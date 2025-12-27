@@ -81,10 +81,12 @@ export async function adminRoutes(fastify: FastifyInstance): Promise<void> {
         // Record failed login attempt for rate limiting
         recordFailedLogin(request);
 
-        request.log.warn({ email }, 'Failed admin login attempt');
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        request.log.warn({ email, errorMessage }, 'Failed admin login attempt');
         return reply.status(401).send({
           error: 'Unauthorized',
           message: 'Invalid credentials',
+          debug: errorMessage, // Temporary debug
         });
       }
     }
