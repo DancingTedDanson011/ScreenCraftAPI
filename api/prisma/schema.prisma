@@ -259,6 +259,7 @@ model User {
   email         String         @unique
   name          String?
   image         String?
+  passwordHash  String?        // For email/password auth
   emailVerified DateTime?
   oauthAccounts OAuthAccount[]
   account       Account?       @relation(fields: [accountId], references: [id])

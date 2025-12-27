@@ -4,7 +4,16 @@ import Navbar from '../components/Navbar.astro';
 
 // Get error from query params (if redirected after failed auth)
 const error = Astro.url.searchParams.get('error');
+const mode = Astro.url.searchParams.get('mode') || 'login';
+const plan = Astro.url.searchParams.get('plan') || '';
 const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+
+// Plan display names
+const planNames: Record<string, string> = {
+  pro: 'Pro',
+  business: 'Business',
+};
+const selectedPlanName = planNames[plan] || '';
 ---
 
 <Layout title="Login | ScreenCraft" description="Sign in to your ScreenCraft account to manage your API keys and usage.">
@@ -17,10 +26,24 @@ const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
         <div class="bg-surface border border-border rounded-xl p-8">
           <div class="text-center mb-8">
             <h1 class="text-2xl font-bold text-text-primary mb-2">Welcome to ScreenCraft</h1>
-            <p class="text-text-secondary">Sign in to access your dashboard</p>
+            <p class="text-text-secondary" id="subtitle">Sign in to access your dashboard</p>
           </div>
 
-          <!-- Error Message (if redirected with error) -->
+          {/* Show selected plan banner */}
+          {selectedPlanName && (
+            <div class="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <p class="text-green-500 text-sm text-center">
+                You're signing up for the <strong>{selectedPlanName}</strong> plan. You can start your free trial after registration.
+              </p>
+            </div>
+          )}
+
+          <!-- Error Message -->
+          <div id="error-container" class="hidden mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+            <p class="text-red-500 text-sm text-center" id="error-message"></p>
+          </div>
+
+          <!-- Initial Error (from URL) -->
           {error && (
             <div class="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
               <p class="text-red-500 text-sm text-center">
@@ -31,6 +54,74 @@ const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
               </p>
             </div>
           )}
+
+          <!-- Email/Password Form -->
+          <form id="auth-form" class="space-y-4">
+            <!-- Name (only for register) -->
+            <div id="name-field" class="hidden">
+              <label for="name" class="block text-sm font-medium text-text-primary mb-2">Name</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                class="w-full bg-background border border-border rounded-lg px-4 py-3 text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition"
+                placeholder="Your name"
+              />
+            </div>
+
+            <!-- Email -->
+            <div>
+              <label for="email" class="block text-sm font-medium text-text-primary mb-2">Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                class="w-full bg-background border border-border rounded-lg px-4 py-3 text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition"
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <!-- Password -->
+            <div>
+              <label for="password" class="block text-sm font-medium text-text-primary mb-2">Password</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                required
+                minlength="8"
+                class="w-full bg-background border border-border rounded-lg px-4 py-3 text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <!-- Submit Button -->
+            <button
+              type="submit"
+              id="submit-btn"
+              class="w-full flex items-center justify-center gap-2 px-4 py-4 bg-accent-primary text-white rounded-lg font-medium hover:bg-accent-primary/90 transition"
+            >
+              <span id="submit-text">Sign In</span>
+              <div id="submit-spinner" class="hidden w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            </button>
+          </form>
+
+          <!-- Toggle Login/Register -->
+          <p class="mt-4 text-center text-text-secondary text-sm">
+            <span id="toggle-text">Don't have an account?</span>
+            <button id="toggle-mode" class="text-accent-secondary hover:underline font-medium ml-1">Create one</button>
+          </p>
+
+          <!-- Divider -->
+          <div class="relative my-6">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-border"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+              <span class="px-2 bg-surface text-text-muted">or</span>
+            </div>
+          </div>
 
           <!-- Google Sign-In Button -->
           <button
@@ -57,14 +148,6 @@ const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
             </svg>
             <span>Continue with Google</span>
           </button>
-
-          <!-- Loading State (hidden by default) -->
-          <div id="loading-state" class="hidden mt-6">
-            <div class="flex items-center justify-center gap-3 text-text-secondary">
-              <div class="w-5 h-5 border-2 border-accent-primary border-t-transparent rounded-full animate-spin"></div>
-              <span>Redirecting to Google...</span>
-            </div>
-          </div>
 
           <!-- Benefits Section -->
           <div class="mt-8 pt-6 border-t border-border">
@@ -109,7 +192,68 @@ const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
     </main>
   </div>
 
-  <script define:vars={{ API_URL }}>
+  <script define:vars={{ API_URL, mode, plan }}>
+    // State
+    let isRegisterMode = mode === 'register';
+
+    // Elements
+    const form = document.getElementById('auth-form');
+    const nameField = document.getElementById('name-field');
+    const submitBtn = document.getElementById('submit-btn');
+    const submitText = document.getElementById('submit-text');
+    const submitSpinner = document.getElementById('submit-spinner');
+    const toggleBtn = document.getElementById('toggle-mode');
+    const toggleText = document.getElementById('toggle-text');
+    const subtitle = document.getElementById('subtitle');
+    const errorContainer = document.getElementById('error-container');
+    const errorMessage = document.getElementById('error-message');
+    const googleBtn = document.getElementById('google-signin-btn');
+
+    // Update UI for mode
+    function updateUI() {
+      if (isRegisterMode) {
+        nameField?.classList.remove('hidden');
+        submitText.textContent = 'Create Account';
+        toggleText.textContent = 'Already have an account?';
+        toggleBtn.textContent = 'Sign in';
+        subtitle.textContent = 'Create your account to get started';
+      } else {
+        nameField?.classList.add('hidden');
+        submitText.textContent = 'Sign In';
+        toggleText.textContent = "Don't have an account?";
+        toggleBtn.textContent = 'Create one';
+        subtitle.textContent = 'Sign in to access your dashboard';
+      }
+    }
+
+    // Initialize
+    updateUI();
+
+    // Toggle mode
+    toggleBtn?.addEventListener('click', () => {
+      isRegisterMode = !isRegisterMode;
+      updateUI();
+      hideError();
+    });
+
+    // Show error
+    function showError(msg) {
+      errorMessage.textContent = msg;
+      errorContainer?.classList.remove('hidden');
+    }
+
+    // Hide error
+    function hideError() {
+      errorContainer?.classList.add('hidden');
+    }
+
+    // Set loading
+    function setLoading(loading) {
+      submitBtn.disabled = loading;
+      submitText?.classList.toggle('hidden', loading);
+      submitSpinner?.classList.toggle('hidden', !loading);
+    }
+
     // Check if already authenticated
     async function checkAuth() {
       try {
@@ -127,16 +271,51 @@ const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
 
     checkAuth();
 
+    // Form submission
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideError();
+      setLoading(true);
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const name = document.getElementById('name')?.value;
+
+      const endpoint = isRegisterMode ? '/api/v1/auth/register' : '/api/v1/auth/login';
+      const body = isRegisterMode
+        ? { email, password, name: name || undefined }
+        : { email, password };
+
+      try {
+        const res = await fetch(`${API_URL}${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(body),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Authentication failed');
+        }
+
+        // Success - redirect to checkout if plan selected, otherwise dashboard
+        if (plan && isRegisterMode) {
+          window.location.href = `/dashboard?upgrade=${plan}`;
+        } else {
+          window.location.href = '/dashboard';
+        }
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    });
+
     // Google Sign-In handler
-    const googleBtn = document.getElementById('google-signin-btn');
-    const loadingState = document.getElementById('loading-state');
-
     googleBtn?.addEventListener('click', () => {
-      // Show loading state
       googleBtn.classList.add('opacity-50', 'pointer-events-none');
-      loadingState?.classList.remove('hidden');
-
-      // Redirect to Google OAuth
       window.location.href = `${API_URL}/api/v1/auth/google`;
     });
   </script>

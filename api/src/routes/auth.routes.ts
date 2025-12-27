@@ -1,9 +1,10 @@
-// Google OAuth Authentication Routes
+// Authentication Routes - Email/Password + Google OAuth
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import oauthPlugin from '@fastify/oauth2';
 import { oauthService } from '../services/auth/oauth.service.js';
 import { sessionService } from '../services/auth/session.service.js';
+import { passwordService } from '../services/auth/password.service.js';
 import { authConfig } from '../config/auth.config.js';
 
 // Extend FastifyInstance to include googleOAuth2
@@ -91,6 +92,172 @@ export async function authRoutes(fastify: FastifyInstance) {
       return reply.redirect(`${authConfig.frontendUrl}/login?error=auth_failed`);
     }
   });
+
+  // ============================================
+  // EMAIL/PASSWORD AUTHENTICATION
+  // ============================================
+
+  /**
+   * Register with Email/Password
+   */
+  fastify.post<{
+    Body: { email: string; password: string; name?: string };
+  }>('/auth/register', async (request, reply) => {
+    try {
+      const { email, password, name } = request.body;
+
+      if (!email || !password) {
+        return reply.status(400).send({
+          error: 'Email and password are required',
+          code: 'MISSING_FIELDS',
+        });
+      }
+
+      // Register user
+      const user = await passwordService.register(email, password, name);
+
+      // Create session
+      const session = await sessionService.createSession(
+        user.id,
+        request.headers['user-agent'],
+        request.ip
+      );
+
+      // Set session cookie
+      reply.setCookie(authConfig.session.cookieName, session.sessionToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: authConfig.session.maxAge / 1000,
+      });
+
+      return {
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        },
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Registration failed';
+      return reply.status(400).send({
+        error: message,
+        code: 'REGISTRATION_FAILED',
+      });
+    }
+  });
+
+  /**
+   * Login with Email/Password
+   */
+  fastify.post<{
+    Body: { email: string; password: string };
+  }>('/auth/login', async (request, reply) => {
+    try {
+      const { email, password } = request.body;
+
+      if (!email || !password) {
+        return reply.status(400).send({
+          error: 'Email and password are required',
+          code: 'MISSING_FIELDS',
+        });
+      }
+
+      // Authenticate user
+      const user = await passwordService.login(email, password);
+
+      // Create session
+      const session = await sessionService.createSession(
+        user.id,
+        request.headers['user-agent'],
+        request.ip
+      );
+
+      // Set session cookie
+      reply.setCookie(authConfig.session.cookieName, session.sessionToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: authConfig.session.maxAge / 1000,
+      });
+
+      return {
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+        },
+        account: user.account ? {
+          id: user.account.id,
+          tier: user.account.tier,
+          monthlyCredits: user.account.monthlyCredits,
+          usedCredits: user.account.usedCredits,
+        } : null,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Login failed';
+      return reply.status(401).send({
+        error: message,
+        code: 'LOGIN_FAILED',
+      });
+    }
+  });
+
+  /**
+   * Change Password (authenticated)
+   */
+  fastify.post<{
+    Body: { currentPassword: string; newPassword: string };
+  }>('/auth/change-password', async (request, reply) => {
+    const sessionToken = request.cookies[authConfig.session.cookieName];
+
+    if (!sessionToken) {
+      return reply.status(401).send({
+        error: 'Not authenticated',
+        code: 'NO_SESSION',
+      });
+    }
+
+    const session = await sessionService.validateSession(sessionToken);
+
+    if (!session) {
+      reply.clearCookie(authConfig.session.cookieName, { path: '/' });
+      return reply.status(401).send({
+        error: 'Session expired',
+        code: 'SESSION_EXPIRED',
+      });
+    }
+
+    try {
+      const { currentPassword, newPassword } = request.body;
+
+      if (!currentPassword || !newPassword) {
+        return reply.status(400).send({
+          error: 'Current and new password are required',
+          code: 'MISSING_FIELDS',
+        });
+      }
+
+      await passwordService.changePassword(session.user.id, currentPassword, newPassword);
+
+      return { success: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Password change failed';
+      return reply.status(400).send({
+        error: message,
+        code: 'PASSWORD_CHANGE_FAILED',
+      });
+    }
+  });
+
+  // ============================================
+  // GOOGLE OAUTH (unchanged)
+  // ============================================
 
   /**
    * Get Current User
