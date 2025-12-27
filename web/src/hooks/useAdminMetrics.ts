@@ -72,8 +72,24 @@ export interface UseAdminMetricsReturn {
   clearAlerts: () => void;
 }
 
-const API_URL = 'http://localhost:3000';
-const WS_URL = 'ws://localhost:3000';
+// Dynamic URLs based on environment
+const getApiUrl = () => {
+  if (typeof window === 'undefined') return 'http://localhost:3000';
+  return window.location.hostname === 'localhost'
+    ? 'http://localhost:3000'
+    : `${window.location.protocol}//${window.location.hostname}`;
+};
+
+const getWsUrl = () => {
+  if (typeof window === 'undefined') return 'ws://localhost:3000';
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return window.location.hostname === 'localhost'
+    ? 'ws://localhost:3000'
+    : `${protocol}//${window.location.hostname}`;
+};
+
+const API_URL = getApiUrl();
+const WS_URL = getWsUrl();
 
 export function useAdminMetrics(options: UseAdminMetricsOptions = {}): UseAdminMetricsReturn {
   const {

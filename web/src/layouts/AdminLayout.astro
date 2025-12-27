@@ -138,6 +138,11 @@ const navItems = [
 </Layout>
 
 <script>
+  // Dynamic API URL
+  const API_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:3000'
+    : `${window.location.protocol}//${window.location.hostname}`;
+
   // Check authentication
   const token = localStorage.getItem('adminToken');
   if (!token) {
@@ -147,7 +152,7 @@ const navItems = [
   // Load admin info
   async function loadAdminInfo() {
     try {
-      const response = await fetch('http://localhost:3000/admin/api/auth/me', {
+      const response = await fetch(`${API_URL}/admin/api/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -191,7 +196,7 @@ const navItems = [
   // Logout handler
   document.getElementById('logout-btn')?.addEventListener('click', async () => {
     try {
-      await fetch('http://localhost:3000/admin/api/auth/logout', {
+      await fetch(`${API_URL}/admin/api/auth/logout`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
