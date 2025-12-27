@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions } from 'fastify';
 import { dashboardRoutes } from './dashboard.routes.js';
+import { demoRoutes } from './demo.routes.js';
 import { createAuthMiddleware, AuthMiddlewareOptions } from '../middleware/auth.middleware.js';
 import { ApiKeyService } from '../services/auth/api-key.service.js';
 import { Redis } from 'ioredis';
@@ -56,6 +57,9 @@ export async function routes(
         },
         { prefix: '/dashboard' }
       );
+
+      // Register demo routes (public, no auth required)
+      await api.register(demoRoutes);
 
       // TODO: Register additional feature routes here
       // await api.register(screenshotRoutes, { prefix: '/screenshots' });

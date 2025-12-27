@@ -72,7 +72,9 @@ export default function DemoWidget({ apiEndpoint = 'http://localhost:3000' }: De
         height: height.toString(),
       });
 
-      const response = await fetch(`${apiEndpoint}/v1/demo/screenshot?${params}`, {
+      // Build the full API URL - apiEndpoint already contains /api
+      const baseUrl = apiEndpoint.endsWith('/api') ? apiEndpoint : `${apiEndpoint}/api`;
+      const response = await fetch(`${baseUrl}/v1/demo/screenshot?${params}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
