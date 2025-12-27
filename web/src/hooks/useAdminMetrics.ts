@@ -72,24 +72,21 @@ export interface UseAdminMetricsReturn {
   clearAlerts: () => void;
 }
 
-// Dynamic URLs based on environment
-const getApiUrl = () => {
+// Dynamic URLs - computed at runtime inside hooks
+function getApiUrl(): string {
   if (typeof window === 'undefined') return 'http://localhost:3000';
   return window.location.hostname === 'localhost'
     ? 'http://localhost:3000'
     : `${window.location.protocol}//${window.location.hostname}`;
-};
+}
 
-const getWsUrl = () => {
+function getWsUrl(): string {
   if (typeof window === 'undefined') return 'ws://localhost:3000';
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   return window.location.hostname === 'localhost'
     ? 'ws://localhost:3000'
     : `${protocol}//${window.location.hostname}`;
-};
-
-const API_URL = getApiUrl();
-const WS_URL = getWsUrl();
+}
 
 export function useAdminMetrics(options: UseAdminMetricsOptions = {}): UseAdminMetricsReturn {
   const {
@@ -125,7 +122,7 @@ export function useAdminMetrics(options: UseAdminMetricsOptions = {}): UseAdminM
     setError(null);
 
     try {
-      const ws = new WebSocket(`${WS_URL}/admin/ws?token=${encodeURIComponent(token)}`);
+      const ws = new WebSocket(`${getWsUrl()}/admin/ws?token=${encodeURIComponent(token)}`);
 
       ws.onopen = () => {
         setConnected(true);
@@ -277,7 +274,7 @@ export function useAdminApi() {
       throw new Error('Not authenticated');
     }
 
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`${getApiUrl()}${endpoint}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
