@@ -1,8 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions } from 'fastify';
 import { dashboardRoutes } from './dashboard.routes.js';
 import { demoRoutes } from './demo.routes.js';
-import { adminRoutes } from '../admin/routes/index.js';
-import { authRoutes } from './auth.routes.js';
 import { createAuthMiddleware, AuthMiddlewareOptions } from '../middleware/auth.middleware.js';
 import { ApiKeyService } from '../services/auth/api-key.service.js';
 import { Redis } from 'ioredis';
@@ -63,11 +61,9 @@ export async function routes(
       // Register demo routes (public, no auth required)
       await api.register(demoRoutes);
 
-      // Register auth routes (Google OAuth, session management)
-      await api.register(authRoutes);
-
-      // Register admin routes
-      await api.register(adminRoutes, { prefix: '/admin' });
+      // NOTE: Auth routes and Admin routes are registered in server.ts
+      // Auth: /api/v1/auth/*
+      // Admin: /admin/api/*
 
       // TODO: Register additional feature routes here
       // await api.register(screenshotRoutes, { prefix: '/screenshots' });
