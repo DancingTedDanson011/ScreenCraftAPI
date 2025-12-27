@@ -1,0 +1,79 @@
+---
+// FAQ Component - ScreenCraft Landing Page
+const faqs = [
+  {
+    question: 'How does the free tier work?',
+    answer: 'Sign up with just your email - no credit card required. You get 100 screenshots and 50 PDFs every month, forever. When you\'re ready to scale, upgrade to Pro with one click.'
+  },
+  {
+    question: 'What happens if I exceed my monthly limit?',
+    answer: 'We\'ll send you an email when you hit 80% of your limit. If you exceed it, API calls return a 429 status code. No surprise charges, ever. Upgrade anytime to continue.'
+  },
+  {
+    question: 'Can I capture pages that require authentication?',
+    answer: 'Yes! Pro and Business plans support custom headers, cookies, and even JavaScript execution. You can capture logged-in dashboards, admin panels, or any protected content.'
+  },
+  {
+    question: 'How fast are the screenshots generated?',
+    answer: 'Average response time is under 2 seconds. Complex pages with heavy JavaScript might take 3-4 seconds. We use a global edge network to ensure consistent performance worldwide.'
+  },
+  {
+    question: 'Do you store the screenshots or page content?',
+    answer: 'No. Screenshots are generated on-demand and streamed directly to you. We don\'t store any captured content. Your data never touches our servers beyond processing.'
+  },
+  {
+    question: 'Can I use this for automated testing?',
+    answer: 'Absolutely. Many customers use our API for visual regression testing, E2E screenshot capture, and CI/CD pipelines. We offer bulk endpoints for test suites.'
+  },
+  {
+    question: 'What\'s your uptime guarantee?',
+    answer: 'Free tier has no SLA. Pro tier targets 99.5% uptime. Business tier guarantees 99.9% uptime with credits for any downtime. Check status.screencraft.io for live metrics.'
+  }
+];
+---
+
+<section id="faq" class="py-20 md:py-32 bg-[#161B22]">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Section Header -->
+    <div class="text-center mb-16">
+      <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#F0F6FC] mb-4">
+        Frequently Asked Questions
+      </h2>
+      <p class="text-lg text-[#8B949E]">
+        Everything you need to know about the API
+      </p>
+    </div>
+
+    <!-- FAQ List -->
+    <div class="max-w-3xl mx-auto space-y-4">
+      {faqs.map((faq) => (
+        <details class="group bg-[#0D1117] border border-[#30363D] rounded-xl overflow-hidden cursor-pointer hover:border-[#1F6FEB] transition-colors">
+          <summary class="flex items-center justify-between px-6 py-5 font-medium text-lg text-[#F0F6FC] select-none">
+            <span class="flex-1 pr-4">{faq.question}</span>
+            <svg
+              class="w-5 h-5 text-[#8B949E] group-open:rotate-180 transition-transform shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <div class="px-6 pb-5 text-[#8B949E] leading-relaxed border-t border-[#30363D] pt-5">
+            {faq.answer}
+          </div>
+        </details>
+      ))}
+    </div>
+
+    <!-- Contact Support -->
+    <div class="text-center mt-12">
+      <p class="text-[#8B949E] mb-4">
+        Still have questions?
+      </p>
+      <a href="#contact" class="text-[#1F6FEB] hover:underline font-medium">
+        Contact our support team
+      </a>
+    </div>
+  </div>
+</section>

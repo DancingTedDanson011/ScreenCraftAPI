@@ -1,0 +1,342 @@
+---
+import DocsLayout from '../../components/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+---
+
+<DocsLayout title="Webhooks" description="Learn how to use webhooks for async screenshot and PDF generation.">
+  <h1>Webhooks Guide</h1>
+
+  <p class="lead text-lg text-text-secondary mb-8">
+    Webhooks allow you to receive notifications when async operations complete. This is ideal
+    for long-running captures or high-volume processing.
+  </p>
+
+  <h2>When to Use Webhooks</h2>
+
+  <p>Use async endpoints with webhooks when:</p>
+  <ul>
+    <li>Capturing pages that take longer than 30 seconds to render</li>
+    <li>Processing many screenshots/PDFs in parallel</li>
+    <li>You want non-blocking API calls</li>
+    <li>Building queue-based processing systems</li>
+  </ul>
+
+  <h2>How It Works</h2>
+
+  <ol>
+    <li><strong>Make an async request</strong> - Call <code>/v2/screenshot/async</code> or <code>/v2/pdf/async</code></li>
+    <li><strong>Receive a job ID</strong> - The API immediately returns a job ID</li>
+    <li><strong>Processing happens</strong> - ScreenCraft processes your request in the background</li>
+    <li><strong>Webhook fires</strong> - When complete, we POST the result to your webhook URL</li>
+  </ol>
+
+  <h2>Setting Up Webhooks</h2>
+
+  <h3>1. Configure Your Webhook URL</h3>
+  <p>
+    Set your webhook URL in the <a href="/dashboard">dashboard</a> under Settings &gt; Webhooks.
+    Your endpoint must:
+  </p>
+  <ul>
+    <li>Be publicly accessible (HTTPS required)</li>
+    <li>Accept POST requests</li>
+    <li>Return a 2xx status code within 30 seconds</li>
+  </ul>
+
+  <h3>2. Make an Async Request</h3>
+
+  <CodeBlock
+    filename="Request"
+    lang="json"
+    code={`{
+  "url": "https://example.com/complex-page",
+  "fullPage": true,
+  "webhook": {
+    "url": "https://your-server.com/webhook/screencraft",
+    "headers": {
+      "X-Custom-Header": "your-value"
+    }
+  }
+}`}
+  />
+
+  <h3>3. Receive the Immediate Response</h3>
+
+  <CodeBlock
+    filename="Response"
+    lang="json"
+    code={`{
+  "success": true,
+  "data": {
+    "job_id": "job_abc123xyz789",
+    "status": "processing",
+    "estimated_time": 15,
+    "webhook_url": "https://your-server.com/webhook/screencraft"
+  }
+}`}
+  />
+
+  <h3>4. Handle the Webhook</h3>
+
+  <p>When processing completes, we POST to your webhook URL:</p>
+
+  <CodeBlock
+    filename="Webhook Payload (Success)"
+    lang="json"
+    code={`{
+  "event": "screenshot.completed",
+  "job_id": "job_abc123xyz789",
+  "timestamp": "2025-12-27T10:30:45Z",
+  "data": {
+    "id": "scr_def456ghi789",
+    "url": "https://cdn.screencraft.dev/s/abc123.png",
+    "width": 1920,
+    "height": 4500,
+    "format": "png",
+    "size": 1245678,
+    "created_at": "2025-12-27T10:30:45Z",
+    "expires_at": "2025-12-28T10:30:45Z"
+  }
+}`}
+  />
+
+  <CodeBlock
+    filename="Webhook Payload (Failed)"
+    lang="json"
+    code={`{
+  "event": "screenshot.failed",
+  "job_id": "job_abc123xyz789",
+  "timestamp": "2025-12-27T10:30:45Z",
+  "error": {
+    "code": "TIMEOUT",
+    "message": "Page took too long to load",
+    "details": {
+      "url": "https://example.com/slow-page",
+      "timeout_ms": 30000
+    }
+  }
+}`}
+  />
+
+  <h2>Webhook Events</h2>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Event</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">screenshot.completed</td>
+          <td class="py-3 px-4">Screenshot generated successfully</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">screenshot.failed</td>
+          <td class="py-3 px-4">Screenshot generation failed</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">pdf.completed</td>
+          <td class="py-3 px-4">PDF generated successfully</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">pdf.failed</td>
+          <td class="py-3 px-4">PDF generation failed</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Verifying Webhooks</h2>
+
+  <p>
+    All webhooks include a signature header for verification. Always verify signatures
+    to ensure the request came from ScreenCraft.
+  </p>
+
+  <h3>Signature Header</h3>
+
+  <CodeBlock
+    filename="Headers"
+    lang="text"
+    code={`X-ScreenCraft-Signature: sha256=abc123def456...
+X-ScreenCraft-Timestamp: 1703673045`}
+  />
+
+  <h3>Verification Code</h3>
+
+  <CodeBlock
+    filename="verify.js (Node.js)"
+    lang="javascript"
+    code={`const crypto = require('crypto');
+
+function verifyWebhook(payload, signature, timestamp, secret) {
+  // Check timestamp to prevent replay attacks (5 min window)
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - parseInt(timestamp)) > 300) {
+    throw new Error('Webhook timestamp too old');
+  }
+
+  // Compute expected signature
+  const signedPayload = \`\${timestamp}.\${payload}\`;
+  const expectedSignature = 'sha256=' + crypto
+    .createHmac('sha256', secret)
+    .update(signedPayload)
+    .digest('hex');
+
+  // Compare signatures (timing-safe)
+  if (!crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expectedSignature)
+  )) {
+    throw new Error('Invalid webhook signature');
+  }
+
+  return true;
+}
+
+// Express.js example
+app.post('/webhook/screencraft', express.raw({ type: 'application/json' }), (req, res) => {
+  const signature = req.headers['x-screencraft-signature'];
+  const timestamp = req.headers['x-screencraft-timestamp'];
+
+  try {
+    verifyWebhook(req.body.toString(), signature, timestamp, process.env.WEBHOOK_SECRET);
+
+    const event = JSON.parse(req.body);
+    console.log('Received event:', event.event, event.job_id);
+
+    // Process the event...
+
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('Webhook verification failed:', error);
+    res.status(400).send('Invalid signature');
+  }
+});`}
+  />
+
+  <CodeBlock
+    filename="verify.py (Python)"
+    lang="python"
+    code={`import hmac
+import hashlib
+import time
+
+def verify_webhook(payload: bytes, signature: str, timestamp: str, secret: str) -> bool:
+    # Check timestamp (5 min window)
+    now = int(time.time())
+    if abs(now - int(timestamp)) > 300:
+        raise ValueError('Webhook timestamp too old')
+
+    # Compute expected signature
+    signed_payload = f"{timestamp}.{payload.decode()}"
+    expected_signature = 'sha256=' + hmac.new(
+        secret.encode(),
+        signed_payload.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+    # Compare signatures
+    if not hmac.compare_digest(signature, expected_signature):
+        raise ValueError('Invalid webhook signature')
+
+    return True
+
+# Flask example
+@app.route('/webhook/screencraft', methods=['POST'])
+def handle_webhook():
+    signature = request.headers.get('X-ScreenCraft-Signature')
+    timestamp = request.headers.get('X-ScreenCraft-Timestamp')
+
+    try:
+        verify_webhook(request.data, signature, timestamp, WEBHOOK_SECRET)
+        event = request.json
+        print(f"Received: {event['event']} - {event['job_id']}")
+        return 'OK', 200
+    except ValueError as e:
+        return str(e), 400`}
+  />
+
+  <h2>Retry Policy</h2>
+
+  <p>If your webhook endpoint returns a non-2xx status code, we retry with exponential backoff:</p>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Attempt</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Delay</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4">1</td>
+          <td class="py-3 px-4">Immediate</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4">2</td>
+          <td class="py-3 px-4">1 minute</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4">3</td>
+          <td class="py-3 px-4">5 minutes</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4">4</td>
+          <td class="py-3 px-4">30 minutes</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4">5</td>
+          <td class="py-3 px-4">2 hours</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>After 5 failed attempts, the webhook is marked as failed. You can view failed webhooks in your dashboard.</p>
+
+  <h2>Polling Alternative</h2>
+
+  <p>If you prefer not to use webhooks, you can poll for job status:</p>
+
+  <CodeBlock
+    filename="Request"
+    lang="bash"
+    code={`curl https://api.screencraft.dev/v2/jobs/job_abc123xyz789 \\
+  -H "Authorization: Bearer sk_live_your_api_key"`}
+  />
+
+  <CodeBlock
+    filename="Response"
+    lang="json"
+    code={`{
+  "success": true,
+  "data": {
+    "job_id": "job_abc123xyz789",
+    "status": "completed",
+    "result": {
+      "url": "https://cdn.screencraft.dev/s/abc123.png",
+      "width": 1920,
+      "height": 4500
+    },
+    "created_at": "2025-12-27T10:30:00Z",
+    "completed_at": "2025-12-27T10:30:45Z"
+  }
+}`}
+  />
+
+  <h2>Best Practices</h2>
+
+  <ul>
+    <li><strong>Respond quickly:</strong> Return 200 immediately, process asynchronously</li>
+    <li><strong>Handle duplicates:</strong> Use job_id for idempotent processing</li>
+    <li><strong>Verify signatures:</strong> Always validate webhook authenticity</li>
+    <li><strong>Use HTTPS:</strong> Never expose webhook endpoints over HTTP</li>
+    <li><strong>Log everything:</strong> Log all webhooks for debugging</li>
+    <li><strong>Set timeouts:</strong> Configure appropriate timeouts on your server</li>
+  </ul>
+</DocsLayout>

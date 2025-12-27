@@ -1,0 +1,1304 @@
+openapi: 3.0.3
+info:
+  title: ScreenCraft API
+  description: |
+    Professional Screenshot & PDF Generation API powered by Playwright.
+
+    ## Features
+    - **High-Quality Screenshots**: Capture pixel-perfect screenshots of any webpage
+    - **PDF Generation**: Convert URLs or HTML to professional PDFs
+    - **Async Processing**: Queue long-running jobs with webhook notifications
+    - **Flexible Configuration**: Custom viewports, cookies, headers, and more
+    - **Resource Optimization**: Block unnecessary resources to speed up capture
+    - **Multiple Formats**: PNG, JPEG, WebP for screenshots; A4, Letter, Legal for PDFs
+
+    ## Authentication
+    All API requests require authentication using an API Key passed in the `X-API-Key` header.
+
+    ## Rate Limiting
+    - **Default**: 100 requests per minute per API key
+    - Rate limit info is included in response headers:
+      - `X-RateLimit-Limit`: Maximum requests allowed
+      - `X-RateLimit-Remaining`: Remaining requests in current window
+      - `X-RateLimit-Reset`: Time when the rate limit resets (ISO 8601)
+
+    ## Async Processing
+    For long-running jobs, use `async: true` in your request:
+    1. Request returns immediately with `202 Accepted` and job ID
+    2. Poll `/v1/screenshots/{id}` or `/v1/pdfs/{id}` for status
+    3. Or provide `webhookUrl` for automatic notification on completion
+
+    ## Error Handling
+    All errors follow a consistent format with `success: false` and an `error` object containing:
+    - `code`: Machine-readable error code
+    - `message`: Human-readable error message
+    - `details`: Additional context (when available)
+
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@screencraft.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.screencraft.com
+    description: Production server
+  - url: https://staging-api.screencraft.com
+    description: Staging server
+  - url: http://localhost:3000
+    description: Local development server
+
+tags:
+  - name: screenshots
+    description: Screenshot generation and management
+  - name: pdfs
+    description: PDF generation and management
+  - name: health
+    description: Service health and status
+
+security:
+  - apiKey: []
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the API service is running and healthy
+      tags:
+        - health
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: ok
+                timestamp: '2025-12-26T12:00:00.000Z'
+                uptime: 3600
+                version: '1.0.0'
+
+  /v1/screenshots:
+    post:
+      summary: Create screenshot
+      description: |
+        Generate a screenshot of a webpage. Supports both synchronous and asynchronous processing.
+
+        **Synchronous Mode** (default):
+        - Screenshot is generated immediately
+        - Returns `201 Created` with download URL
+        - Best for simple screenshots with fast-loading pages
+
+        **Asynchronous Mode** (`async: true`):
+        - Screenshot is queued for background processing
+        - Returns `202 Accepted` with job ID immediately
+        - Poll the status endpoint or use webhook notification
+        - Best for complex pages or full-page screenshots
+      tags:
+        - screenshots
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScreenshotRequest'
+            examples:
+              basic:
+                summary: Basic screenshot
+                value:
+                  url: https://example.com
+                  format: png
+              fullPage:
+                summary: Full page screenshot
+                value:
+                  url: https://example.com
+                  fullPage: true
+                  format: jpeg
+                  quality: 90
+              custom:
+                summary: Custom viewport and wait
+                value:
+                  url: https://example.com
+                  viewport:
+                    width: 1280
+                    height: 720
+                    deviceScaleFactor: 2
+                  waitOptions:
+                    waitUntil: networkidle0
+                    timeout: 30000
+                    delay: 1000
+              async:
+                summary: Async with webhook
+                value:
+                  url: https://example.com
+                  fullPage: true
+                  async: true
+                  webhookUrl: https://your-app.com/webhooks/screenshot
+      responses:
+        '201':
+          description: Screenshot created successfully (synchronous)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScreenshotSuccessResponse'
+        '202':
+          description: Screenshot queued for processing (asynchronous)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScreenshotQueuedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      summary: List screenshots
+      description: Retrieve a paginated list of screenshots with optional filtering and sorting
+      tags:
+        - screenshots
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/StatusFilter'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/SortOrder'
+      responses:
+        '200':
+          description: List of screenshots retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScreenshotListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/screenshots/{id}:
+    get:
+      summary: Get screenshot status
+      description: Retrieve the status and metadata of a specific screenshot
+      tags:
+        - screenshots
+      parameters:
+        - $ref: '#/components/parameters/ScreenshotId'
+      responses:
+        '200':
+          description: Screenshot found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScreenshotStatusResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete screenshot
+      description: Delete a screenshot and its associated file
+      tags:
+        - screenshots
+      parameters:
+        - $ref: '#/components/parameters/ScreenshotId'
+      responses:
+        '204':
+          description: Screenshot deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/screenshots/{id}/download:
+    get:
+      summary: Download screenshot
+      description: Download the screenshot file directly
+      tags:
+        - screenshots
+      parameters:
+        - $ref: '#/components/parameters/ScreenshotId'
+      responses:
+        '200':
+          description: Screenshot file
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Screenshot not ready yet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: SCREENSHOT_NOT_READY
+                  message: Screenshot is still being processed
+                  details:
+                    status: processing
+                    id: 123e4567-e89b-12d3-a456-426614174000
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/pdfs:
+    post:
+      summary: Generate PDF
+      description: |
+        Generate a PDF from a URL or HTML content. Supports both synchronous and asynchronous processing.
+
+        **Synchronous Mode** (default):
+        - PDF is generated immediately
+        - Returns `201 Created` with download URL
+        - Best for simple pages and small PDFs
+
+        **Asynchronous Mode** (`async: true`):
+        - PDF is queued for background processing
+        - Returns `202 Accepted` with job ID immediately
+        - Poll the status endpoint or use webhook notification
+        - Best for complex pages or large documents
+      tags:
+        - pdfs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PdfRequest'
+            examples:
+              urlBasic:
+                summary: PDF from URL
+                value:
+                  type: url
+                  url: https://example.com
+                  format: A4
+                  printBackground: true
+              htmlBasic:
+                summary: PDF from HTML
+                value:
+                  type: html
+                  html: <html><body><h1>Hello World</h1></body></html>
+                  format: Letter
+              advanced:
+                summary: Advanced PDF with margins and headers
+                value:
+                  type: url
+                  url: https://example.com
+                  format: A4
+                  landscape: false
+                  margin:
+                    top: 20mm
+                    right: 15mm
+                    bottom: 20mm
+                    left: 15mm
+                  displayHeaderFooter: true
+                  headerTemplate: <div style="font-size:10px">Page Header</div>
+                  footerTemplate: <div style="font-size:10px">Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>
+              async:
+                summary: Async PDF with webhook
+                value:
+                  type: url
+                  url: https://example.com
+                  format: A4
+                  async: true
+                  webhookUrl: https://your-app.com/webhooks/pdf
+      responses:
+        '201':
+          description: PDF created successfully (synchronous)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PdfSuccessResponse'
+        '202':
+          description: PDF queued for processing (asynchronous)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PdfQueuedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      summary: List PDFs
+      description: Retrieve a paginated list of PDFs with optional filtering and sorting
+      tags:
+        - pdfs
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/StatusFilter'
+        - name: type
+          in: query
+          description: Filter by PDF source type
+          schema:
+            type: string
+            enum: [url, html]
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/SortOrder'
+      responses:
+        '200':
+          description: List of PDFs retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PdfListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/pdfs/{id}:
+    get:
+      summary: Get PDF status
+      description: Retrieve the status and metadata of a specific PDF
+      tags:
+        - pdfs
+      parameters:
+        - $ref: '#/components/parameters/PdfId'
+      responses:
+        '200':
+          description: PDF found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PdfStatusResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete PDF
+      description: Delete a PDF and its associated file
+      tags:
+        - pdfs
+      parameters:
+        - $ref: '#/components/parameters/PdfId'
+      responses:
+        '204':
+          description: PDF deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/pdfs/{id}/download:
+    get:
+      summary: Download PDF
+      description: Download the PDF file directly
+      tags:
+        - pdfs
+      parameters:
+        - $ref: '#/components/parameters/PdfId'
+      responses:
+        '200':
+          description: PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: PDF not ready yet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: PDF_NOT_READY
+                  message: PDF is still being processed
+                  details:
+                    status: processing
+                    id: 123e4567-e89b-12d3-a456-426614174000
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      name: X-API-Key
+      in: header
+      description: API key for authentication. Contact support to obtain your API key.
+
+  parameters:
+    ScreenshotId:
+      name: id
+      in: path
+      required: true
+      description: Screenshot UUID
+      schema:
+        type: string
+        format: uuid
+      example: 123e4567-e89b-12d3-a456-426614174000
+
+    PdfId:
+      name: id
+      in: path
+      required: true
+      description: PDF UUID
+      schema:
+        type: string
+        format: uuid
+      example: 123e4567-e89b-12d3-a456-426614174000
+
+    Page:
+      name: page
+      in: query
+      description: Page number for pagination
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      example: 1
+
+    Limit:
+      name: limit
+      in: query
+      description: Number of items per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      example: 20
+
+    StatusFilter:
+      name: status
+      in: query
+      description: Filter by processing status
+      schema:
+        type: string
+        enum: [pending, processing, completed, failed]
+      example: completed
+
+    SortBy:
+      name: sortBy
+      in: query
+      description: Field to sort by
+      schema:
+        type: string
+        enum: [createdAt, completedAt]
+        default: createdAt
+      example: createdAt
+
+    SortOrder:
+      name: sortOrder
+      in: query
+      description: Sort order
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: desc
+      example: desc
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        timestamp:
+          type: string
+          format: date-time
+        uptime:
+          type: number
+          description: Server uptime in seconds
+        version:
+          type: string
+
+    Viewport:
+      type: object
+      properties:
+        width:
+          type: integer
+          minimum: 320
+          maximum: 3840
+          default: 1920
+          description: Viewport width in pixels
+        height:
+          type: integer
+          minimum: 240
+          maximum: 2160
+          default: 1080
+          description: Viewport height in pixels
+        deviceScaleFactor:
+          type: number
+          minimum: 1
+          maximum: 3
+          default: 1
+          description: Device scale factor for high-DPI displays
+        isMobile:
+          type: boolean
+          default: false
+          description: Emulate mobile device
+        hasTouch:
+          type: boolean
+          default: false
+          description: Enable touch events
+        isLandscape:
+          type: boolean
+          default: false
+          description: Landscape orientation
+
+    Clip:
+      type: object
+      required: [x, y, width, height]
+      properties:
+        x:
+          type: integer
+          minimum: 0
+          description: X coordinate of clip area
+        y:
+          type: integer
+          minimum: 0
+          description: Y coordinate of clip area
+        width:
+          type: integer
+          minimum: 1
+          description: Width of clip area
+        height:
+          type: integer
+          minimum: 1
+          description: Height of clip area
+
+    WaitOptions:
+      type: object
+      properties:
+        waitUntil:
+          type: string
+          enum: [load, domcontentloaded, networkidle0, networkidle2]
+          default: load
+          description: |
+            - `load`: Wait for the load event
+            - `domcontentloaded`: Wait for DOMContentLoaded event
+            - `networkidle0`: Wait until no network connections for 500ms
+            - `networkidle2`: Wait until 2 or fewer network connections for 500ms
+        timeout:
+          type: integer
+          minimum: 1000
+          maximum: 60000
+          default: 30000
+          description: Maximum wait time in milliseconds
+        delay:
+          type: integer
+          minimum: 0
+          maximum: 10000
+          description: Additional delay after page load in milliseconds
+        selector:
+          type: string
+          description: Wait for a specific CSS selector to appear
+
+    Cookie:
+      type: object
+      required: [name, value]
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+        domain:
+          type: string
+        path:
+          type: string
+        expires:
+          type: number
+          description: Unix timestamp in seconds
+        httpOnly:
+          type: boolean
+        secure:
+          type: boolean
+        sameSite:
+          type: string
+          enum: [Strict, Lax, None]
+
+    ScreenshotRequest:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+          description: URL of the webpage to capture
+        viewport:
+          $ref: '#/components/schemas/Viewport'
+        fullPage:
+          type: boolean
+          default: false
+          description: Capture full scrollable page
+        format:
+          type: string
+          enum: [png, jpeg, webp]
+          default: png
+          description: Image format
+        quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Image quality (jpeg/webp only, 1-100)
+        clip:
+          $ref: '#/components/schemas/Clip'
+        omitBackground:
+          type: boolean
+          default: false
+          description: Make background transparent (png only)
+        encoding:
+          type: string
+          enum: [base64, binary]
+          default: binary
+          description: Response encoding format
+        waitOptions:
+          $ref: '#/components/schemas/WaitOptions'
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Custom HTTP headers
+        cookies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cookie'
+          description: Cookies to set before capturing
+        userAgent:
+          type: string
+          description: Custom user agent string
+        blockResources:
+          type: array
+          items:
+            type: string
+            enum: [image, stylesheet, font, script, media]
+          description: Resource types to block for faster loading
+        async:
+          type: boolean
+          default: false
+          description: Process asynchronously
+        webhookUrl:
+          type: string
+          format: uri
+          description: URL to receive webhook notification on completion
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Custom metadata to attach to the screenshot
+
+    PdfMargin:
+      type: object
+      properties:
+        top:
+          type: string
+          pattern: '^\d+(px|in|cm|mm)$'
+          example: 20mm
+        right:
+          type: string
+          pattern: '^\d+(px|in|cm|mm)$'
+          example: 15mm
+        bottom:
+          type: string
+          pattern: '^\d+(px|in|cm|mm)$'
+          example: 20mm
+        left:
+          type: string
+          pattern: '^\d+(px|in|cm|mm)$'
+          example: 15mm
+
+    PdfRequest:
+      oneOf:
+        - $ref: '#/components/schemas/PdfFromUrlRequest'
+        - $ref: '#/components/schemas/PdfFromHtmlRequest'
+      discriminator:
+        propertyName: type
+        mapping:
+          url: '#/components/schemas/PdfFromUrlRequest'
+          html: '#/components/schemas/PdfFromHtmlRequest'
+
+    PdfFromUrlRequest:
+      type: object
+      required: [type, url]
+      properties:
+        type:
+          type: string
+          enum: [url]
+        url:
+          type: string
+          format: uri
+          description: URL of the webpage to convert to PDF
+        format:
+          type: string
+          enum: [Letter, Legal, Tabloid, Ledger, A0, A1, A2, A3, A4, A5, A6]
+          default: A4
+          description: Paper format
+        landscape:
+          type: boolean
+          default: false
+          description: Landscape orientation
+        printBackground:
+          type: boolean
+          default: true
+          description: Print background graphics
+        margin:
+          $ref: '#/components/schemas/PdfMargin'
+        displayHeaderFooter:
+          type: boolean
+          default: false
+          description: Display header and footer
+        headerTemplate:
+          type: string
+          description: HTML template for header
+        footerTemplate:
+          type: string
+          description: HTML template for footer (supports pageNumber and totalPages classes)
+        pageRanges:
+          type: string
+          description: 'Paper ranges to print (e.g., "1-5, 8, 11-13")'
+        preferCSSPageSize:
+          type: boolean
+          default: false
+          description: Use CSS-defined page size
+        width:
+          type: string
+          pattern: '^\d+(px|in|cm|mm)$'
+          description: Paper width (overrides format)
+        height:
+          type: string
+          pattern: '^\d+(px|in|cm|mm)$'
+          description: Paper height (overrides format)
+        scale:
+          type: number
+          minimum: 0.1
+          maximum: 2
+          default: 1
+          description: Scale of webpage rendering
+        waitOptions:
+          $ref: '#/components/schemas/WaitOptions'
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Custom HTTP headers
+        cookies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cookie'
+        userAgent:
+          type: string
+          description: Custom user agent string
+        async:
+          type: boolean
+          default: false
+          description: Process asynchronously
+        webhookUrl:
+          type: string
+          format: uri
+          description: URL to receive webhook notification on completion
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Custom metadata to attach to the PDF
+
+    PdfFromHtmlRequest:
+      type: object
+      required: [type, html]
+      properties:
+        type:
+          type: string
+          enum: [html]
+        html:
+          type: string
+          minLength: 1
+          description: HTML content to convert to PDF
+        format:
+          type: string
+          enum: [Letter, Legal, Tabloid, Ledger, A0, A1, A2, A3, A4, A5, A6]
+          default: A4
+          description: Paper format
+        landscape:
+          type: boolean
+          default: false
+          description: Landscape orientation
+        printBackground:
+          type: boolean
+          default: true
+          description: Print background graphics
+        margin:
+          $ref: '#/components/schemas/PdfMargin'
+        displayHeaderFooter:
+          type: boolean
+          default: false
+          description: Display header and footer
+        headerTemplate:
+          type: string
+          description: HTML template for header
+        footerTemplate:
+          type: string
+          description: HTML template for footer
+        pageRanges:
+          type: string
+          description: 'Paper ranges to print (e.g., "1-5, 8, 11-13")'
+        preferCSSPageSize:
+          type: boolean
+          default: false
+          description: Use CSS-defined page size
+        width:
+          type: string
+          pattern: '^\d+(px|in|cm|mm)$'
+          description: Paper width
+        height:
+          type: string
+          pattern: '^\d+(px|in|cm|mm)$'
+          description: Paper height
+        scale:
+          type: number
+          minimum: 0.1
+          maximum: 2
+          default: 1
+          description: Scale of webpage rendering
+        async:
+          type: boolean
+          default: false
+          description: Process asynchronously
+        webhookUrl:
+          type: string
+          format: uri
+          description: URL to receive webhook notification on completion
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Custom metadata to attach to the PDF
+
+    ScreenshotData:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        url:
+          type: string
+          format: uri
+        format:
+          type: string
+          enum: [png, jpeg, webp]
+        fileSize:
+          type: integer
+          description: File size in bytes
+        downloadUrl:
+          type: string
+          format: uri
+          description: URL to download the screenshot
+        error:
+          type: string
+          description: Error message if status is failed
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    PdfData:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        type:
+          type: string
+          enum: [url, html]
+        format:
+          type: string
+          enum: [Letter, Legal, Tabloid, Ledger, A0, A1, A2, A3, A4, A5, A6]
+        fileSize:
+          type: integer
+          description: File size in bytes
+        pages:
+          type: integer
+          description: Number of pages in PDF
+        downloadUrl:
+          type: string
+          format: uri
+          description: URL to download the PDF
+        error:
+          type: string
+          description: Error message if status is failed
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    ScreenshotSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/ScreenshotData'
+        meta:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+            requestId:
+              type: string
+            version:
+              type: string
+
+    ScreenshotQueuedResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            status:
+              type: string
+              enum: [pending]
+            message:
+              type: string
+              example: Screenshot queued for processing
+            estimatedCompletionTime:
+              type: string
+              format: date-time
+        meta:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+            requestId:
+              type: string
+            version:
+              type: string
+
+    ScreenshotStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/ScreenshotData'
+        meta:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+            requestId:
+              type: string
+            version:
+              type: string
+
+    ScreenshotListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScreenshotData'
+        meta:
+          type: object
+          properties:
+            pagination:
+              type: object
+              properties:
+                page:
+                  type: integer
+                limit:
+                  type: integer
+                total:
+                  type: integer
+                totalPages:
+                  type: integer
+            timestamp:
+              type: string
+              format: date-time
+            requestId:
+              type: string
+            version:
+              type: string
+
+    PdfSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/PdfData'
+        meta:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+            requestId:
+              type: string
+            version:
+              type: string
+
+    PdfQueuedResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            status:
+              type: string
+              enum: [pending]
+            message:
+              type: string
+              example: PDF queued for processing
+            estimatedCompletionTime:
+              type: string
+              format: date-time
+        meta:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+            requestId:
+              type: string
+            version:
+              type: string
+
+    PdfStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/PdfData'
+        meta:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+            requestId:
+              type: string
+            version:
+              type: string
+
+    PdfListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PdfData'
+        meta:
+          type: object
+          properties:
+            pagination:
+              type: object
+              properties:
+                page:
+                  type: integer
+                limit:
+                  type: integer
+                total:
+                  type: integer
+                totalPages:
+                  type: integer
+            timestamp:
+              type: string
+              format: date-time
+            requestId:
+              type: string
+            version:
+              type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code
+            message:
+              type: string
+              description: Human-readable error message
+            details:
+              type: object
+              additionalProperties: true
+              description: Additional error context
+        meta:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+            requestId:
+              type: string
+            version:
+              type: string
+
+  responses:
+    BadRequest:
+      description: Bad request - validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: VALIDATION_ERROR
+              message: Request validation failed
+              details:
+                fields:
+                  url: Invalid URL format
+            meta:
+              timestamp: '2025-12-26T12:00:00.000Z'
+              requestId: req_123456
+              version: v1
+
+    Unauthorized:
+      description: Unauthorized - invalid or missing API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: UNAUTHORIZED
+              message: Invalid or missing API key
+            meta:
+              timestamp: '2025-12-26T12:00:00.000Z'
+              requestId: req_123456
+              version: v1
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: NOT_FOUND
+              message: Resource not found
+            meta:
+              timestamp: '2025-12-26T12:00:00.000Z'
+              requestId: req_123456
+              version: v1
+
+    RateLimitExceeded:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: RATE_LIMIT_EXCEEDED
+              message: Rate limit exceeded. Please try again later.
+              details:
+                limit: 100
+                remaining: 0
+                reset: '2025-12-26T12:01:00.000Z'
+            meta:
+              timestamp: '2025-12-26T12:00:00.000Z'
+              requestId: req_123456
+              version: v1
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: INTERNAL_SERVER_ERROR
+              message: An unexpected error occurred
+            meta:
+              timestamp: '2025-12-26T12:00:00.000Z'
+              requestId: req_123456
+              version: v1

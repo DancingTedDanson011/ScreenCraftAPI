@@ -1,0 +1,256 @@
+# ScreenCraft Production Override
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+version: '3.9'
+
+services:
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=200"
+      - "-c"
+      - "shared_buffers=2GB"
+      - "-c"
+      - "effective_cache_size=6GB"
+      - "-c"
+      - "maintenance_work_mem=512MB"
+      - "-c"
+      - "checkpoint_completion_target=0.9"
+      - "-c"
+      - "wal_buffers=16MB"
+      - "-c"
+      - "default_statistics_target=100"
+      - "-c"
+      - "random_page_cost=1.1"
+      - "-c"
+      - "effective_io_concurrency=200"
+      - "-c"
+      - "work_mem=5242kB"
+      - "-c"
+      - "min_wal_size=2GB"
+      - "-c"
+      - "max_wal_size=8GB"
+    ports: []  # Don't expose to host in production
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+    restart: always
+
+  redis:
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 4gb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --requirepass ${REDIS_PASSWORD}
+    ports: []  # Don't expose to host in production
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    restart: always
+
+  minio:
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BROWSER: "on"
+      MINIO_PROMETHEUS_AUTH_TYPE: "public"
+    ports:
+      - "9000:9000"  # S3 API
+      - "9001:9001"  # Console
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    restart: always
+
+  minio-init:
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
+      mc mb myminio/screenshots --ignore-existing;
+      mc anonymous set download myminio/screenshots;
+      mc ilm add --expiry-days 90 myminio/screenshots;
+      exit 0;
+      "
+
+  api:
+    build:
+      target: production
+      args:
+        NODE_ENV: production
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://screencraft:${POSTGRES_PASSWORD}@postgres:5432/screencraft
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: screenshots
+      MINIO_USE_SSL: false
+      LOG_LEVEL: info
+      LOG_PRETTY: false
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      API_RATE_LIMIT_MAX: ${API_RATE_LIMIT_MAX:-100}
+      API_RATE_LIMIT_WINDOW: ${API_RATE_LIMIT_WINDOW:-15m}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+    ports:
+      - "3000:3000"
+    volumes: []  # No volumes in production
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+      replicas: 2
+    restart: always
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    command: npm run start
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`api.screencraft.example.com`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.api.loadbalancer.server.port=3000"
+
+  worker:
+    build:
+      target: production
+      args:
+        NODE_ENV: production
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://screencraft:${POSTGRES_PASSWORD}@postgres:5432/screencraft
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: screenshots
+      MINIO_USE_SSL: false
+      LOG_LEVEL: info
+      LOG_PRETTY: false
+      PLAYWRIGHT_TIMEOUT: ${PLAYWRIGHT_TIMEOUT:-30000}
+      PLAYWRIGHT_NAVIGATION_TIMEOUT: ${PLAYWRIGHT_NAVIGATION_TIMEOUT:-30000}
+      MAX_CONCURRENT_BROWSERS: ${MAX_CONCURRENT_BROWSERS:-10}
+    volumes: []  # No volumes in production
+    deploy:
+      resources:
+        limits:
+          cpus: '8'
+          memory: 24G
+        reservations:
+          cpus: '4'
+          memory: 12G
+      replicas: 3
+    restart: always
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('ioredis').createClient({host:'redis',port:6379,password:process.env.REDIS_PASSWORD}).ping().then(() => process.exit(0)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    command: npm run worker:start
+
+  web:
+    build:
+      target: production
+      args:
+        PUBLIC_API_URL: https://api.screencraft.example.com
+    environment:
+      NODE_ENV: production
+    ports:
+      - "3001:3000"
+    volumes: []  # No volumes in production
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=Host(`screencraft.example.com`)"
+      - "traefik.http.routers.web.entrypoints=websecure"
+      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.web.loadbalancer.server.port=3000"
+
+  traefik:
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--log.level=INFO"
+      - "--accesslog=true"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_certs:/letsencrypt
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.screencraft.example.com`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dashboard.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_BASIC_AUTH}"
+
+volumes:
+  traefik_certs:

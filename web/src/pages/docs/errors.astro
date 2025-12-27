@@ -1,0 +1,385 @@
+---
+import DocsLayout from '../../components/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+---
+
+<DocsLayout title="Error Codes" description="Complete reference for ScreenCraft API error codes and troubleshooting.">
+  <h1>Error Codes Reference</h1>
+
+  <p class="lead text-lg text-text-secondary mb-8">
+    Understanding error codes helps you handle failures gracefully and debug issues quickly.
+    All errors follow a consistent format with actionable information.
+  </p>
+
+  <h2>Error Response Format</h2>
+
+  <p>All error responses have this structure:</p>
+
+  <CodeBlock
+    filename="Error Response"
+    lang="json"
+    code={`{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human-readable description",
+    "details": {
+      "field": "Additional context"
+    }
+  },
+  "request_id": "req_abc123xyz"
+}`}
+  />
+
+  <p>
+    Always include the <code>request_id</code> when contacting support for faster debugging.
+  </p>
+
+  <h2>HTTP Status Codes</h2>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Status</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Meaning</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Action</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono">400</td>
+          <td class="py-3 px-4">Bad Request</td>
+          <td class="py-3 px-4">Fix the request parameters</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono">401</td>
+          <td class="py-3 px-4">Unauthorized</td>
+          <td class="py-3 px-4">Check your API key</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono">403</td>
+          <td class="py-3 px-4">Forbidden</td>
+          <td class="py-3 px-4">Upgrade plan or check permissions</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono">404</td>
+          <td class="py-3 px-4">Not Found</td>
+          <td class="py-3 px-4">Check the endpoint URL</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono">429</td>
+          <td class="py-3 px-4">Rate Limited</td>
+          <td class="py-3 px-4">Slow down, check rate limit headers</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono">500</td>
+          <td class="py-3 px-4">Server Error</td>
+          <td class="py-3 px-4">Retry with backoff, contact support</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono">503</td>
+          <td class="py-3 px-4">Service Unavailable</td>
+          <td class="py-3 px-4">Check status page, retry later</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Error Codes</h2>
+
+  <h3>Authentication Errors</h3>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Code</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Solution</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">MISSING_API_KEY</td>
+          <td class="py-3 px-4">No Authorization header provided</td>
+          <td class="py-3 px-4">Add <code>Authorization: Bearer sk_live_xxx</code> header</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">INVALID_API_KEY</td>
+          <td class="py-3 px-4">API key is malformed or doesn't exist</td>
+          <td class="py-3 px-4">Check your API key in the dashboard</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">EXPIRED_API_KEY</td>
+          <td class="py-3 px-4">API key has been revoked or expired</td>
+          <td class="py-3 px-4">Generate a new API key</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">INSUFFICIENT_SCOPE</td>
+          <td class="py-3 px-4">API key lacks required permissions</td>
+          <td class="py-3 px-4">Use an API key with the correct scope</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Request Validation Errors</h3>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Code</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Solution</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">MISSING_PARAMETER</td>
+          <td class="py-3 px-4">Required parameter not provided</td>
+          <td class="py-3 px-4">Check <code>details.field</code> for the missing param</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">INVALID_PARAMETER</td>
+          <td class="py-3 px-4">Parameter value is invalid</td>
+          <td class="py-3 px-4">Check <code>details</code> for valid values</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">INVALID_URL</td>
+          <td class="py-3 px-4">URL is malformed or invalid</td>
+          <td class="py-3 px-4">Ensure URL is properly encoded and valid</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">INVALID_HTML</td>
+          <td class="py-3 px-4">HTML content is malformed</td>
+          <td class="py-3 px-4">Validate your HTML structure</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">INVALID_SELECTOR</td>
+          <td class="py-3 px-4">CSS selector is invalid</td>
+          <td class="py-3 px-4">Test selector in browser DevTools</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">BODY_TOO_LARGE</td>
+          <td class="py-3 px-4">Request body exceeds 10MB limit</td>
+          <td class="py-3 px-4">Reduce HTML size or use URL instead</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Capture Errors</h3>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Code</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Solution</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">URL_NOT_ACCESSIBLE</td>
+          <td class="py-3 px-4">Cannot reach the target URL</td>
+          <td class="py-3 px-4">Ensure URL is publicly accessible</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">URL_BLOCKED</td>
+          <td class="py-3 px-4">URL is blocked by our system</td>
+          <td class="py-3 px-4">Contact support if legitimate</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">TIMEOUT</td>
+          <td class="py-3 px-4">Page took too long to load</td>
+          <td class="py-3 px-4">Use async endpoint or optimize page</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">ELEMENT_NOT_FOUND</td>
+          <td class="py-3 px-4">Selector didn't match any element</td>
+          <td class="py-3 px-4">Verify selector matches an element</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">NAVIGATION_FAILED</td>
+          <td class="py-3 px-4">Browser navigation error</td>
+          <td class="py-3 px-4">Check URL returns valid HTML</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">RENDER_FAILED</td>
+          <td class="py-3 px-4">Page rendering crashed</td>
+          <td class="py-3 px-4">Simplify page or contact support</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">CONTENT_TOO_LARGE</td>
+          <td class="py-3 px-4">Generated output exceeds limits</td>
+          <td class="py-3 px-4">Reduce page size or use smaller viewport</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Rate Limiting Errors</h3>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Code</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Solution</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">RATE_LIMITED</td>
+          <td class="py-3 px-4">Too many requests</td>
+          <td class="py-3 px-4">Wait and retry, check <code>Retry-After</code> header</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">QUOTA_EXCEEDED</td>
+          <td class="py-3 px-4">Monthly quota exhausted</td>
+          <td class="py-3 px-4">Upgrade plan or wait for reset</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">CONCURRENT_LIMIT</td>
+          <td class="py-3 px-4">Too many concurrent requests</td>
+          <td class="py-3 px-4">Reduce parallel requests</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Account Errors</h3>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Code</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Solution</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">ACCOUNT_SUSPENDED</td>
+          <td class="py-3 px-4">Account has been suspended</td>
+          <td class="py-3 px-4">Contact support</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">PAYMENT_REQUIRED</td>
+          <td class="py-3 px-4">Payment method failed</td>
+          <td class="py-3 px-4">Update billing information</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm text-accent-error">FEATURE_NOT_AVAILABLE</td>
+          <td class="py-3 px-4">Feature requires higher plan</td>
+          <td class="py-3 px-4">Upgrade your subscription</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Handling Errors</h2>
+
+  <h3>Recommended Error Handling</h3>
+
+  <CodeBlock
+    filename="error-handling.js"
+    lang="javascript"
+    code={`async function captureScreenshot(url) {
+  try {
+    const response = await fetch('https://api.screencraft.dev/v2/screenshot', {
+      method: 'POST',
+      headers: {
+        'Authorization': \`Bearer \${API_KEY}\`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ url }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Handle specific errors
+      switch (data.error.code) {
+        case 'RATE_LIMITED':
+          // Implement exponential backoff
+          const retryAfter = response.headers.get('Retry-After') || 60;
+          await sleep(retryAfter * 1000);
+          return captureScreenshot(url); // Retry
+
+        case 'TIMEOUT':
+          // Use async endpoint for slow pages
+          return captureScreenshotAsync(url);
+
+        case 'QUOTA_EXCEEDED':
+          // Alert user to upgrade
+          throw new Error('Monthly quota exceeded. Please upgrade your plan.');
+
+        default:
+          throw new Error(data.error.message);
+      }
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error('Screenshot failed:', error);
+    throw error;
+  }
+}`}
+  />
+
+  <h3>Retry Strategy</h3>
+
+  <CodeBlock
+    filename="retry.js"
+    lang="javascript"
+    code={`async function withRetry(fn, maxRetries = 3) {
+  let lastError;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+
+      // Don't retry on client errors (4xx)
+      if (error.status >= 400 && error.status < 500) {
+        throw error;
+      }
+
+      // Exponential backoff
+      const delay = Math.min(1000 * Math.pow(2, attempt), 30000);
+      console.log(\`Attempt \${attempt} failed, retrying in \${delay}ms...\`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+
+  throw lastError;
+}`}
+  />
+
+  <h2>Debugging Tips</h2>
+
+  <ol>
+    <li><strong>Check the request_id:</strong> Include it when contacting support</li>
+    <li><strong>Verify the URL:</strong> Test it in a browser first</li>
+    <li><strong>Check rate limit headers:</strong> Monitor <code>X-RateLimit-*</code> headers</li>
+    <li><strong>Use test mode:</strong> Use <code>sk_test_</code> keys for development</li>
+    <li><strong>Enable verbose logging:</strong> Log full request/response for debugging</li>
+    <li><strong>Check status page:</strong> Visit <a href="/status">/status</a> for service issues</li>
+  </ol>
+
+  <h2>Need Help?</h2>
+
+  <p>If you're still having issues:</p>
+  <ul>
+    <li>Email: <a href="mailto:support@screencraft.dev">support@screencraft.dev</a></li>
+    <li>Include the <code>request_id</code> from the error response</li>
+    <li>Provide the full request and response (redact API keys)</li>
+  </ul>
+</DocsLayout>

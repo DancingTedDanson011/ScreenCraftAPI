@@ -1,0 +1,209 @@
+---
+import DocsLayout from '../../components/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+---
+
+<DocsLayout title="Quickstart" description="Get started with the ScreenCraft API in under 5 minutes.">
+  <h1>Quickstart Guide</h1>
+
+  <p class="lead text-lg text-text-secondary mb-8">
+    This guide will help you capture your first screenshot in under 5 minutes.
+    No complex setup required.
+  </p>
+
+  <h2>Step 1: Get Your API Key</h2>
+  <p>
+    Sign up for a free account and get your API key from the
+    <a href="/dashboard">dashboard</a>. Your API key looks like this:
+  </p>
+
+  <div class="bg-surface border border-border rounded-lg p-4 font-mono text-sm not-prose mb-6">
+    <span class="text-text-muted">sk_live_</span><span class="text-accent-secondary">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span>
+  </div>
+
+  <div class="bg-accent-warning/10 border border-accent-warning/30 rounded-lg p-4 not-prose mb-6">
+    <div class="flex items-start gap-3">
+      <svg class="w-5 h-5 text-accent-warning flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <div>
+        <p class="text-text-primary font-medium">Keep your API key secret</p>
+        <p class="text-text-secondary text-sm mt-1">
+          Never expose your API key in client-side code. Use environment variables or a backend proxy.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <h2>Step 2: Make Your First Request</h2>
+  <p>
+    Use cURL, your favorite HTTP client, or one of our SDKs to capture a screenshot:
+  </p>
+
+  <h3>Using cURL</h3>
+
+  <CodeBlock
+    filename="Terminal"
+    lang="bash"
+    code={`curl -X POST https://api.screencraft.dev/v2/screenshot \\
+  -H "Authorization: Bearer sk_live_your_api_key" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "url": "https://example.com",
+    "viewport": { "width": 1920, "height": 1080 },
+    "format": "png"
+  }'`}
+  />
+
+  <h3>Using Node.js</h3>
+
+  <CodeBlock
+    filename="screenshot.js"
+    lang="javascript"
+    code={`const response = await fetch('https://api.screencraft.dev/v2/screenshot', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer sk_live_your_api_key',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    url: 'https://example.com',
+    viewport: { width: 1920, height: 1080 },
+    format: 'png',
+  }),
+});
+
+const data = await response.json();
+console.log('Screenshot URL:', data.data.url);`}
+  />
+
+  <h3>Using Python</h3>
+
+  <CodeBlock
+    filename="screenshot.py"
+    lang="python"
+    code={`import requests
+
+response = requests.post(
+    'https://api.screencraft.dev/v2/screenshot',
+    headers={
+        'Authorization': 'Bearer sk_live_your_api_key',
+        'Content-Type': 'application/json',
+    },
+    json={
+        'url': 'https://example.com',
+        'viewport': {'width': 1920, 'height': 1080},
+        'format': 'png',
+    }
+)
+
+data = response.json()
+print('Screenshot URL:', data['data']['url'])`}
+  />
+
+  <h2>Step 3: Get Your Screenshot</h2>
+  <p>
+    The API returns a JSON response with the screenshot URL:
+  </p>
+
+  <CodeBlock
+    filename="Response"
+    lang="json"
+    code={`{
+  "success": true,
+  "data": {
+    "url": "https://cdn.screencraft.dev/s/abc123.png",
+    "width": 1920,
+    "height": 1080,
+    "format": "png",
+    "size": 245678,
+    "created_at": "2025-12-27T10:30:00Z"
+  }
+}`}
+  />
+
+  <p>
+    The screenshot is hosted on our CDN and available for 24 hours. Download it or use the URL directly.
+  </p>
+
+  <h2>Common Options</h2>
+
+  <h3>Full Page Screenshot</h3>
+  <p>Capture the entire page, including content below the fold:</p>
+
+  <CodeBlock
+    lang="json"
+    code={`{
+  "url": "https://example.com",
+  "fullPage": true
+}`}
+  />
+
+  <h3>Specific Element</h3>
+  <p>Capture only a specific element using a CSS selector:</p>
+
+  <CodeBlock
+    lang="json"
+    code={`{
+  "url": "https://example.com",
+  "selector": "#main-content",
+  "padding": 20
+}`}
+  />
+
+  <h3>Wait for Content</h3>
+  <p>Wait for dynamic content to load before capturing:</p>
+
+  <CodeBlock
+    lang="json"
+    code={`{
+  "url": "https://example.com",
+  "waitFor": {
+    "selector": ".loaded",
+    "timeout": 5000
+  }
+}`}
+  />
+
+  <h3>Mobile Viewport</h3>
+  <p>Capture with a mobile device viewport:</p>
+
+  <CodeBlock
+    lang="json"
+    code={`{
+  "url": "https://example.com",
+  "viewport": {
+    "width": 375,
+    "height": 812,
+    "deviceScaleFactor": 3,
+    "isMobile": true
+  },
+  "device": "iPhone 14 Pro"
+}`}
+  />
+
+  <h2>Next Steps</h2>
+  <p>Now that you've captured your first screenshot, explore more features:</p>
+
+  <div class="grid md:grid-cols-2 gap-4 not-prose mt-6">
+    <a href="/docs/screenshots" class="block p-4 bg-surface border border-border rounded-lg hover:border-accent-primary transition">
+      <h4 class="font-medium text-text-primary mb-1">Screenshot API Reference</h4>
+      <p class="text-text-secondary text-sm">Explore all screenshot options and parameters</p>
+    </a>
+
+    <a href="/docs/pdfs" class="block p-4 bg-surface border border-border rounded-lg hover:border-accent-primary transition">
+      <h4 class="font-medium text-text-primary mb-1">PDF Generation</h4>
+      <p class="text-text-secondary text-sm">Generate PDFs from URLs or HTML</p>
+    </a>
+
+    <a href="/docs/webhooks" class="block p-4 bg-surface border border-border rounded-lg hover:border-accent-primary transition">
+      <h4 class="font-medium text-text-primary mb-1">Webhooks</h4>
+      <p class="text-text-secondary text-sm">Set up async notifications</p>
+    </a>
+
+    <a href="/docs/errors" class="block p-4 bg-surface border border-border rounded-lg hover:border-accent-primary transition">
+      <h4 class="font-medium text-text-primary mb-1">Error Handling</h4>
+      <p class="text-text-secondary text-sm">Handle errors gracefully</p>
+    </a>
+  </div>
+</DocsLayout>

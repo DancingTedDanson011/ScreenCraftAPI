@@ -1,0 +1,38 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from './Navbar.astro';
+import Footer from './Footer.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  lastUpdated?: string;
+}
+
+const { title, description, lastUpdated } = Astro.props;
+---
+
+<Layout title={`${title} | ScreenCraft`} description={description}>
+  <Navbar />
+  <div class="min-h-screen bg-background flex flex-col">
+    <!-- Content -->
+    <main class="flex-1 py-12">
+      <div class="max-w-4xl mx-auto px-4">
+        <div class="mb-8">
+          <h1 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">{title}</h1>
+          {lastUpdated && (
+            <p class="text-text-muted text-sm">
+              Last updated: {lastUpdated}
+            </p>
+          )}
+        </div>
+
+        <div class="prose prose-invert prose-headings:text-text-primary prose-p:text-text-secondary prose-a:text-accent-secondary prose-strong:text-text-primary prose-li:text-text-secondary prose-ul:text-text-secondary max-w-none">
+          <slot />
+        </div>
+      </div>
+    </main>
+
+    <Footer />
+  </div>
+</Layout>

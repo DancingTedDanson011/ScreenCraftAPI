@@ -1,0 +1,191 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+const releases = [
+  {
+    version: '2.3.0',
+    date: '2025-12-27',
+    type: 'feature',
+    title: 'Async Screenshot Generation',
+    changes: [
+      { type: 'added', text: 'New async endpoint with webhook delivery for long-running captures' },
+      { type: 'added', text: 'Support for capturing pages with infinite scroll' },
+      { type: 'improved', text: 'Reduced average capture time by 40%' },
+      { type: 'fixed', text: 'Fixed timeout issues with complex JavaScript-heavy pages' },
+    ],
+  },
+  {
+    version: '2.2.0',
+    date: '2025-12-15',
+    type: 'feature',
+    title: 'PDF Enhancements',
+    changes: [
+      { type: 'added', text: 'Custom headers and footers for PDF generation' },
+      { type: 'added', text: 'Support for page ranges in PDF output' },
+      { type: 'added', text: 'Table of contents generation for multi-page documents' },
+      { type: 'improved', text: 'Better handling of CSS print styles' },
+    ],
+  },
+  {
+    version: '2.1.1',
+    date: '2025-12-10',
+    type: 'fix',
+    title: 'Bug Fixes',
+    changes: [
+      { type: 'fixed', text: 'Resolved memory leak in screenshot worker processes' },
+      { type: 'fixed', text: 'Fixed incorrect viewport dimensions on retina displays' },
+      { type: 'fixed', text: 'Corrected timezone handling in webhook timestamps' },
+    ],
+  },
+  {
+    version: '2.1.0',
+    date: '2025-12-01',
+    type: 'feature',
+    title: 'Element Selection',
+    changes: [
+      { type: 'added', text: 'Capture specific elements using CSS selectors' },
+      { type: 'added', text: 'Clip to element with optional padding' },
+      { type: 'added', text: 'Hide elements using CSS selector arrays' },
+      { type: 'improved', text: 'Better error messages for invalid selectors' },
+    ],
+  },
+  {
+    version: '2.0.0',
+    date: '2025-11-15',
+    type: 'major',
+    title: 'API v2 Release',
+    changes: [
+      { type: 'added', text: 'Complete API redesign with improved ergonomics' },
+      { type: 'added', text: 'New authentication system with API key scopes' },
+      { type: 'added', text: 'Webhook support for async operations' },
+      { type: 'breaking', text: 'API v1 endpoints deprecated (sunset: March 2026)' },
+      { type: 'breaking', text: 'Changed response format for error handling' },
+      { type: 'improved', text: 'Reduced API latency by 60%' },
+      { type: 'improved', text: 'New rate limiting with clearer headers' },
+    ],
+  },
+  {
+    version: '1.9.0',
+    date: '2025-10-20',
+    type: 'feature',
+    title: 'Custom Viewport Presets',
+    changes: [
+      { type: 'added', text: 'Built-in device presets (iPhone, iPad, common desktop sizes)' },
+      { type: 'added', text: 'Custom device pixel ratio support' },
+      { type: 'improved', text: 'Faster rendering for mobile viewports' },
+    ],
+  },
+];
+
+const getTypeColor = (type: string) => {
+  switch (type) {
+    case 'added': return 'text-accent-primary';
+    case 'improved': return 'text-accent-secondary';
+    case 'fixed': return 'text-accent-warning';
+    case 'breaking': return 'text-accent-error';
+    default: return 'text-text-secondary';
+  }
+};
+
+const getTypeLabel = (type: string) => {
+  switch (type) {
+    case 'added': return 'Added';
+    case 'improved': return 'Improved';
+    case 'fixed': return 'Fixed';
+    case 'breaking': return 'Breaking';
+    default: return type;
+  }
+};
+
+const getVersionBadge = (type: string) => {
+  switch (type) {
+    case 'major': return 'bg-accent-error/20 text-accent-error';
+    case 'feature': return 'bg-accent-primary/20 text-accent-primary';
+    case 'fix': return 'bg-accent-warning/20 text-accent-warning';
+    default: return 'bg-surface-hover text-text-secondary';
+  }
+};
+---
+
+<Layout title="Changelog | ScreenCraft" description="Version history and release notes for the ScreenCraft API.">
+  <Navbar />
+  <div class="min-h-screen bg-background flex flex-col">
+    <!-- Main Content -->
+    <main class="flex-1 py-12">
+      <div class="max-w-4xl mx-auto px-4">
+        <div class="mb-8">
+          <h1 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">Changelog</h1>
+          <p class="text-text-secondary">
+            Track our progress and see what's new in ScreenCraft. Follow us on
+            <a href="https://twitter.com/screencraft" class="text-accent-secondary hover:underline">Twitter</a>
+            for announcements.
+          </p>
+        </div>
+
+        <!-- Subscribe -->
+        <div class="bg-surface border border-border rounded-lg p-4 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <p class="text-text-primary font-medium">Subscribe to updates</p>
+            <p class="text-text-muted text-sm">Get notified about new releases and features.</p>
+          </div>
+          <a
+            href="/docs"
+            class="px-4 py-2 bg-accent-primary text-white rounded-lg hover:bg-accent-primary/90 transition text-sm font-medium"
+          >
+            View Docs
+          </a>
+        </div>
+
+        <!-- Releases -->
+        <div class="space-y-8">
+          {releases.map(release => (
+            <article class="relative pl-8 pb-8 border-l border-border last:pb-0">
+              <!-- Timeline dot -->
+              <div class="absolute left-0 top-0 w-4 h-4 -ml-2 rounded-full bg-surface border-2 border-accent-primary"></div>
+
+              <!-- Version header -->
+              <div class="flex flex-wrap items-center gap-3 mb-4">
+                <h2 class="text-xl font-bold text-text-primary">v{release.version}</h2>
+                <span class={`px-2 py-0.5 rounded text-xs font-medium ${getVersionBadge(release.type)}`}>
+                  {release.type === 'major' ? 'Major Release' : release.type === 'feature' ? 'Feature' : 'Patch'}
+                </span>
+                <span class="text-text-muted text-sm">{release.date}</span>
+              </div>
+
+              <h3 class="text-lg font-medium text-text-primary mb-3">{release.title}</h3>
+
+              <!-- Changes list -->
+              <ul class="space-y-2">
+                {release.changes.map(change => (
+                  <li class="flex items-start gap-2">
+                    <span class={`text-sm font-medium uppercase ${getTypeColor(change.type)}`}>
+                      [{getTypeLabel(change.type)}]
+                    </span>
+                    <span class="text-text-secondary">{change.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+
+        <!-- Older releases link -->
+        <div class="mt-12 pt-8 border-t border-border text-center">
+          <p class="text-text-muted mb-4">Looking for older releases?</p>
+          <a
+            href="https://github.com/screencraft/api/releases"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-accent-secondary hover:underline"
+          >
+            View all releases on GitHub
+          </a>
+        </div>
+      </div>
+    </main>
+
+    <Footer />
+  </div>
+</Layout>

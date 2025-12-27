@@ -1,0 +1,372 @@
+---
+import DocsLayout from '../../components/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+---
+
+<DocsLayout title="PDF API" description="Complete reference for the ScreenCraft PDF Generation API.">
+  <h1>PDF API Reference</h1>
+
+  <p class="lead text-lg text-text-secondary mb-8">
+    Generate high-quality PDFs from any URL or HTML content. Supports custom page sizes,
+    headers/footers, margins, and print-specific styling.
+  </p>
+
+  <h2>Endpoints</h2>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Method</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Endpoint</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4"><span class="px-2 py-1 bg-accent-primary/20 text-accent-primary rounded text-sm font-mono">POST</span></td>
+          <td class="py-3 px-4 font-mono text-sm">/v2/pdf</td>
+          <td class="py-3 px-4">Generate a PDF (sync)</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4"><span class="px-2 py-1 bg-accent-primary/20 text-accent-primary rounded text-sm font-mono">POST</span></td>
+          <td class="py-3 px-4 font-mono text-sm">/v2/pdf/async</td>
+          <td class="py-3 px-4">Generate a PDF (async with webhook)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Request Parameters</h2>
+
+  <h3>Source (Required - one of)</h3>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Parameter</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Type</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">url</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4">URL to convert to PDF. Must be publicly accessible.</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">html</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4">Raw HTML content to render as PDF.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Page Options</h3>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Parameter</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Type</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Default</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">format</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4 text-sm">"A4"</td>
+          <td class="py-3 px-4">Page format: "A4", "Letter", "Legal", "Tabloid"</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">width</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4 text-sm">-</td>
+          <td class="py-3 px-4">Custom width (e.g., "210mm", "8.5in")</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">height</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4 text-sm">-</td>
+          <td class="py-3 px-4">Custom height (e.g., "297mm", "11in")</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">landscape</td>
+          <td class="py-3 px-4 text-sm">boolean</td>
+          <td class="py-3 px-4 text-sm">false</td>
+          <td class="py-3 px-4">Landscape orientation</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">scale</td>
+          <td class="py-3 px-4 text-sm">number</td>
+          <td class="py-3 px-4 text-sm">1</td>
+          <td class="py-3 px-4">Scale factor (0.1-2)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Margin Options</h3>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Parameter</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Type</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Default</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">margin.top</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4 text-sm">"20mm"</td>
+          <td class="py-3 px-4">Top margin</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">margin.right</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4 text-sm">"20mm"</td>
+          <td class="py-3 px-4">Right margin</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">margin.bottom</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4 text-sm">"20mm"</td>
+          <td class="py-3 px-4">Bottom margin</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">margin.left</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4 text-sm">"20mm"</td>
+          <td class="py-3 px-4">Left margin</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Header & Footer</h3>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Parameter</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Type</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">displayHeaderFooter</td>
+          <td class="py-3 px-4 text-sm">boolean</td>
+          <td class="py-3 px-4">Enable header and footer</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">headerTemplate</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4">HTML template for header</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">footerTemplate</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4">HTML template for footer</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Header/footer templates support these special classes:</p>
+  <ul>
+    <li><code>date</code> - Current date</li>
+    <li><code>title</code> - Page title</li>
+    <li><code>url</code> - Page URL</li>
+    <li><code>pageNumber</code> - Current page number</li>
+    <li><code>totalPages</code> - Total number of pages</li>
+  </ul>
+
+  <h3>Additional Options</h3>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Parameter</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Type</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">printBackground</td>
+          <td class="py-3 px-4 text-sm">boolean</td>
+          <td class="py-3 px-4">Include background graphics (default: true)</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">preferCSSPageSize</td>
+          <td class="py-3 px-4 text-sm">boolean</td>
+          <td class="py-3 px-4">Respect CSS @page size</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">pageRanges</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4">Pages to include (e.g., "1-5, 8, 11-13")</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">tagged</td>
+          <td class="py-3 px-4 text-sm">boolean</td>
+          <td class="py-3 px-4">Generate tagged/accessible PDF</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Examples</h2>
+
+  <h3>Basic PDF</h3>
+
+  <CodeBlock
+    filename="Request"
+    lang="json"
+    code={`{
+  "url": "https://example.com/report",
+  "format": "A4"
+}`}
+  />
+
+  <h3>Custom Page Size with Margins</h3>
+
+  <CodeBlock
+    filename="Request"
+    lang="json"
+    code={`{
+  "url": "https://example.com/invoice",
+  "width": "8.5in",
+  "height": "11in",
+  "margin": {
+    "top": "1in",
+    "right": "0.75in",
+    "bottom": "1in",
+    "left": "0.75in"
+  }
+}`}
+  />
+
+  <h3>PDF with Header and Footer</h3>
+
+  <CodeBlock
+    filename="Request"
+    lang="json"
+    code={`{
+  "url": "https://example.com/document",
+  "format": "A4",
+  "displayHeaderFooter": true,
+  "headerTemplate": "<div style='font-size: 10px; text-align: center; width: 100%;'>Company Name - Confidential</div>",
+  "footerTemplate": "<div style='font-size: 10px; text-align: center; width: 100%;'>Page <span class='pageNumber'></span> of <span class='totalPages'></span></div>",
+  "margin": {
+    "top": "100px",
+    "bottom": "80px"
+  }
+}`}
+  />
+
+  <h3>Landscape Multi-page Report</h3>
+
+  <CodeBlock
+    filename="Request"
+    lang="json"
+    code={`{
+  "url": "https://example.com/analytics",
+  "format": "A4",
+  "landscape": true,
+  "printBackground": true,
+  "pageRanges": "1-10"
+}`}
+  />
+
+  <h3>HTML to PDF (Invoice Template)</h3>
+
+  <CodeBlock
+    filename="Request"
+    lang="json"
+    code={`{
+  "html": "<!DOCTYPE html><html><head><style>body { font-family: Arial; } .invoice-header { background: #2563eb; color: white; padding: 20px; } .line-item { border-bottom: 1px solid #eee; padding: 10px 0; }</style></head><body><div class='invoice-header'><h1>Invoice #1234</h1></div><div class='line-item'>Service Fee: $99.00</div><div class='line-item'>Total: $99.00</div></body></html>",
+  "format": "A4",
+  "margin": {
+    "top": "20mm",
+    "right": "20mm",
+    "bottom": "20mm",
+    "left": "20mm"
+  }
+}`}
+  />
+
+  <h2>Response</h2>
+
+  <CodeBlock
+    filename="Success Response"
+    lang="json"
+    code={`{
+  "success": true,
+  "data": {
+    "id": "pdf_xyz789abc123",
+    "url": "https://cdn.screencraft.dev/p/xyz789.pdf",
+    "pages": 5,
+    "size": 1245678,
+    "format": "A4",
+    "created_at": "2025-12-27T10:30:00Z",
+    "expires_at": "2025-12-28T10:30:00Z"
+  }
+}`}
+  />
+
+  <h2>Print Styles</h2>
+  <p>
+    For best results, use CSS print media queries in your HTML:
+  </p>
+
+  <CodeBlock
+    filename="print.css"
+    lang="css"
+    code={`@media print {
+  /* Hide non-essential elements */
+  .navigation, .sidebar, .footer {
+    display: none !important;
+  }
+
+  /* Avoid page breaks inside elements */
+  .content-block {
+    page-break-inside: avoid;
+  }
+
+  /* Force page break before sections */
+  .new-section {
+    page-break-before: always;
+  }
+
+  /* Ensure backgrounds print */
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}`}
+  />
+
+  <h2>Best Practices</h2>
+
+  <ul>
+    <li><strong>Use print stylesheets:</strong> Apply <code>@media print</code> styles for optimal PDF output</li>
+    <li><strong>Set appropriate margins:</strong> Account for header/footer space when using templates</li>
+    <li><strong>Test page breaks:</strong> Use <code>page-break-*</code> CSS properties to control content flow</li>
+    <li><strong>Optimize images:</strong> Use appropriately sized images to reduce PDF file size</li>
+    <li><strong>Consider accessibility:</strong> Enable <code>tagged: true</code> for accessible PDFs</li>
+  </ul>
+</DocsLayout>

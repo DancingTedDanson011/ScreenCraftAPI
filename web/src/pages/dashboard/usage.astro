@@ -1,0 +1,426 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Usage" activeTab="usage">
+  <div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <p class="text-text-secondary">
+          Track your API usage and monitor your quota consumption.
+        </p>
+      </div>
+      <button
+        id="export-btn"
+        class="px-4 py-2.5 border border-border text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export CSV
+      </button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div id="stats-loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {[1, 2, 3, 4].map(() => (
+        <div class="bg-surface border border-border rounded-lg p-6 animate-pulse">
+          <div class="h-4 bg-surface-hover rounded w-1/3 mb-4"></div>
+          <div class="h-8 bg-surface-hover rounded w-2/3"></div>
+        </div>
+      ))}
+    </div>
+
+    <div id="stats-cards" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Filled by JS -->
+    </div>
+
+    <!-- Usage Chart -->
+    <div class="bg-surface border border-border rounded-lg p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-text-primary">Usage Over Time</h3>
+
+        <!-- Period Selector -->
+        <div class="flex bg-background rounded-lg p-1">
+          <button
+            data-period="day"
+            class="period-btn px-4 py-1.5 rounded-md text-sm font-medium transition-colors text-text-secondary hover:text-text-primary"
+          >
+            Day
+          </button>
+          <button
+            data-period="week"
+            class="period-btn px-4 py-1.5 rounded-md text-sm font-medium transition-colors text-text-secondary hover:text-text-primary"
+          >
+            Week
+          </button>
+          <button
+            data-period="month"
+            class="period-btn px-4 py-1.5 rounded-md text-sm font-medium transition-colors bg-accent-primary text-white"
+          >
+            Month
+          </button>
+        </div>
+      </div>
+
+      <!-- Chart Container -->
+      <div id="chart-loading" class="flex items-center justify-center h-64">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary"></div>
+      </div>
+
+      <div id="chart-container" class="hidden h-64">
+        <canvas id="usage-chart"></canvas>
+      </div>
+
+      <div id="chart-empty" class="hidden flex items-center justify-center h-64 text-text-muted">
+        No usage data available for this period.
+      </div>
+
+      <!-- Legend -->
+      <div class="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-border">
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-accent-primary"></div>
+          <span class="text-sm text-text-secondary">Credits Used</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-accent-secondary"></div>
+          <span class="text-sm text-text-secondary">Screenshots</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-purple-500"></div>
+          <span class="text-sm text-text-secondary">PDFs</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Usage Breakdown -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- By Type -->
+      <div class="bg-surface border border-border rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-text-primary mb-4">Usage by Type</h3>
+        <div id="breakdown-loading" class="animate-pulse space-y-4">
+          {[1, 2, 3].map(() => (
+            <div class="flex items-center gap-4">
+              <div class="h-8 w-8 bg-surface-hover rounded"></div>
+              <div class="flex-1">
+                <div class="h-4 bg-surface-hover rounded w-1/2 mb-2"></div>
+                <div class="h-2 bg-surface-hover rounded w-full"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div id="breakdown-container" class="hidden space-y-4">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <!-- Current Quota -->
+      <div class="bg-surface border border-border rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-text-primary mb-4">Current Quota</h3>
+        <div id="quota-container">
+          <div class="animate-pulse">
+            <div class="h-6 bg-surface-hover rounded w-1/3 mb-4"></div>
+            <div class="h-4 bg-surface-hover rounded w-full mb-2"></div>
+            <div class="h-4 bg-surface-hover rounded w-2/3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</DashboardLayout>
+
+<script>
+  import { api, type UsageStats, type UsageTimelineItem } from '../../lib/api';
+
+  let currentPeriod: 'day' | 'week' | 'month' = 'month';
+  let usageStats: UsageStats | null = null;
+  let timelineData: UsageTimelineItem[] = [];
+
+  async function loadUsageData() {
+    await Promise.all([
+      loadStats(),
+      loadTimeline(currentPeriod),
+    ]);
+  }
+
+  async function loadStats() {
+    try {
+      const response = await api.dashboard.getUsageStats();
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Failed to load stats');
+      }
+
+      usageStats = response.data;
+      renderStats();
+      renderBreakdown();
+    } catch (error) {
+      console.error('Load stats error:', error);
+    }
+  }
+
+  async function loadTimeline(period: 'day' | 'week' | 'month') {
+    const chartLoading = document.getElementById('chart-loading');
+    const chartContainer = document.getElementById('chart-container');
+    const chartEmpty = document.getElementById('chart-empty');
+
+    chartLoading?.classList.remove('hidden');
+    chartContainer?.classList.add('hidden');
+    chartEmpty?.classList.add('hidden');
+
+    try {
+      const response = await api.dashboard.getUsageTimeline(period);
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Failed to load timeline');
+      }
+
+      timelineData = response.data;
+
+      if (timelineData.length === 0) {
+        chartLoading?.classList.add('hidden');
+        chartEmpty?.classList.remove('hidden');
+      } else {
+        renderChart();
+        chartLoading?.classList.add('hidden');
+        chartContainer?.classList.remove('hidden');
+      }
+    } catch (error) {
+      console.error('Load timeline error:', error);
+      chartLoading?.classList.add('hidden');
+      chartEmpty?.classList.remove('hidden');
+    }
+  }
+
+  function renderStats() {
+    if (!usageStats) return;
+
+    const statsLoading = document.getElementById('stats-loading');
+    const statsCards = document.getElementById('stats-cards');
+
+    if (statsLoading) statsLoading.classList.add('hidden');
+    if (statsCards) {
+      statsCards.classList.remove('hidden');
+      statsCards.innerHTML = `
+        <div class="bg-surface border border-border rounded-lg p-6">
+          <div class="text-text-secondary text-sm font-medium mb-2">Total Requests</div>
+          <div class="text-3xl font-bold text-text-primary">${usageStats.totalRequests.toLocaleString()}</div>
+        </div>
+        <div class="bg-surface border border-border rounded-lg p-6">
+          <div class="text-text-secondary text-sm font-medium mb-2">Total Credits</div>
+          <div class="text-3xl font-bold text-text-primary">${usageStats.totalCredits.toLocaleString()}</div>
+        </div>
+        <div class="bg-surface border border-border rounded-lg p-6">
+          <div class="text-text-secondary text-sm font-medium mb-2">Screenshots</div>
+          <div class="text-3xl font-bold text-text-primary">${usageStats.screenshotCount.toLocaleString()}</div>
+        </div>
+        <div class="bg-surface border border-border rounded-lg p-6">
+          <div class="text-text-secondary text-sm font-medium mb-2">PDFs</div>
+          <div class="text-3xl font-bold text-text-primary">${usageStats.pdfCount.toLocaleString()}</div>
+        </div>
+      `;
+    }
+  }
+
+  function renderBreakdown() {
+    if (!usageStats) return;
+
+    const breakdownLoading = document.getElementById('breakdown-loading');
+    const breakdownContainer = document.getElementById('breakdown-container');
+
+    if (breakdownLoading) breakdownLoading.classList.add('hidden');
+    if (breakdownContainer) {
+      breakdownContainer.classList.remove('hidden');
+
+      if (usageStats.breakdown.length === 0) {
+        breakdownContainer.innerHTML = '<p class="text-text-muted">No usage data available.</p>';
+        return;
+      }
+
+      const colors: Record<string, string> = {
+        SCREENSHOT: 'bg-blue-500',
+        SCREENSHOT_FULLPAGE: 'bg-cyan-500',
+        PDF: 'bg-purple-500',
+        PDF_WITH_TEMPLATE: 'bg-pink-500',
+      };
+
+      const labels: Record<string, string> = {
+        SCREENSHOT: 'Screenshot',
+        SCREENSHOT_FULLPAGE: 'Full Page Screenshot',
+        PDF: 'PDF',
+        PDF_WITH_TEMPLATE: 'PDF with Template',
+      };
+
+      breakdownContainer.innerHTML = usageStats.breakdown.map(item => `
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 ${colors[item.eventType] || 'bg-gray-500'} rounded-lg flex items-center justify-center text-white">
+            ${item.percentage}%
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-text-primary font-medium">${labels[item.eventType] || item.eventType}</span>
+              <span class="text-text-secondary text-sm">${item.count} requests</span>
+            </div>
+            <div class="h-2 bg-surface-hover rounded-full overflow-hidden">
+              <div class="h-full ${colors[item.eventType] || 'bg-gray-500'} rounded-full" style="width: ${item.percentage}%"></div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  function renderChart() {
+    const canvas = document.getElementById('usage-chart') as HTMLCanvasElement;
+    if (!canvas || timelineData.length === 0) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Simple canvas chart implementation
+    const padding = 40;
+    const width = canvas.parentElement?.clientWidth || 600;
+    const height = 240;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const chartWidth = width - padding * 2;
+    const chartHeight = height - padding * 2;
+
+    // Find max values
+    const maxCredits = Math.max(...timelineData.map(d => d.credits), 1);
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw grid lines
+    ctx.strokeStyle = '#30363D';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const y = padding + (chartHeight / 4) * i;
+      ctx.beginPath();
+      ctx.moveTo(padding, y);
+      ctx.lineTo(width - padding, y);
+      ctx.stroke();
+    }
+
+    // Draw data line
+    ctx.strokeStyle = '#238636';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    timelineData.forEach((item, index) => {
+      const x = padding + (index / (timelineData.length - 1 || 1)) * chartWidth;
+      const y = padding + chartHeight - (item.credits / maxCredits) * chartHeight;
+
+      if (index === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    });
+
+    ctx.stroke();
+
+    // Draw data points
+    ctx.fillStyle = '#238636';
+    timelineData.forEach((item, index) => {
+      const x = padding + (index / (timelineData.length - 1 || 1)) * chartWidth;
+      const y = padding + chartHeight - (item.credits / maxCredits) * chartHeight;
+
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Draw Y-axis labels
+    ctx.fillStyle = '#8B949E';
+    ctx.font = '12px Inter, sans-serif';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+      const value = Math.round(maxCredits * (1 - i / 4));
+      const y = padding + (chartHeight / 4) * i + 4;
+      ctx.fillText(value.toString(), padding - 8, y);
+    }
+
+    // Draw X-axis labels
+    ctx.textAlign = 'center';
+    const step = Math.max(1, Math.floor(timelineData.length / 5));
+    timelineData.forEach((item, index) => {
+      if (index % step === 0 || index === timelineData.length - 1) {
+        const x = padding + (index / (timelineData.length - 1 || 1)) * chartWidth;
+        const date = new Date(item.date);
+        const label = currentPeriod === 'day'
+          ? date.toLocaleTimeString('en-US', { hour: 'numeric' })
+          : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        ctx.fillText(label, x, height - 10);
+      }
+    });
+  }
+
+  function exportToCsv() {
+    if (!timelineData.length) {
+      alert('No data to export');
+      return;
+    }
+
+    const headers = ['Date', 'Screenshots', 'PDFs', 'Credits'];
+    const rows = timelineData.map(item => [
+      item.date,
+      item.screenshots,
+      item.pdfs,
+      item.credits,
+    ]);
+
+    const csv = [
+      headers.join(','),
+      ...rows.map(row => row.join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `screencraft-usage-${currentPeriod}-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Setup period selector
+  document.querySelectorAll('.period-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const target = e.target as HTMLButtonElement;
+      const period = target.dataset.period as 'day' | 'week' | 'month';
+
+      // Update button styles
+      document.querySelectorAll('.period-btn').forEach(b => {
+        b.classList.remove('bg-accent-primary', 'text-white');
+        b.classList.add('text-text-secondary', 'hover:text-text-primary');
+      });
+      target.classList.remove('text-text-secondary', 'hover:text-text-primary');
+      target.classList.add('bg-accent-primary', 'text-white');
+
+      currentPeriod = period;
+      loadTimeline(period);
+    });
+  });
+
+  // Setup export button
+  document.getElementById('export-btn')?.addEventListener('click', exportToCsv);
+
+  // Load data on page load
+  document.addEventListener('DOMContentLoaded', loadUsageData);
+
+  // Resize chart on window resize
+  let resizeTimeout: number;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = window.setTimeout(() => {
+      if (timelineData.length) renderChart();
+    }, 100);
+  });
+</script>

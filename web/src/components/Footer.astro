@@ -1,0 +1,192 @@
+---
+// Footer Component - ScreenCraft Landing Page
+---
+
+<!-- Final CTA Section (Above Footer) -->
+<section class="py-20 md:py-32 bg-gradient-to-r from-[#238636] to-[#2EA043] relative overflow-hidden">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+    <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-white">
+      Stop wrestling with Puppeteer.<br />
+      Start shipping screenshots.
+    </h2>
+    <p class="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
+      Join 2,000+ developers who chose the easy path.
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+      <a href="/login" class="inline-flex items-center justify-center px-8 py-4 bg-white text-[#238636] font-semibold rounded-lg hover:bg-gray-100 transition-all duration-200 hover:scale-105">
+        Get Your Free API Key
+      </a>
+      <a href="/docs" class="inline-flex items-center justify-center px-8 py-4 border-2 border-white/30 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-all duration-200 backdrop-blur-sm">
+        View Documentation
+      </a>
+    </div>
+
+    <p class="text-sm text-white/80">
+      Free forever tier • No credit card • Setup in 2 minutes
+    </p>
+  </div>
+
+  <!-- Decorative Background -->
+  <div class="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-[#0D1117] border-t border-[#30363D] py-16">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-12 mb-12">
+
+      <!-- Brand & Newsletter -->
+      <div class="md:col-span-2">
+        <a href="/" class="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
+          <div class="w-8 h-8 bg-gradient-to-r from-[#238636] to-[#2EA043] rounded"></div>
+          <span class="text-xl font-bold text-[#F0F6FC]">ScreenCraft API</span>
+        </a>
+        <p class="text-[#8B949E] mb-6 max-w-sm">
+          Simple screenshot & PDF generation for developers.
+        </p>
+
+        <!-- Newsletter -->
+        <div class="space-y-3">
+          <label for="newsletter" class="block text-sm font-medium text-[#F0F6FC]">
+            Subscribe to our changelog
+          </label>
+          <form id="newsletter-form" class="flex gap-2">
+            <input
+              type="email"
+              id="newsletter"
+              name="email"
+              placeholder="email@example.com"
+              required
+              class="flex-1 px-4 py-2 bg-[#161B22] border border-[#30363D] rounded-lg text-sm text-[#F0F6FC] placeholder-[#6E7681] focus:outline-none focus:border-[#1F6FEB] transition-colors"
+            />
+            <button type="submit" class="px-6 py-2 bg-[#238636] text-white font-semibold rounded-lg hover:bg-[#2EA043] transition-colors text-sm">
+              Subscribe
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Product Links -->
+      <div>
+        <h3 class="font-semibold text-[#F0F6FC] mb-4">PRODUCT</h3>
+        <ul class="space-y-3 text-sm">
+          <li>
+            <a href="/pricing" class="text-[#8B949E] hover:text-[#F0F6FC] transition-colors">
+              Pricing
+            </a>
+          </li>
+          <li>
+            <a href="/#features" class="text-[#8B949E] hover:text-[#F0F6FC] transition-colors">
+              Features
+            </a>
+          </li>
+          <li>
+            <a href="/changelog" class="text-[#8B949E] hover:text-[#F0F6FC] transition-colors">
+              Changelog
+            </a>
+          </li>
+          <li>
+            <a href="/status" class="text-[#8B949E] hover:text-[#F0F6FC] transition-colors">
+              Status
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Developer Links -->
+      <div>
+        <h3 class="font-semibold text-[#F0F6FC] mb-4">DEVELOPERS</h3>
+        <ul class="space-y-3 text-sm">
+          <li>
+            <a href="/docs" class="text-[#8B949E] hover:text-[#F0F6FC] transition-colors">
+              Documentation
+            </a>
+          </li>
+          <li>
+            <a href="/docs/quickstart" class="text-[#8B949E] hover:text-[#F0F6FC] transition-colors">
+              Quickstart
+            </a>
+          </li>
+          <li>
+            <a href="/docs/screenshots" class="text-[#8B949E] hover:text-[#F0F6FC] transition-colors">
+              Screenshots API
+            </a>
+          </li>
+          <li>
+            <a href="/docs/pdfs" class="text-[#8B949E] hover:text-[#F0F6FC] transition-colors">
+              PDF API
+            </a>
+          </li>
+          <li>
+            <a href="/docs/webhooks" class="text-[#8B949E] hover:text-[#F0F6FC] transition-colors">
+              Webhooks
+            </a>
+          </li>
+          <li>
+            <a href="/docs/errors" class="text-[#8B949E] hover:text-[#F0F6FC] transition-colors">
+              Error Reference
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Company & Legal -->
+      <div>
+        <h3 class="font-semibold text-[#F0F6FC] mb-4">COMPANY</h3>
+        <ul class="space-y-3 text-sm mb-6">
+          <li>
+            <a href="/contact" class="text-[#8B949E] hover:text-[#F0F6FC] transition-colors">
+              Contact
+            </a>
+          </li>
+          <li>
+            <a href="/dashboard" class="text-[#8B949E] hover:text-[#F0F6FC] transition-colors">
+              Dashboard
+            </a>
+          </li>
+        </ul>
+
+        <h3 class="font-semibold text-[#F0F6FC] mb-4">LEGAL</h3>
+        <ul class="space-y-3 text-sm">
+          <li>
+            <a href="/privacy" class="text-[#8B949E] hover:text-[#F0F6FC] transition-colors">
+              Privacy Policy
+            </a>
+          </li>
+          <li>
+            <a href="/terms" class="text-[#8B949E] hover:text-[#F0F6FC] transition-colors">
+              Terms of Service
+            </a>
+          </li>
+          <li>
+            <a href="/imprint" class="text-[#8B949E] hover:text-[#F0F6FC] transition-colors">
+              Imprint
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="pt-8 border-t border-[#30363D] flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p class="text-sm text-[#6E7681]">
+        &copy; {new Date().getFullYear()} ScreenCraft. Made with care for developers.
+      </p>
+
+      <!-- Social Links -->
+      <div class="flex items-center gap-6">
+        <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" class="text-[#6E7681] hover:text-[#F0F6FC] transition-colors" aria-label="Twitter">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+        </a>
+        <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="text-[#6E7681] hover:text-[#F0F6FC] transition-colors" aria-label="GitHub">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>

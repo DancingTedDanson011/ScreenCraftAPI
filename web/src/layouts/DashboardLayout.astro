@@ -1,0 +1,181 @@
+---
+import Layout from './Layout.astro';
+
+interface Props {
+  title: string;
+  activeTab?: string;
+}
+
+const { title, activeTab = 'overview' } = Astro.props;
+const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+
+const navItems = [
+  { name: 'Overview', href: '/dashboard', icon: 'home', key: 'overview' },
+  { name: 'API Keys', href: '/dashboard/api-keys', icon: 'key', key: 'api-keys' },
+  { name: 'Usage', href: '/dashboard/usage', icon: 'chart', key: 'usage' },
+  { name: 'Settings', href: '/dashboard/settings', icon: 'settings', key: 'settings' },
+];
+
+// Icon SVGs
+const icons: Record<string, string> = {
+  home: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>`,
+  key: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>`,
+  chart: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>`,
+  settings: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`,
+  logout: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>`,
+  docs: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`,
+};
+---
+
+<Layout title={title}>
+  <div class="min-h-screen bg-background flex">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-surface border-r border-border flex flex-col fixed h-full">
+      <!-- Logo -->
+      <div class="p-6 border-b border-border">
+        <a href="/" class="flex items-center gap-2">
+          <div class="w-8 h-8 bg-accent-primary rounded-lg flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+          </div>
+          <span class="text-xl font-bold text-text-primary">ScreenCraft</span>
+        </a>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 p-4 space-y-1">
+        {navItems.map(item => (
+          <a
+            href={item.href}
+            class:list={[
+              'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+              activeTab === item.key
+                ? 'bg-accent-primary/20 text-accent-primary border border-accent-primary/30'
+                : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
+            ]}
+          >
+            <Fragment set:html={icons[item.icon]} />
+            <span class="font-medium">{item.name}</span>
+          </a>
+        ))}
+      </nav>
+
+      <!-- Bottom Links -->
+      <div class="p-4 border-t border-border space-y-1">
+        <a
+          href="/docs"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-all duration-200"
+        >
+          <Fragment set:html={icons.docs} />
+          <span class="font-medium">Documentation</span>
+        </a>
+        <button
+          id="logout-btn"
+          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary hover:bg-surface-hover hover:text-accent-error transition-all duration-200"
+        >
+          <Fragment set:html={icons.logout} />
+          <span class="font-medium">Log Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64">
+      <!-- Top Header -->
+      <header class="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b border-border px-8 py-4">
+        <div class="flex items-center justify-between">
+          <h1 class="text-2xl font-bold text-text-primary">{title}</h1>
+          <div class="flex items-center gap-4">
+            <!-- Quick Actions -->
+            <a
+              href="/dashboard/api-keys?create=true"
+              class="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-lg font-medium transition-colors"
+            >
+              + New API Key
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <div class="p-8">
+        <slot />
+      </div>
+    </main>
+  </div>
+
+  <!-- Mobile Sidebar Toggle (hidden on desktop) -->
+  <button
+    id="mobile-menu-toggle"
+    class="lg:hidden fixed bottom-4 right-4 z-50 p-3 bg-accent-primary text-white rounded-full shadow-lg"
+    aria-label="Toggle menu"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  </button>
+</Layout>
+
+<style>
+  /* Responsive adjustments */
+  @media (max-width: 1023px) {
+    aside {
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+
+    aside.open {
+      transform: translateX(0);
+    }
+
+    main {
+      margin-left: 0;
+    }
+  }
+</style>
+
+<script define:vars={{ API_URL }}>
+  // Auth check on page load
+  async function checkAuth() {
+    try {
+      const res = await fetch(`${API_URL}/api/v1/auth/session`, {
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (!data.authenticated) {
+        window.location.href = '/login';
+      }
+    } catch (e) {
+      // On error, redirect to login
+      window.location.href = '/login';
+    }
+  }
+
+  // Check auth when page loads
+  checkAuth();
+
+  // Logout handler
+  const logoutBtn = document.getElementById('logout-btn');
+  logoutBtn?.addEventListener('click', async () => {
+    try {
+      await fetch(`${API_URL}/api/v1/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (e) {
+      // Ignore errors, redirect anyway
+    }
+    window.location.href = '/';
+  });
+
+  // Mobile menu toggle
+  const toggle = document.getElementById('mobile-menu-toggle');
+  const sidebar = document.querySelector('aside');
+
+  toggle?.addEventListener('click', () => {
+    sidebar?.classList.toggle('open');
+  });
+</script>

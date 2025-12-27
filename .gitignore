@@ -1,0 +1,92 @@
+# Environment Variables
+.env
+.env.local
+.env.*.local
+.env.production
+*.env
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-*
+
+# Testing
+coverage/
+.nyc_output/
+.jest/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+prisma/migrations/migration_lock.toml
+
+# Uploads
+uploads/
+screenshots/
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Backups
+backups/*.sql
+backups/*.sql.gz
+backups/*.tar.gz
+
+# SSL Certificates
+*.pem
+*.key
+*.crt
+
+# MinIO
+.minio/
+.minio.sys/
+
+# Local configuration
+.local/
+
+# Cache
+.cache/
+.npm/
+.eslintcache
+.stylelintcache

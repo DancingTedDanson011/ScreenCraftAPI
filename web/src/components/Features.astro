@@ -1,0 +1,196 @@
+---
+// Features Component - ScreenCraft Landing Page
+---
+
+<section id="features" class="py-20 md:py-32 bg-[#0D1117]">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Section Header -->
+    <div class="text-center mb-16">
+      <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#F0F6FC] mb-4">
+        Everything you need. Nothing you don't.
+      </h2>
+      <p class="text-lg text-[#8B949E] max-w-2xl mx-auto">
+        A complete screenshot and PDF generation API built for modern developers
+      </p>
+    </div>
+
+    <!-- Features Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 max-w-6xl mx-auto">
+
+      <!-- Feature 1: Screenshot Capture -->
+      <div class="bg-[#161B22] border border-[#30363D] rounded-xl p-8 hover:border-[#1F6FEB] transition-all duration-300 group">
+        <div class="flex items-start gap-4">
+          <!-- Icon -->
+          <div class="flex-shrink-0 w-12 h-12 bg-[#238636]/10 rounded-lg flex items-center justify-center group-hover:bg-[#238636]/20 transition-colors">
+            <svg class="w-6 h-6 text-[#238636]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+
+          <div class="flex-1">
+            <h3 class="text-xl font-semibold text-[#F0F6FC] mb-3">
+              Full-Page & Viewport Screenshots
+            </h3>
+            <p class="text-[#8B949E] mb-4 leading-relaxed">
+              Capture any URL as PNG, JPEG, or WebP. Full-page scrolling, custom viewports, or mobile emulation. One endpoint. Infinite possibilities.
+            </p>
+            <div class="inline-flex items-center gap-2 text-sm text-[#238636] font-medium">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              Supports lazy-loaded content
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature 2: PDF Generation -->
+      <div class="bg-[#161B22] border border-[#30363D] rounded-xl p-8 hover:border-[#1F6FEB] transition-all duration-300 group">
+        <div class="flex items-start gap-4">
+          <!-- Icon -->
+          <div class="flex-shrink-0 w-12 h-12 bg-[#1F6FEB]/10 rounded-lg flex items-center justify-center group-hover:bg-[#1F6FEB]/20 transition-colors">
+            <svg class="w-6 h-6 text-[#1F6FEB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+
+          <div class="flex-1">
+            <h3 class="text-xl font-semibold text-[#F0F6FC] mb-3">
+              Print-Quality PDFs
+            </h3>
+            <p class="text-[#8B949E] mb-4 leading-relaxed">
+              Generate PDFs from any URL or raw HTML. Custom headers, footers, page sizes, and margins. Perfect for invoices, reports, and documents.
+            </p>
+            <div class="inline-flex items-center gap-2 text-sm text-[#1F6FEB] font-medium">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              A4, Letter, Legal, or custom sizes
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature 3: Speed & Reliability -->
+      <div class="bg-[#161B22] border border-[#30363D] rounded-xl p-8 hover:border-[#1F6FEB] transition-all duration-300 group">
+        <div class="flex items-start gap-4">
+          <!-- Icon -->
+          <div class="flex-shrink-0 w-12 h-12 bg-[#D29922]/10 rounded-lg flex items-center justify-center group-hover:bg-[#D29922]/20 transition-colors">
+            <svg class="w-6 h-6 text-[#D29922]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+
+          <div class="flex-1">
+            <h3 class="text-xl font-semibold text-[#F0F6FC] mb-3">
+              Sub-2-Second Response Times
+            </h3>
+            <p class="text-[#8B949E] mb-4 leading-relaxed">
+              Global edge network with smart caching. Auto-scaling infrastructure handles your traffic spikes. 99.9% uptime SLA on paid plans.
+            </p>
+            <div class="inline-flex items-center gap-2 text-sm text-[#D29922] font-medium">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              No cold starts. Ever.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature 4: Developer Experience -->
+      <div class="bg-[#161B22] border border-[#30363D] rounded-xl p-8 hover:border-[#1F6FEB] transition-all duration-300 group">
+        <div class="flex items-start gap-4">
+          <!-- Icon -->
+          <div class="flex-shrink-0 w-12 h-12 bg-[#8B949E]/10 rounded-lg flex items-center justify-center group-hover:bg-[#8B949E]/20 transition-colors">
+            <svg class="w-6 h-6 text-[#8B949E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+            </svg>
+          </div>
+
+          <div class="flex-1">
+            <h3 class="text-xl font-semibold text-[#F0F6FC] mb-3">
+              Built for Developers
+            </h3>
+            <p class="text-[#8B949E] mb-4 leading-relaxed">
+              RESTful API with comprehensive documentation. SDKs for Node.js, Python, PHP, and cURL. Webhook support for async processing.
+            </p>
+            <div class="inline-flex items-center gap-2 text-sm text-[#8B949E] font-medium">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              Postman collection included
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature Comparison Mini-Table -->
+    <div class="mt-16 max-w-3xl mx-auto">
+      <div class="bg-[#161B22] border border-[#30363D] rounded-xl overflow-hidden">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-[#30363D]">
+              <th class="px-6 py-4 text-[#8B949E] font-medium"></th>
+              <th class="px-6 py-4 text-center text-[#F0F6FC] font-semibold">Us</th>
+              <th class="px-6 py-4 text-center text-[#8B949E] font-semibold">Others</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#30363D]">
+            <tr class="hover:bg-[#0D1117] transition-colors">
+              <td class="px-6 py-4 text-[#8B949E]">Free tier included</td>
+              <td class="px-6 py-4 text-center">
+                <span class="inline-flex items-center justify-center text-[#238636]">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                </span>
+              </td>
+              <td class="px-6 py-4 text-center text-[#6E7681]">Maybe</td>
+            </tr>
+            <tr class="hover:bg-[#0D1117] transition-colors">
+              <td class="px-6 py-4 text-[#8B949E]">No rate limiting on Pro</td>
+              <td class="px-6 py-4 text-center">
+                <span class="inline-flex items-center justify-center text-[#238636]">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                </span>
+              </td>
+              <td class="px-6 py-4 text-center">
+                <span class="text-[#F85149]">
+                  <svg class="w-5 h-5 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                  </svg>
+                </span>
+              </td>
+            </tr>
+            <tr class="hover:bg-[#0D1117] transition-colors">
+              <td class="px-6 py-4 text-[#8B949E]">Custom headers/cookies</td>
+              <td class="px-6 py-4 text-center">
+                <span class="inline-flex items-center justify-center text-[#238636]">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                </span>
+              </td>
+              <td class="px-6 py-4 text-center text-[#6E7681]">$$$</td>
+            </tr>
+            <tr class="hover:bg-[#0D1117] transition-colors">
+              <td class="px-6 py-4 text-[#8B949E]">Priority support</td>
+              <td class="px-6 py-4 text-center">
+                <span class="inline-flex items-center justify-center text-[#238636]">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                </span>
+              </td>
+              <td class="px-6 py-4 text-center text-[#6E7681]">Extra</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>

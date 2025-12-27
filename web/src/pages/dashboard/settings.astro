@@ -1,0 +1,663 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Settings" activeTab="settings">
+  <div class="space-y-6 max-w-4xl">
+    <!-- Account Information -->
+    <div class="bg-surface border border-border rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-text-primary mb-6">Account Information</h3>
+
+      <div id="account-loading" class="animate-pulse space-y-4">
+        <div class="flex items-center justify-between py-3">
+          <div class="h-4 bg-surface-hover rounded w-1/4"></div>
+          <div class="h-4 bg-surface-hover rounded w-1/3"></div>
+        </div>
+        <div class="flex items-center justify-between py-3">
+          <div class="h-4 bg-surface-hover rounded w-1/4"></div>
+          <div class="h-4 bg-surface-hover rounded w-1/4"></div>
+        </div>
+      </div>
+
+      <div id="account-info" class="hidden space-y-4">
+        <div class="flex items-center justify-between py-3 border-b border-border">
+          <span class="text-text-secondary">Email</span>
+          <span id="info-email" class="text-text-primary font-medium">-</span>
+        </div>
+        <div class="flex items-center justify-between py-3 border-b border-border">
+          <span class="text-text-secondary">Plan</span>
+          <span id="info-tier" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent-primary/20 text-accent-primary">-</span>
+        </div>
+        <div class="flex items-center justify-between py-3 border-b border-border">
+          <span class="text-text-secondary">Member Since</span>
+          <span id="info-created" class="text-text-primary">-</span>
+        </div>
+        <div class="flex items-center justify-between py-3">
+          <span class="text-text-secondary">Account ID</span>
+          <span id="info-id" class="text-text-muted font-mono text-sm">-</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Default Screenshot Settings -->
+    <div class="bg-surface border border-border rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-text-primary mb-2">Default Screenshot Settings</h3>
+      <p class="text-text-secondary text-sm mb-6">
+        These settings will be used as defaults when creating screenshots. You can override them per request.
+      </p>
+
+      <form id="settings-form" class="space-y-6">
+        <!-- Format -->
+        <div>
+          <label class="block text-sm font-medium text-text-secondary mb-3">Output Format</label>
+          <div class="grid grid-cols-3 gap-3">
+            <label class="relative">
+              <input type="radio" name="format" value="png" class="sr-only peer" checked />
+              <div class="px-4 py-3 bg-background border border-border rounded-lg cursor-pointer peer-checked:border-accent-primary peer-checked:bg-accent-primary/10 transition-all text-center">
+                <span class="text-text-primary font-medium">PNG</span>
+              </div>
+            </label>
+            <label class="relative">
+              <input type="radio" name="format" value="jpeg" class="sr-only peer" />
+              <div class="px-4 py-3 bg-background border border-border rounded-lg cursor-pointer peer-checked:border-accent-primary peer-checked:bg-accent-primary/10 transition-all text-center">
+                <span class="text-text-primary font-medium">JPEG</span>
+              </div>
+            </label>
+            <label class="relative">
+              <input type="radio" name="format" value="webp" class="sr-only peer" />
+              <div class="px-4 py-3 bg-background border border-border rounded-lg cursor-pointer peer-checked:border-accent-primary peer-checked:bg-accent-primary/10 transition-all text-center">
+                <span class="text-text-primary font-medium">WebP</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Quality -->
+        <div>
+          <label for="quality" class="block text-sm font-medium text-text-secondary mb-2">
+            Quality: <span id="quality-value">80</span>%
+          </label>
+          <input
+            type="range"
+            id="quality"
+            name="quality"
+            min="1"
+            max="100"
+            value="80"
+            class="w-full h-2 bg-surface-hover rounded-lg appearance-none cursor-pointer accent-accent-primary"
+          />
+          <p class="text-text-muted text-xs mt-1">Only applies to JPEG and WebP formats.</p>
+        </div>
+
+        <!-- Viewport -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="viewport-width" class="block text-sm font-medium text-text-secondary mb-2">
+              Viewport Width (px)
+            </label>
+            <input
+              type="number"
+              id="viewport-width"
+              name="viewportWidth"
+              min="320"
+              max="3840"
+              value="1920"
+              class="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all"
+            />
+          </div>
+          <div>
+            <label for="viewport-height" class="block text-sm font-medium text-text-secondary mb-2">
+              Viewport Height (px)
+            </label>
+            <input
+              type="number"
+              id="viewport-height"
+              name="viewportHeight"
+              min="200"
+              max="2160"
+              value="1080"
+              class="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all"
+            />
+          </div>
+        </div>
+
+        <!-- Full Page -->
+        <div class="flex items-center justify-between">
+          <div>
+            <label for="full-page" class="block text-sm font-medium text-text-primary">Full Page Screenshots</label>
+            <p class="text-text-muted text-xs mt-1">Capture the entire scrollable page instead of just the viewport.</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="full-page" name="fullPage" class="sr-only peer" />
+            <div class="w-11 h-6 bg-surface-hover rounded-full peer peer-checked:bg-accent-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+          </label>
+        </div>
+
+        <!-- Save Button -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
+          <button
+            type="button"
+            id="reset-btn"
+            class="px-4 py-2.5 border border-border text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg font-medium transition-colors"
+          >
+            Reset to Defaults
+          </button>
+          <button
+            type="submit"
+            id="save-btn"
+            class="px-4 py-2.5 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-lg font-medium transition-colors"
+          >
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Webhooks -->
+    <div class="bg-surface border border-border rounded-lg p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h3 class="text-lg font-semibold text-text-primary">Webhooks</h3>
+          <p class="text-text-secondary text-sm mt-1">
+            Receive real-time notifications when screenshots or PDFs are completed.
+          </p>
+        </div>
+        <button
+          id="create-webhook-btn"
+          class="px-4 py-2.5 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Add Webhook
+        </button>
+      </div>
+
+      <div id="webhooks-loading" class="py-8">
+        <div class="flex items-center justify-center">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary"></div>
+        </div>
+      </div>
+
+      <div id="webhooks-container" class="hidden">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="bg-red-500/5 border border-red-500/20 rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-red-400 mb-2">Danger Zone</h3>
+      <p class="text-text-secondary text-sm mb-6">
+        Irreversible and destructive actions.
+      </p>
+
+      <div class="flex items-center justify-between py-4 border-t border-red-500/20">
+        <div>
+          <h4 class="text-text-primary font-medium">Delete Account</h4>
+          <p class="text-text-muted text-sm mt-1">
+            Permanently delete your account and all associated data. This action cannot be undone.
+          </p>
+        </div>
+        <button
+          id="delete-account-btn"
+          class="px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
+        >
+          Delete Account
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Webhook Modal Container -->
+  <div id="webhook-modal-container"></div>
+</DashboardLayout>
+
+<script>
+  import { api, type WebhookItem, type CreatedWebhook } from '../../lib/api';
+
+  let webhooks: WebhookItem[] = [];
+
+  async function loadSettings() {
+    try {
+      const response = await api.dashboard.getSettings();
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Failed to load settings');
+      }
+
+      const data = response.data;
+
+      // Update account info
+      const accountLoading = document.getElementById('account-loading');
+      const accountInfo = document.getElementById('account-info');
+
+      if (accountLoading) accountLoading.classList.add('hidden');
+      if (accountInfo) accountInfo.classList.remove('hidden');
+
+      const emailEl = document.getElementById('info-email');
+      const tierEl = document.getElementById('info-tier');
+      const createdEl = document.getElementById('info-created');
+      const idEl = document.getElementById('info-id');
+
+      if (emailEl) emailEl.textContent = data.email;
+      if (tierEl) tierEl.textContent = data.tier;
+      if (createdEl) {
+        createdEl.textContent = new Date(data.createdAt).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+      }
+      if (idEl) idEl.textContent = data.id;
+
+      // Update form with default settings
+      if (data.defaultSettings) {
+        const formatRadio = document.querySelector(`input[name="format"][value="${data.defaultSettings.format}"]`) as HTMLInputElement;
+        if (formatRadio) formatRadio.checked = true;
+
+        const qualityInput = document.getElementById('quality') as HTMLInputElement;
+        const qualityValue = document.getElementById('quality-value');
+        if (qualityInput && qualityValue) {
+          qualityInput.value = String(data.defaultSettings.quality);
+          qualityValue.textContent = String(data.defaultSettings.quality);
+        }
+
+        const widthInput = document.getElementById('viewport-width') as HTMLInputElement;
+        if (widthInput) widthInput.value = String(data.defaultSettings.viewport.width);
+
+        const heightInput = document.getElementById('viewport-height') as HTMLInputElement;
+        if (heightInput) heightInput.value = String(data.defaultSettings.viewport.height);
+
+        const fullPageInput = document.getElementById('full-page') as HTMLInputElement;
+        if (fullPageInput) fullPageInput.checked = data.defaultSettings.fullPage;
+      }
+    } catch (error) {
+      console.error('Load settings error:', error);
+    }
+  }
+
+  async function loadWebhooks() {
+    try {
+      const response = await api.dashboard.getWebhooks();
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Failed to load webhooks');
+      }
+
+      webhooks = response.data;
+      renderWebhooks();
+    } catch (error) {
+      console.error('Load webhooks error:', error);
+    }
+  }
+
+  function renderWebhooks() {
+    const loading = document.getElementById('webhooks-loading');
+    const container = document.getElementById('webhooks-container');
+
+    if (loading) loading.classList.add('hidden');
+    if (!container) return;
+
+    container.classList.remove('hidden');
+
+    if (webhooks.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-8 text-text-muted">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+          <p>No webhooks configured.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-border">
+              <th class="px-4 py-3 text-left text-sm font-medium text-text-secondary">URL</th>
+              <th class="px-4 py-3 text-left text-sm font-medium text-text-secondary">Events</th>
+              <th class="px-4 py-3 text-left text-sm font-medium text-text-secondary">Status</th>
+              <th class="px-4 py-3 text-right text-sm font-medium text-text-secondary">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            ${webhooks.map(webhook => `
+              <tr class="hover:bg-surface-hover transition-colors">
+                <td class="px-4 py-3">
+                  <div class="font-mono text-sm text-text-primary truncate max-w-xs" title="${webhook.url}">
+                    ${webhook.url}
+                  </div>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex flex-wrap gap-1">
+                    ${webhook.events.map(event => `
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-accent-secondary/20 text-accent-secondary">
+                        ${event}
+                      </span>
+                    `).join('')}
+                  </div>
+                </td>
+                <td class="px-4 py-3">
+                  ${webhook.isActive
+                    ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400">Active</span>'
+                    : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400">Inactive</span>'
+                  }
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <button
+                    onclick="deleteWebhook('${webhook.id}')"
+                    class="px-3 py-1.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-md transition-colors"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  async function deleteWebhook(id: string) {
+    if (!confirm('Are you sure you want to delete this webhook?')) {
+      return;
+    }
+
+    try {
+      await api.dashboard.deleteWebhook(id);
+      await loadWebhooks();
+    } catch (error) {
+      console.error('Delete webhook error:', error);
+      alert('Failed to delete webhook. Please try again.');
+    }
+  }
+
+  async function saveSettings() {
+    const form = document.getElementById('settings-form') as HTMLFormElement;
+    if (!form) return;
+
+    const formData = new FormData(form);
+
+    const settings = {
+      format: formData.get('format') as 'png' | 'jpeg' | 'webp',
+      quality: Number(formData.get('quality')),
+      fullPage: formData.get('fullPage') === 'on',
+      viewport: {
+        width: Number(formData.get('viewportWidth')),
+        height: Number(formData.get('viewportHeight')),
+      },
+    };
+
+    const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+    }
+
+    try {
+      await api.dashboard.updateSettings(settings);
+      alert('Settings saved successfully!');
+    } catch (error) {
+      console.error('Save settings error:', error);
+      alert('Failed to save settings. Please try again.');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Changes';
+      }
+    }
+  }
+
+  function resetSettings() {
+    const formatRadio = document.querySelector('input[name="format"][value="png"]') as HTMLInputElement;
+    if (formatRadio) formatRadio.checked = true;
+
+    const qualityInput = document.getElementById('quality') as HTMLInputElement;
+    const qualityValue = document.getElementById('quality-value');
+    if (qualityInput && qualityValue) {
+      qualityInput.value = '80';
+      qualityValue.textContent = '80';
+    }
+
+    const widthInput = document.getElementById('viewport-width') as HTMLInputElement;
+    if (widthInput) widthInput.value = '1920';
+
+    const heightInput = document.getElementById('viewport-height') as HTMLInputElement;
+    if (heightInput) heightInput.value = '1080';
+
+    const fullPageInput = document.getElementById('full-page') as HTMLInputElement;
+    if (fullPageInput) fullPageInput.checked = false;
+  }
+
+  function openWebhookModal() {
+    const container = document.getElementById('webhook-modal-container');
+    if (!container) return;
+
+    const AVAILABLE_EVENTS = [
+      { value: 'screenshot.completed', label: 'Screenshot Completed' },
+      { value: 'screenshot.failed', label: 'Screenshot Failed' },
+      { value: 'pdf.completed', label: 'PDF Completed' },
+      { value: 'pdf.failed', label: 'PDF Failed' },
+    ];
+
+    container.innerHTML = `
+      <div class="fixed inset-0 z-50 flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeWebhookModal()"></div>
+        <div class="relative bg-surface border border-border rounded-xl shadow-lg w-full max-w-md mx-4 animate-fade-in">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+            <h2 class="text-lg font-semibold text-text-primary">Create Webhook</h2>
+            <button onclick="closeWebhookModal()" class="text-text-muted hover:text-text-primary transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="p-6">
+            <form id="webhook-form">
+              <div class="mb-6">
+                <label for="webhookUrl" class="block text-sm font-medium text-text-secondary mb-2">Endpoint URL</label>
+                <input
+                  type="url"
+                  id="webhookUrl"
+                  name="url"
+                  placeholder="https://example.com/webhook"
+                  class="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all"
+                  required
+                />
+              </div>
+              <div class="mb-6">
+                <label class="block text-sm font-medium text-text-secondary mb-3">Events</label>
+                <div class="space-y-2">
+                  ${AVAILABLE_EVENTS.map(event => `
+                    <label class="flex items-center gap-3 p-3 bg-background border border-border rounded-lg cursor-pointer hover:border-accent-primary/50 transition-colors">
+                      <input type="checkbox" name="events" value="${event.value}" class="w-4 h-4 rounded border-border text-accent-primary focus:ring-accent-primary" />
+                      <span class="text-text-primary text-sm">${event.label}</span>
+                    </label>
+                  `).join('')}
+                </div>
+              </div>
+              <div id="webhook-error" class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm"></div>
+              <div class="flex gap-3">
+                <button type="button" onclick="closeWebhookModal()" class="flex-1 px-4 py-2.5 border border-border text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg font-medium transition-colors">
+                  Cancel
+                </button>
+                <button type="submit" id="webhook-submit-btn" class="flex-1 px-4 py-2.5 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-lg font-medium transition-colors">
+                  Create
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const form = document.getElementById('webhook-form');
+    form?.addEventListener('submit', handleWebhookSubmit);
+  }
+
+  function closeWebhookModal() {
+    const container = document.getElementById('webhook-modal-container');
+    if (container) container.innerHTML = '';
+  }
+
+  async function handleWebhookSubmit(e: Event) {
+    e.preventDefault();
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const url = formData.get('url') as string;
+    const events = formData.getAll('events') as string[];
+
+    const errorDiv = document.getElementById('webhook-error');
+    const submitBtn = document.getElementById('webhook-submit-btn') as HTMLButtonElement;
+
+    if (!url || events.length === 0) {
+      if (errorDiv) {
+        errorDiv.textContent = 'Please provide a URL and select at least one event.';
+        errorDiv.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating...';
+    }
+    errorDiv?.classList.add('hidden');
+
+    try {
+      const response = await api.dashboard.createWebhook(url, events);
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Failed to create webhook');
+      }
+
+      showWebhookSuccess(response.data);
+      await loadWebhooks();
+    } catch (error) {
+      if (errorDiv) {
+        errorDiv.textContent = error instanceof Error ? error.message : 'Failed to create webhook';
+        errorDiv.classList.remove('hidden');
+      }
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create';
+      }
+    }
+  }
+
+  function showWebhookSuccess(webhook: CreatedWebhook) {
+    const container = document.getElementById('webhook-modal-container');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="fixed inset-0 z-50 flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeWebhookModal()"></div>
+        <div class="relative bg-surface border border-border rounded-xl shadow-lg w-full max-w-md mx-4 animate-fade-in">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+            <h2 class="text-lg font-semibold text-text-primary">Webhook Created</h2>
+            <button onclick="closeWebhookModal()" class="text-text-muted hover:text-text-primary transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="p-6">
+            <div class="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <div class="flex items-start gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <p class="text-yellow-400 font-medium text-sm">Save this secret now!</p>
+                  <p class="text-yellow-400/80 text-sm mt-1">Use it to verify webhook signatures.</p>
+                </div>
+              </div>
+            </div>
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-text-secondary mb-2">Webhook Secret</label>
+              <div class="relative">
+                <input
+                  type="text"
+                  value="${webhook.secret}"
+                  readonly
+                  id="webhook-secret"
+                  class="w-full px-4 py-3 pr-24 bg-background border border-border rounded-lg text-text-primary font-mono text-sm focus:outline-none"
+                />
+                <button
+                  onclick="copyWebhookSecret()"
+                  id="copy-webhook-btn"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-accent-primary hover:bg-accent-primary/90 text-white text-sm rounded-md font-medium transition-colors"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+            <button onclick="closeWebhookModal()" class="w-full px-4 py-2.5 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-lg font-medium transition-colors">
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function copyWebhookSecret() {
+    const secretInput = document.getElementById('webhook-secret') as HTMLInputElement;
+    const copyBtn = document.getElementById('copy-webhook-btn');
+
+    if (secretInput && copyBtn) {
+      try {
+        await navigator.clipboard.writeText(secretInput.value);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+          copyBtn.textContent = 'Copy';
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+  }
+
+  function confirmDeleteAccount() {
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      if (confirm('This will permanently delete all your data including API keys, screenshots, and PDFs. Type "DELETE" to confirm.')) {
+        // In a real implementation, this would call the API to delete the account
+        alert('Account deletion is not implemented in this demo.');
+      }
+    }
+  }
+
+  // Make functions globally available
+  (window as any).deleteWebhook = deleteWebhook;
+  (window as any).openWebhookModal = openWebhookModal;
+  (window as any).closeWebhookModal = closeWebhookModal;
+  (window as any).copyWebhookSecret = copyWebhookSecret;
+
+  // Setup event listeners
+  document.getElementById('settings-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveSettings();
+  });
+
+  document.getElementById('reset-btn')?.addEventListener('click', resetSettings);
+
+  document.getElementById('quality')?.addEventListener('input', (e) => {
+    const target = e.target as HTMLInputElement;
+    const qualityValue = document.getElementById('quality-value');
+    if (qualityValue) qualityValue.textContent = target.value;
+  });
+
+  document.getElementById('create-webhook-btn')?.addEventListener('click', openWebhookModal);
+  document.getElementById('delete-account-btn')?.addEventListener('click', confirmDeleteAccount);
+
+  // Load data on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    loadSettings();
+    loadWebhooks();
+  });
+</script>

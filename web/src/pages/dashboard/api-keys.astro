@@ -1,0 +1,462 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { ApiKeyTable } from '../../components/dashboard/ApiKeyTable';
+import { CreateKeyModal } from '../../components/dashboard/CreateKeyModal';
+---
+
+<DashboardLayout title="API Keys" activeTab="api-keys">
+  <div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <p class="text-text-secondary">
+          Manage your API keys. Create new keys to access the ScreenCraft API.
+        </p>
+      </div>
+      <button
+        id="create-key-btn"
+        class="px-4 py-2.5 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Create API Key
+      </button>
+    </div>
+
+    <!-- Info Box -->
+    <div class="bg-accent-secondary/10 border border-accent-secondary/20 rounded-lg p-4">
+      <div class="flex items-start gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent-secondary flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <div>
+          <p class="text-accent-secondary font-medium text-sm">Security Notice</p>
+          <p class="text-text-secondary text-sm mt-1">
+            API keys are only shown once when created. Store them securely and never share them publicly.
+            Revoked keys cannot be restored.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="bg-surface border border-border rounded-lg p-8">
+      <div class="flex items-center justify-center">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary"></div>
+        <span class="ml-3 text-text-secondary">Loading API keys...</span>
+      </div>
+    </div>
+
+    <!-- API Keys Table Container -->
+    <div id="keys-container" class="hidden"></div>
+
+    <!-- Error State -->
+    <div id="error-state" class="hidden bg-red-500/10 border border-red-500/20 rounded-lg p-6 text-center">
+      <div class="text-red-400 mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <p id="error-message" class="text-text-secondary mb-4">Failed to load API keys.</p>
+      <button
+        onclick="loadApiKeys()"
+        class="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-lg font-medium transition-colors"
+      >
+        Try Again
+      </button>
+    </div>
+
+    <!-- Usage Info -->
+    <div class="bg-surface border border-border rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-text-primary mb-4">Using Your API Key</h3>
+      <div class="space-y-4">
+        <p class="text-text-secondary text-sm">
+          Include your API key in the Authorization header of your requests:
+        </p>
+        <div class="bg-background rounded-lg p-4 font-mono text-sm">
+          <span class="text-text-muted">curl</span> -X POST \<br/>
+          &nbsp;&nbsp;-H <span class="text-accent-primary">"Authorization: Bearer sk_live_your_key_here"</span> \<br/>
+          &nbsp;&nbsp;-H <span class="text-accent-primary">"Content-Type: application/json"</span> \<br/>
+          &nbsp;&nbsp;-d <span class="text-accent-secondary">'{"url": "https://example.com"}'</span> \<br/>
+          &nbsp;&nbsp;https://api.screencraft.io/v1/screenshots
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Key Modal Container -->
+  <div id="modal-container"></div>
+</DashboardLayout>
+
+<script>
+  import { api, type ApiKeyItem, type CreatedApiKey } from '../../lib/api';
+
+  let apiKeys: ApiKeyItem[] = [];
+  let isModalOpen = false;
+
+  async function loadApiKeys() {
+    const loadingState = document.getElementById('loading-state');
+    const keysContainer = document.getElementById('keys-container');
+    const errorState = document.getElementById('error-state');
+
+    loadingState?.classList.remove('hidden');
+    keysContainer?.classList.add('hidden');
+    errorState?.classList.add('hidden');
+
+    try {
+      const response = await api.dashboard.getApiKeys();
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Failed to load API keys');
+      }
+
+      apiKeys = response.data;
+      renderApiKeys();
+
+      loadingState?.classList.add('hidden');
+      keysContainer?.classList.remove('hidden');
+    } catch (error) {
+      console.error('Load API keys error:', error);
+
+      const errorMessage = document.getElementById('error-message');
+      if (errorMessage) {
+        errorMessage.textContent = error instanceof Error ? error.message : 'An error occurred';
+      }
+
+      loadingState?.classList.add('hidden');
+      errorState?.classList.remove('hidden');
+    }
+  }
+
+  function renderApiKeys() {
+    const container = document.getElementById('keys-container');
+    if (!container) return;
+
+    if (apiKeys.length === 0) {
+      container.innerHTML = `
+        <div class="bg-surface border border-border rounded-lg p-8 text-center">
+          <div class="text-text-muted mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-text-primary mb-2">No API Keys</h3>
+          <p class="text-text-secondary mb-4">Create your first API key to start using the ScreenCraft API.</p>
+          <button
+            onclick="openCreateModal()"
+            class="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-lg font-medium transition-colors"
+          >
+            Create API Key
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="bg-surface border border-border rounded-lg overflow-hidden">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-border">
+              <th class="px-6 py-4 text-left text-sm font-medium text-text-secondary">Name / Key</th>
+              <th class="px-6 py-4 text-left text-sm font-medium text-text-secondary">Status</th>
+              <th class="px-6 py-4 text-left text-sm font-medium text-text-secondary">Created</th>
+              <th class="px-6 py-4 text-left text-sm font-medium text-text-secondary">Last Used</th>
+              <th class="px-6 py-4 text-right text-sm font-medium text-text-secondary">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            ${apiKeys.map(key => `
+              <tr class="hover:bg-surface-hover transition-colors" data-key-id="${key.id}">
+                <td class="px-6 py-4">
+                  <div>
+                    <div class="font-medium text-text-primary">${key.name || 'Unnamed Key'}</div>
+                    <div class="text-sm text-text-muted font-mono">${key.prefix}...</div>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  ${key.isActive
+                    ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400">Active</span>'
+                    : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400">Revoked</span>'
+                  }
+                </td>
+                <td class="px-6 py-4 text-sm text-text-secondary">${formatDate(key.createdAt)}</td>
+                <td class="px-6 py-4 text-sm text-text-secondary">${formatRelativeTime(key.lastUsedAt)}</td>
+                <td class="px-6 py-4 text-right">
+                  ${key.isActive ? `
+                    <button
+                      onclick="revokeKey('${key.id}')"
+                      class="revoke-btn px-3 py-1.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-md transition-colors"
+                    >
+                      Revoke
+                    </button>
+                  ` : ''}
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function formatDate(dateString: string | null): string {
+    if (!dateString) return 'Never';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  }
+
+  function formatRelativeTime(dateString: string | null): string {
+    if (!dateString) return 'Never used';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return formatDate(dateString);
+  }
+
+  async function revokeKey(id: string) {
+    if (!confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await api.dashboard.revokeApiKey(id);
+      await loadApiKeys();
+    } catch (error) {
+      console.error('Revoke key error:', error);
+      alert('Failed to revoke API key. Please try again.');
+    }
+  }
+
+  function openCreateModal() {
+    isModalOpen = true;
+    renderModal();
+  }
+
+  function closeModal() {
+    isModalOpen = false;
+    const container = document.getElementById('modal-container');
+    if (container) container.innerHTML = '';
+  }
+
+  async function createKey(name?: string): Promise<CreatedApiKey> {
+    const response = await api.dashboard.createApiKey(name);
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Failed to create API key');
+    }
+    await loadApiKeys();
+    return response.data;
+  }
+
+  function renderModal() {
+    const container = document.getElementById('modal-container');
+    if (!container || !isModalOpen) return;
+
+    container.innerHTML = `
+      <div class="fixed inset-0 z-50 flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="relative bg-surface border border-border rounded-xl shadow-lg w-full max-w-md mx-4 animate-fade-in">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+            <h2 class="text-lg font-semibold text-text-primary">Create API Key</h2>
+            <button onclick="closeModal()" class="text-text-muted hover:text-text-primary transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="p-6">
+            <form id="create-key-form">
+              <div class="mb-6">
+                <label for="keyName" class="block text-sm font-medium text-text-secondary mb-2">
+                  Key Name (optional)
+                </label>
+                <input
+                  type="text"
+                  id="keyName"
+                  name="keyName"
+                  placeholder="e.g., Production Server"
+                  class="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all"
+                  autofocus
+                />
+                <p class="text-text-muted text-sm mt-2">
+                  A friendly name to help you identify this key.
+                </p>
+              </div>
+              <div id="form-error" class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm"></div>
+              <div class="flex gap-3">
+                <button
+                  type="button"
+                  onclick="closeModal()"
+                  class="flex-1 px-4 py-2.5 border border-border text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  id="submit-btn"
+                  class="flex-1 px-4 py-2.5 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-lg font-medium transition-colors"
+                >
+                  Create Key
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Add form submit handler
+    const form = document.getElementById('create-key-form');
+    form?.addEventListener('submit', handleCreateSubmit);
+  }
+
+  async function handleCreateSubmit(e: Event) {
+    e.preventDefault();
+
+    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+    const errorDiv = document.getElementById('form-error');
+    const nameInput = document.getElementById('keyName') as HTMLInputElement;
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating...';
+    }
+    errorDiv?.classList.add('hidden');
+
+    try {
+      const createdKey = await createKey(nameInput?.value || undefined);
+      showKeySuccess(createdKey);
+    } catch (error) {
+      if (errorDiv) {
+        errorDiv.textContent = error instanceof Error ? error.message : 'Failed to create key';
+        errorDiv.classList.remove('hidden');
+      }
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Key';
+      }
+    }
+  }
+
+  function showKeySuccess(key: CreatedApiKey) {
+    const container = document.getElementById('modal-container');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="fixed inset-0 z-50 flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="relative bg-surface border border-border rounded-xl shadow-lg w-full max-w-md mx-4 animate-fade-in">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+            <h2 class="text-lg font-semibold text-text-primary">API Key Created</h2>
+            <button onclick="closeModal()" class="text-text-muted hover:text-text-primary transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="p-6">
+            <div class="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <div class="flex items-start gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <p class="text-yellow-400 font-medium text-sm">Save this key now!</p>
+                  <p class="text-yellow-400/80 text-sm mt-1">
+                    This is the only time you will be able to see this key. Store it securely.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-text-secondary mb-2">Your API Key</label>
+              <div class="relative">
+                <input
+                  type="text"
+                  value="${key.key}"
+                  readonly
+                  id="key-display"
+                  class="w-full px-4 py-3 pr-24 bg-background border border-border rounded-lg text-text-primary font-mono text-sm focus:outline-none"
+                />
+                <button
+                  onclick="copyKey()"
+                  id="copy-btn"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-accent-primary hover:bg-accent-primary/90 text-white text-sm rounded-md font-medium transition-colors"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            ${key.name ? `
+              <div class="mb-6 text-sm">
+                <span class="text-text-muted">Name: </span>
+                <span class="text-text-primary">${key.name}</span>
+              </div>
+            ` : ''}
+
+            <button
+              onclick="closeModal()"
+              class="w-full px-4 py-2.5 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-lg font-medium transition-colors"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function copyKey() {
+    const keyInput = document.getElementById('key-display') as HTMLInputElement;
+    const copyBtn = document.getElementById('copy-btn');
+
+    if (keyInput && copyBtn) {
+      try {
+        await navigator.clipboard.writeText(keyInput.value);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+          copyBtn.textContent = 'Copy';
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+  }
+
+  // Make functions globally available
+  (window as any).loadApiKeys = loadApiKeys;
+  (window as any).revokeKey = revokeKey;
+  (window as any).openCreateModal = openCreateModal;
+  (window as any).closeModal = closeModal;
+  (window as any).copyKey = copyKey;
+
+  // Setup create button click handler
+  document.getElementById('create-key-btn')?.addEventListener('click', openCreateModal);
+
+  // Check for create query param
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('create') === 'true') {
+    setTimeout(openCreateModal, 100);
+  }
+
+  // Load API keys on page load
+  document.addEventListener('DOMContentLoaded', loadApiKeys);
+</script>

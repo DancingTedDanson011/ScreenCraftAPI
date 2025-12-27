@@ -1,0 +1,462 @@
+// ScreenCraft API - Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Account Management
+model Account {
+  id               String         @id @default(uuid())
+  email            String         @unique
+  tier             Tier           @default(FREE)
+  monthlyCredits   Int
+  usedCredits      Int            @default(0)
+  stripeCustomerId String?        @unique
+  apiKeys          ApiKey[]
+  usageEvents      UsageEvent[]
+  screenshots      Screenshot[]
+  pdfs             Pdf[]
+  subscriptions    Subscription[]
+  user             User?
+  webhooks         Webhook[]
+  feedback         Feedback[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  lastResetAt      DateTime       @default(now())
+
+  @@index([email])
+  @@index([stripeCustomerId])
+  @@map("accounts")
+}
+
+// API Key Management
+model ApiKey {
+  id         String    @id @default(uuid())
+  key        String    @unique // SHA256 hashed
+  prefix     String // First 8 chars for display (e.g., "sk_test_")
+  name       String? // Optional key name
+  accountId  String
+  account    Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  isActive   Boolean   @default(true)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+
+  @@index([key])
+  @@index([accountId])
+  @@map("api_keys")
+}
+
+// Usage Tracking
+model UsageEvent {
+  id        String    @id @default(uuid())
+  accountId String
+  account   Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  eventType EventType
+  credits   Int // Credits consumed
+  metadata  Json? // Additional event data
+  createdAt DateTime  @default(now())
+
+  @@index([accountId, createdAt])
+  @@index([createdAt])
+  @@map("usage_events")
+}
+
+// Subscription Tiers
+enum Tier {
+  FREE
+  PRO
+  BUSINESS
+  ENTERPRISE
+}
+
+// Event Types for Usage Tracking
+enum EventType {
+  SCREENSHOT
+  SCREENSHOT_FULLPAGE
+  PDF
+  PDF_WITH_TEMPLATE
+}
+
+// Screenshot Jobs
+model Screenshot {
+  id             String           @id @default(uuid())
+  accountId      String
+  account        Account          @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  status         ScreenshotStatus @default(PENDING)
+  url            String
+  format         ImageFormat      @default(PNG)
+  fullPage       Boolean          @default(false)
+  quality        Int?
+  viewport       Json? // { width, height, deviceScaleFactor, etc. }
+  clip           Json? // { x, y, width, height }
+  waitOptions    Json? // { waitUntil, timeout, delay, selector }
+  headers        Json?
+  cookies        Json?
+  userAgent      String?
+  blockResources Json?
+  omitBackground Boolean          @default(false)
+  encoding       String           @default("binary")
+  fileSize       Int?
+  downloadUrl    String?
+  storageKey     String? // S3/Storage key for file
+  error          String?
+  metadata       Json?
+  webhookUrl     String?
+  createdAt      DateTime         @default(now())
+  completedAt    DateTime?
+
+  @@index([accountId, createdAt])
+  @@index([status, createdAt])
+  @@map("screenshots")
+}
+
+// PDF Jobs
+model Pdf {
+  id                  String    @id @default(uuid())
+  accountId           String
+  account             Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  status              PdfStatus @default(PENDING)
+  type                PdfType
+  url                 String? // For URL-based PDFs
+  html                String? // For HTML-based PDFs
+  format              PdfFormat @default(A4)
+  landscape           Boolean   @default(false)
+  printBackground     Boolean   @default(true)
+  margin              Json? // { top, right, bottom, left }
+  displayHeaderFooter Boolean   @default(false)
+  headerTemplate      String?
+  footerTemplate      String?
+  pageRanges          String?
+  preferCSSPageSize   Boolean   @default(false)
+  width               String?
+  height              String?
+  scale               Float     @default(1.0)
+  waitOptions         Json? // For URL-based: { waitUntil, timeout, delay }
+  headers             Json?
+  cookies             Json?
+  userAgent           String?
+  fileSize            Int?
+  pages               Int?
+  downloadUrl         String?
+  storageKey          String? // S3/Storage key for file
+  error               String?
+  metadata            Json?
+  webhookUrl          String?
+  createdAt           DateTime  @default(now())
+  completedAt         DateTime?
+
+  @@index([accountId, createdAt])
+  @@index([status, createdAt])
+  @@map("pdfs")
+}
+
+// Screenshot Status Enum
+enum ScreenshotStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// PDF Status Enum
+enum PdfStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// Image Format Enum
+enum ImageFormat {
+  PNG
+  JPEG
+  WEBP
+}
+
+// PDF Type Enum
+enum PdfType {
+  URL
+  HTML
+}
+
+// PDF Format Enum
+enum PdfFormat {
+  LETTER
+  LEGAL
+  TABLOID
+  LEDGER
+  A0
+  A1
+  A2
+  A3
+  A4
+  A5
+  A6
+}
+
+// Subscription Management
+model Subscription {
+  id                   String             @id @default(uuid())
+  accountId            String
+  account              Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  stripeSubscriptionId String             @unique
+  stripePriceId        String
+  status               SubscriptionStatus
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean            @default(false)
+  canceledAt           DateTime?
+  tier                 Tier
+  metadata             Json?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([accountId])
+  @@index([stripeSubscriptionId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+// Subscription Status Enum
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  TRIALING
+  UNPAID
+}
+
+// Webhook Events for Idempotency
+model WebhookEvent {
+  id            String    @id @default(uuid())
+  stripeEventId String    @unique
+  eventType     String
+  processed     Boolean   @default(false)
+  payload       Json
+  error         String?
+  createdAt     DateTime  @default(now())
+  processedAt   DateTime?
+
+  @@index([stripeEventId])
+  @@index([processed, createdAt])
+  @@map("webhook_events")
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  oauthAccounts OAuthAccount[]
+  account       Account?       @relation(fields: [accountId], references: [id])
+  accountId     String?        @unique
+  sessions      Session[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  lastLoginAt   DateTime?
+
+  @@index([email])
+  @@map("users")
+}
+
+model OAuthAccount {
+  id                 String    @id @default(uuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider           String
+  providerAccountId  String
+  accessToken        String?   @db.Text
+  refreshToken       String?   @db.Text
+  accessTokenExpires DateTime?
+  tokenType          String?
+  scope              String?
+  idToken            String?   @db.Text
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("oauth_accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionToken String   @unique
+  expires      DateTime
+  userAgent    String?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([sessionToken])
+  @@map("sessions")
+}
+
+// ============================================
+// ADMIN MANAGEMENT
+// ============================================
+
+model AdminUser {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  passwordHash String
+  name         String
+  role         AdminRole      @default(ADMIN)
+  isActive     Boolean        @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  sessions     AdminSession[]
+  auditLogs    AuditLog[]
+
+  @@map("admin_users")
+}
+
+model AdminSession {
+  id        String    @id @default(uuid())
+  adminId   String
+  admin     AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  token     String    @unique
+  ipAddress String
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([adminId])
+  @@map("admin_sessions")
+}
+
+model AuditLog {
+  id         String     @id @default(uuid())
+  adminId    String?
+  admin      AdminUser? @relation(fields: [adminId], references: [id])
+  accountId  String?
+  action     String
+  targetType String?
+  targetId   String?
+  details    Json?
+  ipAddress  String?
+  createdAt  DateTime   @default(now())
+
+  @@index([adminId])
+  @@index([accountId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  VIEWER
+}
+
+// ============================================
+// FORMS & SUBMISSIONS
+// ============================================
+
+model NewsletterSubscriber {
+  id               String           @id @default(uuid())
+  email            String           @unique
+  status           SubscriberStatus @default(PENDING)
+  confirmToken     String?          @unique
+  confirmedAt      DateTime?
+  unsubscribeToken String           @unique @default(uuid())
+  source           String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@map("newsletter_subscribers")
+}
+
+enum SubscriberStatus {
+  PENDING
+  CONFIRMED
+  UNSUBSCRIBED
+}
+
+model ContactSubmission {
+  id        String        @id @default(uuid())
+  name      String
+  email     String
+  subject   String
+  message   String        @db.Text
+  ipAddress String?
+  userAgent String?
+  status    ContactStatus @default(NEW)
+  repliedAt DateTime?
+  createdAt DateTime      @default(now())
+
+  @@index([email])
+  @@index([status])
+  @@map("contact_submissions")
+}
+
+enum ContactStatus {
+  NEW
+  READ
+  REPLIED
+  SPAM
+  ARCHIVED
+}
+
+model Feedback {
+  id        String           @id @default(uuid())
+  accountId String
+  account   Account          @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  rating    Int
+  category  FeedbackCategory
+  message   String?          @db.Text
+  page      String?
+  createdAt DateTime         @default(now())
+
+  @@index([accountId])
+  @@index([category])
+  @@map("feedback")
+}
+
+enum FeedbackCategory {
+  BUG
+  FEATURE
+  IMPROVEMENT
+  OTHER
+}
+
+// ============================================
+// WEBHOOKS
+// ============================================
+
+model Webhook {
+  id              String    @id @default(uuid())
+  accountId       String
+  account         Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  url             String
+  events          String[]
+  secret          String
+  isActive        Boolean   @default(true)
+  lastTriggeredAt DateTime?
+  failCount       Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([accountId])
+  @@map("webhooks")
+}

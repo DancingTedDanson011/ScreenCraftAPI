@@ -1,0 +1,382 @@
+---
+import DocsLayout from '../../components/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+---
+
+<DocsLayout title="Screenshot API" description="Complete reference for the ScreenCraft Screenshot API.">
+  <h1>Screenshot API Reference</h1>
+
+  <p class="lead text-lg text-text-secondary mb-8">
+    Capture pixel-perfect screenshots from any URL or HTML content. Supports full-page captures,
+    element selection, custom viewports, and more.
+  </p>
+
+  <h2>Endpoints</h2>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Method</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Endpoint</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4"><span class="px-2 py-1 bg-accent-primary/20 text-accent-primary rounded text-sm font-mono">POST</span></td>
+          <td class="py-3 px-4 font-mono text-sm">/v2/screenshot</td>
+          <td class="py-3 px-4">Capture a screenshot (sync)</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4"><span class="px-2 py-1 bg-accent-primary/20 text-accent-primary rounded text-sm font-mono">POST</span></td>
+          <td class="py-3 px-4 font-mono text-sm">/v2/screenshot/async</td>
+          <td class="py-3 px-4">Capture a screenshot (async with webhook)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Request Parameters</h2>
+
+  <h3>Source (Required - one of)</h3>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Parameter</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Type</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">url</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4">URL to capture. Must be publicly accessible.</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">html</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4">Raw HTML content to render and capture.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Viewport Options</h3>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Parameter</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Type</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Default</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">viewport.width</td>
+          <td class="py-3 px-4 text-sm">number</td>
+          <td class="py-3 px-4 text-sm">1920</td>
+          <td class="py-3 px-4">Viewport width in pixels (100-3840)</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">viewport.height</td>
+          <td class="py-3 px-4 text-sm">number</td>
+          <td class="py-3 px-4 text-sm">1080</td>
+          <td class="py-3 px-4">Viewport height in pixels (100-3840)</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">viewport.deviceScaleFactor</td>
+          <td class="py-3 px-4 text-sm">number</td>
+          <td class="py-3 px-4 text-sm">1</td>
+          <td class="py-3 px-4">Device pixel ratio (1-3)</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">viewport.isMobile</td>
+          <td class="py-3 px-4 text-sm">boolean</td>
+          <td class="py-3 px-4 text-sm">false</td>
+          <td class="py-3 px-4">Enable mobile mode</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">device</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4 text-sm">-</td>
+          <td class="py-3 px-4">Device preset (e.g., "iPhone 14 Pro")</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Output Options</h3>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Parameter</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Type</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Default</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">format</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4 text-sm">"png"</td>
+          <td class="py-3 px-4">"png", "jpeg", or "webp"</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">quality</td>
+          <td class="py-3 px-4 text-sm">number</td>
+          <td class="py-3 px-4 text-sm">80</td>
+          <td class="py-3 px-4">JPEG/WebP quality (1-100)</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">fullPage</td>
+          <td class="py-3 px-4 text-sm">boolean</td>
+          <td class="py-3 px-4 text-sm">false</td>
+          <td class="py-3 px-4">Capture full scrollable page</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">omitBackground</td>
+          <td class="py-3 px-4 text-sm">boolean</td>
+          <td class="py-3 px-4 text-sm">false</td>
+          <td class="py-3 px-4">Transparent background (PNG only)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Element Selection</h3>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Parameter</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Type</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">selector</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4">CSS selector for element to capture</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">padding</td>
+          <td class="py-3 px-4 text-sm">number</td>
+          <td class="py-3 px-4">Padding around selected element (px)</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">hideSelectors</td>
+          <td class="py-3 px-4 text-sm">string[]</td>
+          <td class="py-3 px-4">Elements to hide before capture</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">clip</td>
+          <td class="py-3 px-4 text-sm">object</td>
+          <td class="py-3 px-4">Clip region {`{x, y, width, height}`}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Wait Options</h3>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Parameter</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Type</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">waitFor.selector</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4">Wait for element to appear</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">waitFor.timeout</td>
+          <td class="py-3 px-4 text-sm">number</td>
+          <td class="py-3 px-4">Max wait time in ms (default: 5000)</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">delay</td>
+          <td class="py-3 px-4 text-sm">number</td>
+          <td class="py-3 px-4">Fixed delay before capture (ms)</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">waitUntil</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4">"load", "domcontentloaded", "networkidle"</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Examples</h2>
+
+  <h3>Basic Screenshot</h3>
+
+  <CodeBlock
+    filename="Request"
+    lang="json"
+    code={`{
+  "url": "https://example.com",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "format": "png"
+}`}
+  />
+
+  <h3>Full Page with JPEG Output</h3>
+
+  <CodeBlock
+    filename="Request"
+    lang="json"
+    code={`{
+  "url": "https://example.com/blog",
+  "fullPage": true,
+  "format": "jpeg",
+  "quality": 90
+}`}
+  />
+
+  <h3>Capture Specific Element</h3>
+
+  <CodeBlock
+    filename="Request"
+    lang="json"
+    code={`{
+  "url": "https://example.com",
+  "selector": ".hero-section",
+  "padding": 20,
+  "hideSelectors": [".cookie-banner", ".popup"]
+}`}
+  />
+
+  <h3>Mobile Device Emulation</h3>
+
+  <CodeBlock
+    filename="Request"
+    lang="json"
+    code={`{
+  "url": "https://example.com",
+  "device": "iPhone 14 Pro",
+  "fullPage": true
+}`}
+  />
+
+  <h3>Wait for Dynamic Content</h3>
+
+  <CodeBlock
+    filename="Request"
+    lang="json"
+    code={`{
+  "url": "https://example.com/dashboard",
+  "waitFor": {
+    "selector": "[data-loaded='true']",
+    "timeout": 10000
+  },
+  "waitUntil": "networkidle"
+}`}
+  />
+
+  <h3>Custom HTML Rendering</h3>
+
+  <CodeBlock
+    filename="Request"
+    lang="json"
+    code={`{
+  "html": "<html><body><h1>Hello World</h1></body></html>",
+  "viewport": { "width": 800, "height": 600 },
+  "format": "png"
+}`}
+  />
+
+  <h2>Response</h2>
+
+  <CodeBlock
+    filename="Success Response"
+    lang="json"
+    code={`{
+  "success": true,
+  "data": {
+    "id": "scr_abc123def456",
+    "url": "https://cdn.screencraft.dev/s/abc123.png",
+    "width": 1920,
+    "height": 1080,
+    "format": "png",
+    "size": 245678,
+    "created_at": "2025-12-27T10:30:00Z",
+    "expires_at": "2025-12-28T10:30:00Z"
+  }
+}`}
+  />
+
+  <h2>Device Presets</h2>
+  <p>Available device presets for mobile emulation:</p>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse text-sm">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-2 px-3 text-text-primary font-medium">Device</th>
+          <th class="text-left py-2 px-3 text-text-primary font-medium">Width</th>
+          <th class="text-left py-2 px-3 text-text-primary font-medium">Height</th>
+          <th class="text-left py-2 px-3 text-text-primary font-medium">Scale</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-2 px-3">iPhone 14 Pro</td>
+          <td class="py-2 px-3">393</td>
+          <td class="py-2 px-3">852</td>
+          <td class="py-2 px-3">3</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-2 px-3">iPhone 14 Pro Max</td>
+          <td class="py-2 px-3">430</td>
+          <td class="py-2 px-3">932</td>
+          <td class="py-2 px-3">3</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-2 px-3">iPad Pro 12.9"</td>
+          <td class="py-2 px-3">1024</td>
+          <td class="py-2 px-3">1366</td>
+          <td class="py-2 px-3">2</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-2 px-3">Pixel 7</td>
+          <td class="py-2 px-3">412</td>
+          <td class="py-2 px-3">915</td>
+          <td class="py-2 px-3">2.625</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-2 px-3">Galaxy S23 Ultra</td>
+          <td class="py-2 px-3">384</td>
+          <td class="py-2 px-3">824</td>
+          <td class="py-2 px-3">3</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    See the full list of available devices in your
+    <a href="/dashboard">dashboard</a>.
+  </p>
+</DocsLayout>

@@ -1,0 +1,81 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="500 - Server Error | ScreenCraft" description="An unexpected error occurred on our server.">
+  <div class="min-h-screen bg-background flex flex-col">
+    <!-- Header -->
+    <header class="border-b border-border">
+      <div class="max-w-7xl mx-auto px-4 py-4">
+        <a href="/" class="flex items-center gap-2 w-fit">
+          <svg class="w-8 h-8 text-accent-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span class="font-semibold text-text-primary">ScreenCraft</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex items-center justify-center px-4">
+      <div class="text-center max-w-lg">
+        <!-- Error Icon -->
+        <div class="relative mb-8">
+          <div class="text-[120px] md:text-[180px] font-bold text-accent-error/20 leading-none select-none">
+            500
+          </div>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <svg class="w-32 h-32 md:w-48 md:h-48 text-accent-error/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+        </div>
+
+        <h1 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+          Server Error
+        </h1>
+
+        <p class="text-text-secondary text-lg mb-4">
+          Something went wrong on our end. Our team has been notified and is working on a fix.
+        </p>
+
+        <p class="text-text-muted text-sm mb-8">
+          If this issue persists, please check our <a href="/status" class="text-accent-secondary hover:underline">status page</a> or contact support.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a
+            href="/"
+            class="px-6 py-3 bg-accent-primary text-white rounded-lg hover:bg-accent-primary/90 transition font-medium"
+          >
+            Back to Home
+          </a>
+          <button
+            onclick="window.location.reload()"
+            class="px-6 py-3 border border-border text-text-primary rounded-lg hover:bg-surface transition font-medium"
+          >
+            Try Again
+          </button>
+        </div>
+
+        <!-- Status Info -->
+        <div class="mt-12 pt-8 border-t border-border">
+          <div class="bg-surface border border-border rounded-lg p-4 text-left">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-2 h-2 rounded-full bg-accent-warning animate-pulse"></div>
+              <span class="text-text-primary font-medium text-sm">Incident Detected</span>
+            </div>
+            <p class="text-text-muted text-sm">
+              Our monitoring systems have detected this issue. Check the
+              <a href="/status" class="text-accent-secondary hover:underline">status page</a>
+              for real-time updates.
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <Footer />
+  </div>
+</Layout>

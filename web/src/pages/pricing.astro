@@ -1,0 +1,28 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Pricing from '../components/Pricing.astro';
+import FAQ from '../components/FAQ.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Pricing - ScreenCraft API">
+  <Navbar />
+  <main>
+    <!-- Header -->
+    <section class="pt-16 pb-8 bg-[#0D1117]">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-4xl sm:text-5xl font-bold text-[#F0F6FC] mb-4">
+          Simple, Transparent Pricing
+        </h1>
+        <p class="text-lg text-[#8B949E] max-w-2xl mx-auto">
+          Start free, scale as you grow. No hidden fees, no surprises.
+        </p>
+      </div>
+    </section>
+
+    <Pricing />
+    <FAQ />
+    <Footer />
+  </main>
+</Layout>

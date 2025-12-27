@@ -1,0 +1,17 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import JobTable from '../../components/admin/JobTable';
+---
+
+<AdminLayout title="Job Queue" activeTab="jobs">
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-[#F0F6FC]">Job Queue</h1>
+        <p class="text-[#8B949E] mt-1">Monitor and manage screenshot and PDF generation jobs</p>
+      </div>
+    </div>
+
+    <JobTable client:load />
+  </div>
+</AdminLayout>

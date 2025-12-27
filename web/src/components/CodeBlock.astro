@@ -1,0 +1,100 @@
+---
+interface Props {
+  code: string;
+  lang?: string;
+  filename?: string;
+  showLineNumbers?: boolean;
+}
+
+const { code, lang = 'bash', filename, showLineNumbers = false } = Astro.props;
+
+const lines = code.trim().split('\n');
+---
+
+<div class="rounded-lg border border-border overflow-hidden my-4">
+  {filename && (
+    <div class="bg-surface-hover px-4 py-2 border-b border-border flex items-center gap-2">
+      <svg class="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      <span class="text-sm text-text-muted font-mono">{filename}</span>
+      <button
+        class="ml-auto text-text-muted hover:text-text-primary transition copy-btn"
+        data-code={code}
+        title="Copy code"
+      >
+        <svg class="w-4 h-4 copy-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+        <svg class="w-4 h-4 check-icon hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </button>
+    </div>
+  )}
+  <div class="bg-surface overflow-x-auto">
+    <pre class="p-4 text-sm font-mono"><code class={`language-${lang}`}>{showLineNumbers ? (
+      lines.map((line, i) => (
+        <span class="table-row">
+          <span class="table-cell pr-4 text-text-muted select-none text-right">{i + 1}</span>
+          <span class="table-cell">{line}</span>
+          {i < lines.length - 1 && '\n'}
+        </span>
+      ))
+    ) : code.trim()}</code></pre>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const code = btn.getAttribute('data-code');
+      if (code) {
+        await navigator.clipboard.writeText(code);
+        const copyIcon = btn.querySelector('.copy-icon');
+        const checkIcon = btn.querySelector('.check-icon');
+        copyIcon?.classList.add('hidden');
+        checkIcon?.classList.remove('hidden');
+        setTimeout(() => {
+          copyIcon?.classList.remove('hidden');
+          checkIcon?.classList.add('hidden');
+        }, 2000);
+      }
+    });
+  });
+</script>
+
+<style>
+  pre {
+    margin: 0;
+  }
+
+  code {
+    color: #e6edf3;
+  }
+
+  .language-bash .token-comment,
+  .language-sh .token-comment {
+    color: #8b949e;
+  }
+
+  .language-bash .token-string,
+  .language-sh .token-string {
+    color: #a5d6ff;
+  }
+
+  .language-javascript .token-keyword,
+  .language-typescript .token-keyword {
+    color: #ff7b72;
+  }
+
+  .language-javascript .token-string,
+  .language-typescript .token-string {
+    color: #a5d6ff;
+  }
+
+  .language-javascript .token-function,
+  .language-typescript .token-function {
+    color: #d2a8ff;
+  }
+</style>

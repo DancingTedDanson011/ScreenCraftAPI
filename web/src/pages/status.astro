@@ -1,0 +1,173 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+// In production, this would be fetched from a status API
+const services = [
+  { name: 'Screenshot API', status: 'operational', uptime: '99.98%' },
+  { name: 'PDF API', status: 'operational', uptime: '99.95%' },
+  { name: 'Webhook Delivery', status: 'operational', uptime: '99.99%' },
+  { name: 'Dashboard', status: 'operational', uptime: '99.97%' },
+  { name: 'Authentication', status: 'operational', uptime: '99.99%' },
+];
+
+const incidents = [
+  {
+    date: '2025-12-20',
+    title: 'Elevated API Latency',
+    status: 'resolved',
+    description: 'Some users experienced increased latency on the Screenshot API. Root cause identified as a traffic spike. Additional capacity added.',
+    duration: '23 minutes',
+  },
+  {
+    date: '2025-12-15',
+    title: 'Scheduled Maintenance',
+    status: 'completed',
+    description: 'Planned infrastructure upgrade to improve performance. All services were briefly unavailable.',
+    duration: '5 minutes',
+  },
+];
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'operational': return 'bg-accent-primary';
+    case 'degraded': return 'bg-accent-warning';
+    case 'outage': return 'bg-accent-error';
+    default: return 'bg-text-muted';
+  }
+};
+
+const getStatusText = (status: string) => {
+  switch (status) {
+    case 'operational': return 'Operational';
+    case 'degraded': return 'Degraded Performance';
+    case 'outage': return 'Major Outage';
+    default: return 'Unknown';
+  }
+};
+
+const allOperational = services.every(s => s.status === 'operational');
+---
+
+<Layout title="System Status | ScreenCraft" description="Real-time status of ScreenCraft API services.">
+  <Navbar />
+  <div class="min-h-screen bg-background flex flex-col">
+    <!-- Main Content -->
+    <main class="flex-1 py-12">
+      <div class="max-w-4xl mx-auto px-4">
+        <!-- Overall Status -->
+        <div class={`rounded-xl p-6 mb-8 ${allOperational ? 'bg-accent-primary/10 border border-accent-primary/30' : 'bg-accent-warning/10 border border-accent-warning/30'}`}>
+          <div class="flex items-center gap-4">
+            <div class={`w-4 h-4 rounded-full ${allOperational ? 'bg-accent-primary' : 'bg-accent-warning'} animate-pulse`}></div>
+            <div>
+              <h1 class="text-2xl font-bold text-text-primary">
+                {allOperational ? 'All Systems Operational' : 'Some Systems Degraded'}
+              </h1>
+              <p class="text-text-secondary mt-1">
+                Last updated: {new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Services -->
+        <section class="mb-12">
+          <h2 class="text-xl font-semibold text-text-primary mb-4">Services</h2>
+          <div class="bg-surface border border-border rounded-lg overflow-hidden">
+            {services.map((service, index) => (
+              <div class={`flex items-center justify-between p-4 ${index !== services.length - 1 ? 'border-b border-border' : ''}`}>
+                <div class="flex items-center gap-3">
+                  <div class={`w-3 h-3 rounded-full ${getStatusColor(service.status)}`}></div>
+                  <span class="text-text-primary font-medium">{service.name}</span>
+                </div>
+                <div class="flex items-center gap-4">
+                  <span class="text-text-muted text-sm">{service.uptime} uptime</span>
+                  <span class="text-text-secondary text-sm">{getStatusText(service.status)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <!-- 90-Day Uptime Graph -->
+        <section class="mb-12">
+          <h2 class="text-xl font-semibold text-text-primary mb-4">90-Day Uptime</h2>
+          <div class="bg-surface border border-border rounded-lg p-4">
+            <div class="flex gap-0.5">
+              {Array.from({ length: 90 }, (_, i) => {
+                // Simulate some minor incidents
+                const hasIssue = i === 70 || i === 75;
+                return (
+                  <div
+                    class={`flex-1 h-8 rounded-sm ${hasIssue ? 'bg-accent-warning' : 'bg-accent-primary'}`}
+                    title={`Day ${90 - i}: ${hasIssue ? 'Minor incident' : '100% uptime'}`}
+                  ></div>
+                );
+              })}
+            </div>
+            <div class="flex justify-between mt-2 text-text-muted text-sm">
+              <span>90 days ago</span>
+              <span>Today</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Recent Incidents -->
+        <section class="mb-12">
+          <h2 class="text-xl font-semibold text-text-primary mb-4">Recent Incidents</h2>
+          <div class="space-y-4">
+            {incidents.length === 0 ? (
+              <div class="bg-surface border border-border rounded-lg p-6 text-center">
+                <p class="text-text-secondary">No incidents reported in the last 30 days.</p>
+              </div>
+            ) : (
+              incidents.map(incident => (
+                <div class="bg-surface border border-border rounded-lg p-4">
+                  <div class="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 class="font-medium text-text-primary">{incident.title}</h3>
+                      <p class="text-text-muted text-sm">{incident.date}</p>
+                    </div>
+                    <span class={`px-2 py-1 rounded text-xs font-medium ${
+                      incident.status === 'resolved' || incident.status === 'completed'
+                        ? 'bg-accent-primary/20 text-accent-primary'
+                        : 'bg-accent-warning/20 text-accent-warning'
+                    }`}>
+                      {incident.status.charAt(0).toUpperCase() + incident.status.slice(1)}
+                    </span>
+                  </div>
+                  <p class="text-text-secondary text-sm mb-2">{incident.description}</p>
+                  <p class="text-text-muted text-sm">Duration: {incident.duration}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        <!-- Subscribe -->
+        <section class="bg-surface border border-border rounded-lg p-6">
+          <h2 class="text-xl font-semibold text-text-primary mb-2">Stay Updated</h2>
+          <p class="text-text-secondary mb-4">
+            Subscribe to receive notifications about scheduled maintenance and service incidents.
+          </p>
+          <form class="flex flex-col sm:flex-row gap-3">
+            <input
+              type="email"
+              placeholder="Enter your email"
+              class="flex-1 px-4 py-2 bg-background border border-border rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent-secondary focus:border-transparent"
+            />
+            <button
+              type="submit"
+              class="px-6 py-2 bg-accent-primary text-white rounded-lg hover:bg-accent-primary/90 transition font-medium"
+            >
+              Subscribe
+            </button>
+          </form>
+        </section>
+      </div>
+    </main>
+
+    <Footer />
+  </div>
+</Layout>

@@ -1,0 +1,162 @@
+---
+// Hero Component - ScreenCraft Landing Page
+---
+
+<section id="hero" class="relative overflow-hidden bg-gradient-to-b from-[#0D1117] to-[#161B22] pt-20 pb-24 md:pt-32 md:pb-40">
+  <!-- Background Grid Pattern -->
+  <div class="absolute inset-0 opacity-20" style="background-image: url('/grid.svg');"></div>
+
+  <!-- Gradient Overlay -->
+  <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[#0D1117]/50 to-[#161B22]"></div>
+
+  <div class="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16 items-center">
+
+      <!-- Left: Text Content -->
+      <div class="text-center lg:text-left">
+        <!-- Headline -->
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#F0F6FC] mb-6 leading-tight">
+          Ship Screenshots. <br class="hidden sm:block" />Not Infrastructure.
+        </h1>
+
+        <!-- Subheadline -->
+        <p class="text-lg sm:text-xl text-[#8B949E] mb-4 max-w-2xl mx-auto lg:mx-0">
+          Pixel-perfect screenshots and PDFs via simple REST API.
+        </p>
+        <p class="text-base sm:text-lg text-[#6E7681] mb-8 max-w-2xl mx-auto lg:mx-0">
+          No Puppeteer. No headless browsers. No DevOps headaches.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8">
+          <a
+            href="#pricing"
+            class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-white bg-gradient-to-r from-[#238636] to-[#2EA043] rounded-lg hover:shadow-[0_0_20px_rgba(35,134,54,0.4)] transition-all duration-200 hover:scale-105"
+          >
+            Get Free API Key
+          </a>
+          <a
+            href="#docs"
+            class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-[#F0F6FC] border-2 border-[#30363D] rounded-lg hover:border-[#1F6FEB] hover:text-[#1F6FEB] transition-all duration-200"
+          >
+            View Documentation
+          </a>
+        </div>
+
+        <!-- Micro-Copy -->
+        <div class="flex flex-wrap gap-4 justify-center lg:justify-start text-sm text-[#6E7681]">
+          <span class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-[#238636]" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+            No credit card required
+          </span>
+          <span class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-[#238636]" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+            100 free screenshots/month
+          </span>
+          <span class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-[#238636]" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+            Setup in 2 minutes
+          </span>
+        </div>
+      </div>
+
+      <!-- Right: Demo Widget Placeholder -->
+      <div class="relative">
+        <div class="bg-[#161B22] border border-[#30363D] rounded-xl p-6 shadow-lg">
+          <!-- Demo Widget Header -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-[#8B949E] mb-2">URL</label>
+            <input
+              type="text"
+              value="https://example.com"
+              class="w-full px-4 py-3 bg-[#0D1117] border border-[#30363D] rounded-lg text-[#F0F6FC] focus:border-[#1F6FEB] focus:outline-none transition-colors"
+              readonly
+            />
+          </div>
+
+          <!-- Generate Button -->
+          <button
+            class="w-full px-6 py-3 bg-[#238636] text-white font-semibold rounded-lg hover:bg-[#2EA043] transition-colors mb-4"
+          >
+            Generate Screenshot
+          </button>
+
+          <!-- Preview Area -->
+          <div class="bg-[#0D1117] border border-[#30363D] rounded-lg p-8 min-h-[240px] flex items-center justify-center">
+            <div class="text-center">
+              <svg class="w-16 h-16 text-[#30363D] mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <p class="text-[#6E7681] text-sm">Screenshot preview appears here</p>
+            </div>
+          </div>
+
+          <!-- Metadata -->
+          <div class="mt-4 flex flex-wrap gap-4 text-xs text-[#6E7681] justify-center">
+            <span>Generated in 1.2s</span>
+            <span>•</span>
+            <span>1920x1080</span>
+            <span>•</span>
+            <span>PNG</span>
+          </div>
+        </div>
+
+        <!-- Decorative Glow -->
+        <div class="absolute -inset-4 bg-gradient-to-r from-[#238636]/10 to-[#1F6FEB]/10 blur-3xl -z-10 opacity-50"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trust Bar -->
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 mt-20">
+    <p class="text-center text-sm text-[#6E7681] mb-6">Built with technologies you trust</p>
+    <div class="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-60">
+      <!-- Node.js -->
+      <div class="flex items-center gap-2">
+        <svg class="w-8 h-8 text-[#8B949E]" viewBox="0 0 256 256" fill="currentColor">
+          <path d="M128 0C57.307 0 0 57.307 0 128s57.307 128 128 128 128-57.307 128-128S198.693 0 128 0zm0 240C65.965 240 16 190.035 16 128S65.965 16 128 16s112 49.965 112 112-49.965 112-112 112z"/>
+        </svg>
+        <span class="text-[#8B949E] font-medium">Node.js</span>
+      </div>
+
+      <!-- Playwright -->
+      <div class="flex items-center gap-2">
+        <svg class="w-8 h-8 text-[#8B949E]" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18L19.82 8 12 11.82 4.18 8 12 4.18zM4 9.5l7 3.5v7l-7-3.5v-7zm16 0v7l-7 3.5v-7l7-3.5z"/>
+        </svg>
+        <span class="text-[#8B949E] font-medium">Playwright</span>
+      </div>
+
+      <!-- Chrome -->
+      <div class="flex items-center gap-2">
+        <svg class="w-8 h-8 text-[#8B949E]" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="4" fill="#0D1117"/>
+        </svg>
+        <span class="text-[#8B949E] font-medium">Chrome</span>
+      </div>
+
+      <!-- AWS -->
+      <div class="flex items-center gap-2">
+        <svg class="w-8 h-8 text-[#8B949E]" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6.76 10.36l-1.19.67c-.09.05-.18.12-.25.2-.06.07-.09.16-.09.25v1.34c0 .09.03.18.09.25.07.08.16.15.25.2l1.19.67c.09.05.19.08.29.08.1 0 .2-.03.29-.08l1.19-.67c.09-.05.18-.12.25-.2.06-.07.09-.16.09-.25v-1.34c0-.09-.03-.18-.09-.25-.07-.08-.16-.15-.25-.2l-1.19-.67c-.09-.05-.19-.08-.29-.08-.1 0-.2.03-.29.08z"/>
+        </svg>
+        <span class="text-[#8B949E] font-medium">AWS</span>
+      </div>
+
+      <!-- Cloudflare -->
+      <div class="flex items-center gap-2">
+        <svg class="w-8 h-8 text-[#8B949E]" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18.5 11.5c0 .55-.45 1-1 1h-11c-.55 0-1-.45-1-1s.45-1 1-1h11c.55 0 1 .45 1 1z"/>
+        </svg>
+        <span class="text-[#8B949E] font-medium">Cloudflare</span>
+      </div>
+    </div>
+  </div>
+</section>
