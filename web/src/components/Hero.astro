@@ -2,7 +2,8 @@
 // Hero Component - ScreenCraft Landing Page
 import DemoWidget from './DemoWidget.tsx';
 
-const apiEndpoint = import.meta.env.PUBLIC_API_URL || 'https://screencraftapi.com/api';
+// Use environment variable or fallback to current origin
+const apiEndpoint = import.meta.env.PUBLIC_API_URL || '';
 ---
 
 <section id="hero" class="relative overflow-hidden bg-gradient-to-b from-[#0D1117] to-[#161B22] pt-20 pb-24 md:pt-32 md:pb-40">

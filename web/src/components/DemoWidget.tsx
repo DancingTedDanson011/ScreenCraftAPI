@@ -13,7 +13,16 @@ interface ScreenshotResult {
   duration: number;
 }
 
-export default function DemoWidget({ apiEndpoint = 'http://localhost:3000' }: DemoWidgetProps) {
+// Get dynamic API URL based on current location
+function getApiUrl(endpoint: string): string {
+  if (endpoint) return endpoint;
+  if (typeof window === 'undefined') return 'http://localhost:3000';
+  return window.location.hostname === 'localhost'
+    ? 'http://localhost:3000'
+    : `${window.location.protocol}//${window.location.hostname}`;
+}
+
+export default function DemoWidget({ apiEndpoint = '' }: DemoWidgetProps) {
   const [url, setUrl] = useState('https://github.com');
   const [format, setFormat] = useState<'png' | 'jpeg' | 'webp'>('png');
   const [width, setWidth] = useState(1920);
@@ -72,8 +81,9 @@ export default function DemoWidget({ apiEndpoint = 'http://localhost:3000' }: De
         height: height.toString(),
       });
 
-      // Build the full API URL - apiEndpoint already contains /api
-      const baseUrl = apiEndpoint.endsWith('/api') ? apiEndpoint : `${apiEndpoint}/api`;
+      // Build the full API URL dynamically
+      const resolvedEndpoint = getApiUrl(apiEndpoint);
+      const baseUrl = resolvedEndpoint.endsWith('/api') ? resolvedEndpoint : `${resolvedEndpoint}/api`;
       const response = await fetch(`${baseUrl}/v1/demo/screenshot?${params}`, {
         method: 'GET',
         headers: {
