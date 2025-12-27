@@ -7,6 +7,9 @@ import type { LaunchOptions } from 'playwright-core';
 export const BROWSER_LAUNCH_OPTIONS: LaunchOptions = {
   headless: true,
 
+  // Use system Chromium from Alpine (set via ENV or default path)
+  executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
+
   // Chrome/Chromium specific arguments for stability and performance
   args: [
     // Memory and performance optimizations
