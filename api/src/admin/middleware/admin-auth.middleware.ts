@@ -196,11 +196,15 @@ export async function adminLogin(
     expiresIn,
   });
 
-  // Create session record
+  // Create session record with unique token identifier
+  // Use a hash of the full token to ensure uniqueness
+  const crypto = await import('crypto');
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex').substring(0, 64);
+
   await prisma.adminSession.create({
     data: {
       adminId: adminUser.id,
-      token: token.substring(0, 64), // Store only prefix for lookup
+      token: tokenHash,
       ipAddress: ipAddress || 'unknown',
       userAgent: userAgent,
       expiresAt,
@@ -229,10 +233,11 @@ export async function adminLogin(
  * Admin logout handler
  */
 export async function adminLogout(token: string): Promise<void> {
-  const tokenPrefix = token.substring(0, 64);
+  const crypto = await import('crypto');
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex').substring(0, 64);
 
   await prisma.adminSession.deleteMany({
-    where: { token: tokenPrefix },
+    where: { token: tokenHash },
   });
 }
 
