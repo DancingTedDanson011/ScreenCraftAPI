@@ -1,0 +1,17 @@
+# ScreenCraft API - robots.txt
+# https://screencraftapi.com
+
+User-agent: *
+Allow: /
+
+# Block admin and dashboard from indexing
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /login
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://screencraftapi.com/sitemap-index.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1

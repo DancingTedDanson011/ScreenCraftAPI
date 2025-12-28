@@ -1,7 +1,5 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
-import { ApiKeyTable } from '../../components/dashboard/ApiKeyTable';
-import { CreateKeyModal } from '../../components/dashboard/CreateKeyModal';
 ---
 
 <DashboardLayout title="API Keys" activeTab="api-keys">
@@ -94,9 +92,10 @@ import { CreateKeyModal } from '../../components/dashboard/CreateKeyModal';
 </DashboardLayout>
 
 <script>
-  import { api, type ApiKeyItem, type CreatedApiKey } from '../../lib/api';
+  import { api } from '../../lib/api';
 
-  let apiKeys: ApiKeyItem[] = [];
+  /** @type {Array<{id: string, name: string, prefix: string, isActive: boolean, createdAt: string, lastUsedAt: string}>} */
+  let apiKeys = [];
   let isModalOpen = false;
 
   async function loadApiKeys() {
@@ -205,7 +204,7 @@ import { CreateKeyModal } from '../../components/dashboard/CreateKeyModal';
     `;
   }
 
-  function formatDate(dateString: string | null): string {
+  function formatDate(dateString) {
     if (!dateString) return 'Never';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -214,7 +213,7 @@ import { CreateKeyModal } from '../../components/dashboard/CreateKeyModal';
     });
   }
 
-  function formatRelativeTime(dateString: string | null): string {
+  function formatRelativeTime(dateString) {
     if (!dateString) return 'Never used';
     const date = new Date(dateString);
     const now = new Date();
@@ -230,7 +229,7 @@ import { CreateKeyModal } from '../../components/dashboard/CreateKeyModal';
     return formatDate(dateString);
   }
 
-  async function revokeKey(id: string) {
+  async function revokeKey(id) {
     if (!confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) {
       return;
     }
@@ -255,7 +254,7 @@ import { CreateKeyModal } from '../../components/dashboard/CreateKeyModal';
     if (container) container.innerHTML = '';
   }
 
-  async function createKey(name?: string): Promise<CreatedApiKey> {
+  async function createKey(name) {
     const response = await api.dashboard.createApiKey(name);
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Failed to create API key');
@@ -326,12 +325,12 @@ import { CreateKeyModal } from '../../components/dashboard/CreateKeyModal';
     form?.addEventListener('submit', handleCreateSubmit);
   }
 
-  async function handleCreateSubmit(e: Event) {
+  async function handleCreateSubmit(e) {
     e.preventDefault();
 
-    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+    const submitBtn = document.getElementById('submit-btn');
     const errorDiv = document.getElementById('form-error');
-    const nameInput = document.getElementById('keyName') as HTMLInputElement;
+    const nameInput = document.getElementById('keyName');
 
     if (submitBtn) {
       submitBtn.disabled = true;
@@ -354,7 +353,7 @@ import { CreateKeyModal } from '../../components/dashboard/CreateKeyModal';
     }
   }
 
-  function showKeySuccess(key: CreatedApiKey) {
+  function showKeySuccess(key) {
     const container = document.getElementById('modal-container');
     if (!container) return;
 
@@ -425,7 +424,7 @@ import { CreateKeyModal } from '../../components/dashboard/CreateKeyModal';
   }
 
   async function copyKey() {
-    const keyInput = document.getElementById('key-display') as HTMLInputElement;
+    const keyInput = document.getElementById('key-display');
     const copyBtn = document.getElementById('copy-btn');
 
     if (keyInput && copyBtn) {
@@ -442,11 +441,11 @@ import { CreateKeyModal } from '../../components/dashboard/CreateKeyModal';
   }
 
   // Make functions globally available
-  (window as any).loadApiKeys = loadApiKeys;
-  (window as any).revokeKey = revokeKey;
-  (window as any).openCreateModal = openCreateModal;
-  (window as any).closeModal = closeModal;
-  (window as any).copyKey = copyKey;
+  window.loadApiKeys = loadApiKeys;
+  window.revokeKey = revokeKey;
+  window.openCreateModal = openCreateModal;
+  window.closeModal = closeModal;
+  window.copyKey = copyKey;
 
   // Setup create button click handler
   document.getElementById('create-key-btn')?.addEventListener('click', openCreateModal);

@@ -38,7 +38,9 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default('http://localhost:3001'),
 
   // Admin Configuration
-  ADMIN_JWT_SECRET: z.string().default('change-this-in-production-admin-secret-key'),
+  // C-05: No default for JWT secret - must be explicitly set
+  // In development, use a dev-only fallback; in production, require explicit config
+  ADMIN_JWT_SECRET: z.string().min(32, 'JWT secret must be at least 32 characters').optional(),
   ADMIN_JWT_EXPIRES_IN: z.string().default('8h'),
   ADMIN_ENABLED: z.string().transform(val => val === 'true').default('true'),
 });
@@ -49,6 +51,23 @@ if (!parsedEnv.success) {
   console.error('Invalid environment variables:', parsedEnv.error.format());
   process.exit(1);
 }
+
+// C-05: Validate JWT secret based on environment
+const nodeEnv = parsedEnv.data.NODE_ENV;
+const jwtSecret = parsedEnv.data.ADMIN_JWT_SECRET;
+
+if (nodeEnv === 'production' && !jwtSecret) {
+  console.error('FATAL: ADMIN_JWT_SECRET must be set in production environment');
+  console.error('Generate a secure secret with: openssl rand -hex 32');
+  process.exit(1);
+}
+
+// Use dev fallback only in development/test
+const resolvedJwtSecret = jwtSecret || (
+  nodeEnv === 'development' || nodeEnv === 'test'
+    ? 'dev-only-secret-not-for-production-min32chars'
+    : ''
+);
 
 export const config = {
   server: {
@@ -107,7 +126,8 @@ export const config = {
   },
 
   admin: {
-    jwtSecret: parsedEnv.data.ADMIN_JWT_SECRET,
+    // C-05: Use resolved secret (validated above)
+    jwtSecret: resolvedJwtSecret,
     jwtExpiresIn: parsedEnv.data.ADMIN_JWT_EXPIRES_IN,
     enabled: parsedEnv.data.ADMIN_ENABLED,
   },

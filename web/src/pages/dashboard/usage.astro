@@ -134,6 +134,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 
 <script>
   import { api, type UsageStats, type UsageTimelineItem } from '../../lib/api';
+  import { escapeHtml } from '../../lib/html-escape';
 
   let currentPeriod: 'day' | 'week' | 'month' = 'month';
   let usageStats: UsageStats | null = null;
@@ -254,6 +255,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         PDF_WITH_TEMPLATE: 'PDF with Template',
       };
 
+      // H-01: XSS Protection - escape fallback eventType if not in predefined labels
       breakdownContainer.innerHTML = usageStats.breakdown.map(item => `
         <div class="flex items-center gap-4">
           <div class="w-10 h-10 ${colors[item.eventType] || 'bg-gray-500'} rounded-lg flex items-center justify-center text-white">
@@ -261,7 +263,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
           </div>
           <div class="flex-1">
             <div class="flex items-center justify-between mb-1">
-              <span class="text-text-primary font-medium">${labels[item.eventType] || item.eventType}</span>
+              <span class="text-text-primary font-medium">${labels[item.eventType] || escapeHtml(item.eventType)}</span>
               <span class="text-text-secondary text-sm">${item.count} requests</span>
             </div>
             <div class="h-2 bg-surface-hover rounded-full overflow-hidden">

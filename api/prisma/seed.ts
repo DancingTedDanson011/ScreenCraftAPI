@@ -4,8 +4,38 @@ import { PrismaClient, Tier, AdminRole } from '@prisma/client';
 import { ApiKeyService } from '../src/services/auth/api-key.service.js';
 import { Redis } from 'ioredis';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
+
+/**
+ * M-12: Generate a secure random password for seeded admin user
+ * This ensures even in development, we don't use predictable passwords
+ */
+function generateSecurePassword(length: number = 20): string {
+  // Character sets for strong password
+  const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // No I, O to avoid confusion
+  const lowercase = 'abcdefghjkmnpqrstuvwxyz'; // No i, l, o to avoid confusion
+  const numbers = '23456789'; // No 0, 1 to avoid confusion
+  const symbols = '!@#$%^&*';
+
+  const allChars = uppercase + lowercase + numbers + symbols;
+
+  // Ensure at least one of each character type
+  let password = '';
+  password += uppercase[crypto.randomInt(uppercase.length)];
+  password += lowercase[crypto.randomInt(lowercase.length)];
+  password += numbers[crypto.randomInt(numbers.length)];
+  password += symbols[crypto.randomInt(symbols.length)];
+
+  // Fill the rest randomly
+  for (let i = password.length; i < length; i++) {
+    password += allChars[crypto.randomInt(allChars.length)];
+  }
+
+  // Shuffle the password to randomize the position of guaranteed chars
+  return password.split('').sort(() => crypto.randomInt(3) - 1).join('');
+}
 
 async function main() {
   console.log('🌱 Seeding database...');
@@ -68,7 +98,8 @@ async function main() {
   // Create admin user
   console.log('\n👤 Creating admin user...');
 
-  const adminPassword = 'admin123'; // Change in production!
+  // M-12: Generate a secure random password instead of using a hardcoded one
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD || generateSecurePassword();
   const passwordHash = await bcrypt.hash(adminPassword, 12);
 
   const adminUser = await prisma.adminUser.upsert({

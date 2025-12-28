@@ -1,0 +1,343 @@
+---
+import BlogLayout from '../../layouts/BlogLayout.astro';
+---
+
+<BlogLayout
+  title="Visual Regression Testing with Automated Screenshots"
+  description="Implement visual regression testing in your CI/CD pipeline. Detect UI bugs before they reach production using automated screenshot comparisons."
+  keywords="visual regression testing, screenshot testing, UI testing automation, visual testing ci cd, automated screenshot comparison"
+  publishDate="2025-01-01"
+  readTime="7 min read"
+>
+  <div class="tldr-box">
+    <p>
+      <strong>TL;DR:</strong> Visual regression testing catches UI bugs by comparing
+      screenshots before and after code changes. Use tools like Percy, Chromatic,
+      or build your own with a Screenshot API + image comparison library.
+      Run tests in CI/CD to catch issues before production.
+    </p>
+  </div>
+
+  <h2>What Is Visual Regression Testing?</h2>
+
+  <p>
+    Visual regression testing automatically detects unintended UI changes by
+    comparing screenshots of your application across different versions.
+    When a pixel-level difference is detected, the test flags it for review.
+  </p>
+
+  <p>
+    This catches issues that traditional unit and integration tests miss:
+  </p>
+
+  <ul>
+    <li>CSS changes that break layouts</li>
+    <li>Missing or misaligned elements</li>
+    <li>Font rendering issues</li>
+    <li>Color and styling regressions</li>
+    <li>Responsive design breakages</li>
+  </ul>
+
+  <h2>How Visual Regression Testing Works</h2>
+
+  <ol>
+    <li><strong>Capture baseline screenshots</strong> - Take screenshots of your UI in a known-good state</li>
+    <li><strong>Make code changes</strong> - Develop new features or fix bugs</li>
+    <li><strong>Capture new screenshots</strong> - Take screenshots after changes</li>
+    <li><strong>Compare images</strong> - Detect pixel-level differences</li>
+    <li><strong>Review differences</strong> - Accept intentional changes, fix regressions</li>
+  </ol>
+
+  <h2>Implementation Approaches</h2>
+
+  <h3>Option 1: Managed Services (Percy, Chromatic)</h3>
+
+  <p>
+    Services like Percy and Chromatic provide complete visual testing platforms
+    with cloud rendering, baseline management, and review workflows.
+  </p>
+
+  <pre><code class="language-javascript">// Percy with Cypress example
+describe('Homepage', () => &#123;
+  it('should match visual snapshot', () => &#123;
+    cy.visit('/');
+    cy.percySnapshot('Homepage');
+  &#125;);
+&#125;);
+
+// Percy with Playwright
+test('homepage visual test', async (&#123; page &#125;) => &#123;
+  await page.goto('/');
+  await percySnapshot(page, 'Homepage');
+&#125;);</code></pre>
+
+  <p>
+    <strong>Pros:</strong> Easy setup, cloud rendering, team review workflows.
+  </p>
+
+  <p>
+    <strong>Cons:</strong> Monthly subscription costs, external dependency.
+  </p>
+
+  <h3>Option 2: Build Your Own with Screenshot API</h3>
+
+  <p>
+    For more control, build a custom solution using a Screenshot API
+    and image comparison library:
+  </p>
+
+  <pre><code class="language-javascript">const &#123; PNG &#125; = require('pngjs');
+const pixelmatch = require('pixelmatch');
+const fs = require('fs');
+
+async function visualTest(url, testName) &#123;
+  // 1. Capture current screenshot
+  const response = await fetch('https://api.screencraft.dev/v2/screenshot', &#123;
+    method: 'POST',
+    headers: &#123;
+      'Authorization': 'Bearer YOUR_API_KEY',
+      'Content-Type': 'application/json',
+    &#125;,
+    body: JSON.stringify(&#123;
+      url,
+      viewport: &#123; width: 1280, height: 720 &#125;,
+      format: 'png'
+    &#125;)
+  &#125;);
+
+  const data = await response.json();
+  const currentImage = await fetch(data.data.url);
+  const currentBuffer = Buffer.from(await currentImage.arrayBuffer());
+
+  // 2. Load baseline
+  const baselinePath = `./baselines/$&#123;testName&#125;.png`;
+
+  if (!fs.existsSync(baselinePath)) &#123;
+    // First run: save as baseline
+    fs.writeFileSync(baselinePath, currentBuffer);
+    console.log(`Baseline created: $&#123;testName&#125;`);
+    return &#123; passed: true, isNewBaseline: true &#125;;
+  &#125;
+
+  // 3. Compare images
+  const baseline = PNG.sync.read(fs.readFileSync(baselinePath));
+  const current = PNG.sync.read(currentBuffer);
+
+  const &#123; width, height &#125; = baseline;
+  const diff = new PNG(&#123; width, height &#125;);
+
+  const numDiffPixels = pixelmatch(
+    baseline.data,
+    current.data,
+    diff.data,
+    width,
+    height,
+    &#123; threshold: 0.1 &#125;
+  );
+
+  const diffPercentage = (numDiffPixels / (width * height)) * 100;
+
+  // 4. Evaluate results
+  if (diffPercentage > 0.1) &#123; // 0.1% threshold
+    fs.writeFileSync(`./diffs/$&#123;testName&#125;-diff.png`, PNG.sync.write(diff));
+    fs.writeFileSync(`./diffs/$&#123;testName&#125;-current.png`, currentBuffer);
+    return &#123;
+      passed: false,
+      diffPercentage,
+      diffPath: `./diffs/$&#123;testName&#125;-diff.png`
+    &#125;;
+  &#125;
+
+  return &#123; passed: true, diffPercentage &#125;;
+&#125;</code></pre>
+
+  <h3>Option 3: Puppeteer + jest-image-snapshot</h3>
+
+  <p>
+    For simpler setups, use Puppeteer with Jest's image snapshot matcher:
+  </p>
+
+  <pre><code class="language-javascript">const puppeteer = require('puppeteer');
+const &#123; toMatchImageSnapshot &#125; = require('jest-image-snapshot');
+
+expect.extend(&#123; toMatchImageSnapshot &#125;);
+
+describe('Visual Regression', () => &#123;
+  let browser;
+  let page;
+
+  beforeAll(async () => &#123;
+    browser = await puppeteer.launch();
+    page = await browser.newPage();
+    await page.setViewport(&#123; width: 1280, height: 720 &#125;);
+  &#125;);
+
+  afterAll(async () => &#123;
+    await browser.close();
+  &#125;);
+
+  test('homepage matches snapshot', async () => &#123;
+    await page.goto('http://localhost:3000');
+    const screenshot = await page.screenshot();
+
+    expect(screenshot).toMatchImageSnapshot(&#123;
+      failureThreshold: 0.01,
+      failureThresholdType: 'percent'
+    &#125;);
+  &#125;);
+&#125;);</code></pre>
+
+  <h2>CI/CD Integration</h2>
+
+  <p>
+    Run visual tests in your CI/CD pipeline to catch issues before merging:
+  </p>
+
+  <h3>GitHub Actions Example</h3>
+
+  <pre><code class="language-yaml">name: Visual Regression Tests
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  visual-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start application
+        run: npm run build && npm run start &
+        env:
+          PORT: 3000
+
+      - name: Wait for app
+        run: npx wait-on http://localhost:3000
+
+      - name: Run visual tests
+        run: npm run test:visual
+        env:
+          SCREENSHOT_API_KEY: $&#123;&#123; secrets.SCREENSHOT_API_KEY &#125;&#125;
+
+      - name: Upload diff artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: visual-diff
+          path: ./diffs/</code></pre>
+
+  <h2>Best Practices</h2>
+
+  <h3>1. Use Consistent Viewports</h3>
+
+  <p>
+    Always test with the same viewport sizes to avoid false positives:
+  </p>
+
+  <pre><code class="language-javascript">const viewports = [
+  &#123; width: 1920, height: 1080, name: 'desktop' &#125;,
+  &#123; width: 768, height: 1024, name: 'tablet' &#125;,
+  &#123; width: 375, height: 667, name: 'mobile' &#125;
+];
+
+for (const viewport of viewports) &#123;
+  await visualTest(url, `homepage-$&#123;viewport.name&#125;`);
+&#125;</code></pre>
+
+  <h3>2. Wait for Stability</h3>
+
+  <p>
+    Ensure all content is loaded and animations are complete before capturing:
+  </p>
+
+  <pre><code class="language-json">&#123;
+  "url": "https://example.com",
+  "waitFor": &#123;
+    "selector": "[data-testid='content-loaded']",
+    "timeout": 5000
+  &#125;,
+  "delay": 500  // Wait for animations
+&#125;</code></pre>
+
+  <h3>3. Ignore Dynamic Content</h3>
+
+  <p>
+    Mask or hide elements that change between runs (timestamps, ads, etc.):
+  </p>
+
+  <pre><code class="language-javascript">// Hide dynamic elements before screenshot
+await page.evaluate(() => &#123;
+  document.querySelectorAll('[data-dynamic]').forEach(el => &#123;
+    el.style.visibility = 'hidden';
+  &#125;);
+&#125;);</code></pre>
+
+  <h3>4. Set Appropriate Thresholds</h3>
+
+  <p>
+    A 0% threshold is too strict (anti-aliasing causes minor differences).
+    Start with 0.1% and adjust based on your needs.
+  </p>
+
+  <h2>Handling Flaky Tests</h2>
+
+  <p>Common causes of flaky visual tests and solutions:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Issue</th>
+        <th>Solution</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Font rendering differences</td>
+        <td>Use web fonts, not system fonts</td>
+      </tr>
+      <tr>
+        <td>Animation timing</td>
+        <td>Add delay, disable animations</td>
+      </tr>
+      <tr>
+        <td>Dynamic content</td>
+        <td>Mask or stub dynamic areas</td>
+      </tr>
+      <tr>
+        <td>Loading states</td>
+        <td>Wait for specific selectors</td>
+      </tr>
+      <tr>
+        <td>Date/time displays</td>
+        <td>Mock or hide timestamps</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Conclusion</h2>
+
+  <p>
+    Visual regression testing is a powerful addition to your testing strategy.
+    Whether you use a managed service or build your own solution with a
+    Screenshot API, automated visual testing catches bugs that other tests miss.
+  </p>
+
+  <p>
+    Start with critical pages (homepage, checkout, dashboard) and expand coverage
+    as you gain confidence in your visual testing workflow.
+  </p>
+
+  <p>
+    <a href="/dashboard">Get started with ScreenCraft</a> - perfect for building
+    custom visual testing solutions with reliable, fast screenshots.
+  </p>
+</BlogLayout>

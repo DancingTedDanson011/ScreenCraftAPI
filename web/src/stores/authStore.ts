@@ -17,8 +17,17 @@ interface Account {
   usedCredits: number;
 }
 
+// Normalize API URL: Remove trailing /api if present to avoid /api/api/ double prefix
+function normalizeApiUrl(url: string): string {
+  const normalized = url.replace(/\/+$/, '');
+  if (normalized.endsWith('/api')) {
+    return normalized.slice(0, -4);
+  }
+  return normalized;
+}
+
 // API URL from environment
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = normalizeApiUrl(import.meta.env.PUBLIC_API_URL || 'http://localhost:3000');
 
 // Atoms (reactive state)
 export const userAtom = atom<User | null>(null);

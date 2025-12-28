@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
 import { Redis } from 'ioredis';
 import type { ApiKeyInfo, GeneratedApiKey } from '../../types/auth.types.js';
+import { hashApiKeyWithPepper } from '../crypto/encryption.service.js';
 
 const prisma = new PrismaClient();
 
@@ -26,10 +27,11 @@ export class ApiKeyService {
   }
 
   /**
-   * Hash API key using SHA256
+   * Hash API key using SHA256 with pepper
+   * M-06: Peppered hash prevents rainbow table attacks even if DB is compromised
    */
   hashApiKey(key: string): string {
-    return crypto.createHash('sha256').update(key).digest('hex');
+    return hashApiKeyWithPepper(key);
   }
 
   /**

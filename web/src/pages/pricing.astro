@@ -4,9 +4,17 @@ import Navbar from '../components/Navbar.astro';
 import Pricing from '../components/Pricing.astro';
 import FAQ from '../components/FAQ.astro';
 import Footer from '../components/Footer.astro';
+
+const pageTitle = "Pricing - Screenshot & PDF API Plans | ScreenCraft";
+const pageDescription = "Simple, transparent pricing for ScreenCraft API. Start free with 100 screenshots/month. Scale with Pro or Business plans. No hidden fees, no surprises.";
+const pageKeywords = "screenshot API pricing, PDF API plans, web capture pricing, API subscription, developer API pricing, free screenshot API";
 ---
 
-<Layout title="Pricing - ScreenCraft API">
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  keywords={pageKeywords}
+>
   <Navbar />
   <main>
     <!-- Header -->

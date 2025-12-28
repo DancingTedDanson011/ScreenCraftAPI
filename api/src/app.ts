@@ -5,7 +5,13 @@ import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
+import { Redis } from 'ioredis';
 import { registerRawBodyParser } from './middleware/raw-body.middleware.js';
+import { createAuthMiddleware } from './middleware/auth.middleware.js';
+import { csrfMiddleware } from './middleware/csrf.middleware.js';
+import { ApiKeyService } from './services/auth/api-key.service.js';
+import { RapidApiService } from './services/rapidapi/rapidapi.service.js';
+import { config } from './config/index.js';
 
 // Routes
 import screenshotRoutes from './routes/screenshot.routes';
@@ -13,6 +19,7 @@ import pdfRoutes from './routes/pdf.routes';
 import paymentRoutes from './routes/payment.routes.js';
 import formsRoutes from './routes/forms.routes';
 import docsRoutes from './routes/docs.routes';
+import { gdprRoutes } from './routes/gdpr.routes.js';
 
 export interface AppConfig {
   port: number;
@@ -46,11 +53,12 @@ export async function buildApp(config: AppConfig): Promise<FastifyInstance> {
   }).withTypeProvider<TypeBoxTypeProvider>();
 
   // Register CORS
+  // H-13: Use explicit origin allowlist, never allow all origins
   await fastify.register(cors, {
-    origin: config.env === 'production' ? ['https://yourapp.com'] : true,
+    origin: config.cors.origin, // Explicit allowlist from config
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-CSRF-Token'],
   });
 
   // Register Security Headers
@@ -186,16 +194,74 @@ export async function buildApp(config: AppConfig): Promise<FastifyInstance> {
   // Register Documentation Routes
   await fastify.register(docsRoutes);
 
+  // Initialize Redis and auth services for protected routes
+  const redis = new Redis({
+    host: config.redis.host,
+    port: config.redis.port,
+    password: config.redis.password,
+  });
+
+  const apiKeyService = new ApiKeyService(redis);
+  const rapidApiService = new RapidApiService();
+
+  // Create auth middleware for protected routes
+  const authMiddleware = createAuthMiddleware({
+    apiKeyService,
+    rapidApiService,
+  });
+
+  // Paths that should skip auth (webhooks use their own verification)
+  const publicPaths = [
+    '/v1/payment/webhooks/stripe',
+  ];
+
+  // Attach services to fastify instance for use in controllers
+  (fastify as any).apiKeyService = apiKeyService;
+  (fastify as any).rapidApiService = rapidApiService;
+
   // Register API Routes with /v1 prefix
   await fastify.register(
     async (instance) => {
-      await instance.register(screenshotRoutes);
-      await instance.register(pdfRoutes);
-      await instance.register(paymentRoutes, { prefix: '/payment' });
+      // Protected routes - require authentication
+      await instance.register(
+        async (protectedInstance) => {
+          // Apply auth middleware with webhook path exclusion
+          protectedInstance.addHook('preHandler', async (request, reply) => {
+            // Skip auth for webhook endpoints (they use their own verification)
+            if (publicPaths.some(path => request.url.startsWith(path.replace('/v1', '')))) {
+              return;
+            }
+            // Apply normal auth middleware
+            return authMiddleware(request, reply);
+          });
+
+          // H-06: Apply CSRF protection after auth
+          protectedInstance.addHook('preHandler', csrfMiddleware);
+
+          // Screenshot and PDF routes require authentication
+          await protectedInstance.register(screenshotRoutes);
+          await protectedInstance.register(pdfRoutes);
+
+          // Payment routes require authentication
+          // Note: Webhook endpoint is excluded via publicPaths check above
+          await protectedInstance.register(paymentRoutes, { prefix: '/payment' });
+
+          // M-15: GDPR routes (export, delete) require authentication
+          await protectedInstance.register(gdprRoutes);
+        }
+      );
+
+      // Public routes - no authentication required
+      // Forms (newsletter, contact, feedback) are public
       await instance.register(formsRoutes, { prefix: '/forms' });
     },
     { prefix: '/v1' }
   );
+
+  // Cleanup Redis on server close
+  fastify.addHook('onClose', async () => {
+    await redis.quit();
+  });
 
   // 404 Handler
   fastify.setNotFoundHandler((request, reply) => {
@@ -214,17 +280,27 @@ export async function buildApp(config: AppConfig): Promise<FastifyInstance> {
   });
 
   // Global Error Handler
+  // H-17: Sanitize error messages in production to prevent information leakage
   fastify.setErrorHandler((error, request, reply) => {
     fastify.log.error(error);
 
     const statusCode = error.statusCode || 500;
     const isDevelopment = config.env === 'development';
+    const isProduction = config.env === 'production';
+
+    // H-17: In production, only show generic messages for 5xx errors
+    // to prevent leaking sensitive information (DB errors, stack traces, etc.)
+    let sanitizedMessage = error.message || 'An unexpected error occurred';
+    if (isProduction && statusCode >= 500) {
+      sanitizedMessage = 'An internal server error occurred. Please try again later.';
+    }
 
     reply.code(statusCode).send({
       success: false,
       error: {
         code: error.code || 'INTERNAL_SERVER_ERROR',
-        message: error.message || 'An unexpected error occurred',
+        message: sanitizedMessage,
+        // Only include stack trace in development
         ...(isDevelopment && { stack: error.stack }),
       },
       meta: {

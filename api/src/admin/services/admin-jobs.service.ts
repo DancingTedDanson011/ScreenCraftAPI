@@ -7,6 +7,7 @@ import type {
   PaginationParams,
   PaginatedResponse,
 } from '../types/admin.types.js';
+import { createSafeOrderBy, validatePagination } from '../utils/query-validator.js';
 
 /**
  * Admin Jobs Service
@@ -24,8 +25,12 @@ export class AdminJobsService {
       search?: string;
     }
   ): Promise<PaginatedResponse<AdminJobListItem>> {
-    const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', type = 'all', status, accountId, search } = params;
-    const skip = (page - 1) * limit;
+    const { sortBy, sortOrder, type = 'all', status, accountId, search } = params;
+
+    // M-03: Validate pagination and sort parameters
+    const { page, limit, skip } = validatePagination(params.page, params.limit, 100);
+    const screenshotOrderBy = createSafeOrderBy('screenshot', sortBy, sortOrder, 'createdAt');
+    const pdfOrderBy = createSafeOrderBy('pdf', sortBy, sortOrder, 'createdAt');
 
     const jobs: AdminJobListItem[] = [];
     let total = 0;
@@ -50,13 +55,14 @@ export class AdminJobsService {
     }
 
     // Get screenshots if needed
+    // M-03: Using validated orderBy to prevent injection
     if (type === 'all' || type === 'screenshot') {
       const screenshotCount = await prisma.screenshot.count({ where: screenshotWhere });
       const screenshots = await prisma.screenshot.findMany({
         where: screenshotWhere,
         skip: type === 'screenshot' ? skip : 0,
         take: type === 'screenshot' ? limit : Math.floor(limit / 2),
-        orderBy: { [sortBy]: sortOrder },
+        orderBy: screenshotOrderBy,
         select: {
           id: true,
           accountId: true,
@@ -89,13 +95,14 @@ export class AdminJobsService {
     }
 
     // Get PDFs if needed
+    // M-03: Using validated orderBy to prevent injection
     if (type === 'all' || type === 'pdf') {
       const pdfCount = await prisma.pdf.count({ where: pdfWhere });
       const pdfs = await prisma.pdf.findMany({
         where: pdfWhere,
         skip: type === 'pdf' ? skip : 0,
         take: type === 'pdf' ? limit : Math.floor(limit / 2),
-        orderBy: { [sortBy]: sortOrder },
+        orderBy: pdfOrderBy,
         select: {
           id: true,
           accountId: true,

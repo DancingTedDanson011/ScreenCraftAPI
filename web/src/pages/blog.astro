@@ -1,0 +1,151 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+const pageTitle = "Developer Blog - Screenshot & PDF API Tips | ScreenCraft";
+const pageDescription = "Learn how to capture screenshots programmatically, generate PDFs from URLs, and optimize your web automation workflows. Tips, tutorials, and best practices.";
+const pageKeywords = "screenshot API blog, PDF generation tutorials, web automation tips, Puppeteer alternatives, headless browser guides";
+
+const blogPosts = [
+  {
+    title: "How to Take a Screenshot of a Website Programmatically",
+    description: "Learn multiple approaches to capture website screenshots using JavaScript, Python, and APIs. Compare Puppeteer, Playwright, and Screenshot APIs.",
+    slug: "how-to-take-screenshot-of-website-programmatically",
+    date: "January 15, 2025",
+    readTime: "8 min read",
+    tags: ["Tutorial", "JavaScript", "Python"]
+  },
+  {
+    title: "Puppeteer Screenshot Too Slow? 7 Ways to Fix It",
+    description: "Speed up your Puppeteer screenshots by 10x with these optimization techniques. Learn buffer usage, viewport reduction, and when to consider alternatives.",
+    slug: "puppeteer-screenshot-slow-fix",
+    date: "January 10, 2025",
+    readTime: "6 min read",
+    tags: ["Performance", "Puppeteer", "Node.js"]
+  },
+  {
+    title: "Convert URL to PDF: Complete API Guide",
+    description: "Generate professional PDFs from any URL or HTML content. Learn about pagination, headers, footers, and advanced PDF customization options.",
+    slug: "convert-url-to-pdf-api",
+    date: "January 8, 2025",
+    readTime: "7 min read",
+    tags: ["PDF", "API", "Tutorial"]
+  },
+  {
+    title: "Screenshot API vs Puppeteer: Which Should You Use?",
+    description: "Compare self-hosted Puppeteer with managed Screenshot APIs. Understand the trade-offs in cost, reliability, scalability, and maintenance.",
+    slug: "screenshot-api-vs-puppeteer",
+    date: "January 5, 2025",
+    readTime: "6 min read",
+    tags: ["Comparison", "Architecture", "Decision Guide"]
+  },
+  {
+    title: "Visual Regression Testing with Automated Screenshots",
+    description: "Implement visual regression testing in your CI/CD pipeline. Detect UI bugs before they reach production using automated screenshot comparisons.",
+    slug: "visual-regression-testing-screenshots",
+    date: "January 1, 2025",
+    readTime: "7 min read",
+    tags: ["Testing", "CI/CD", "QA"]
+  }
+];
+---
+
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  keywords={pageKeywords}
+>
+  <Navbar />
+
+  <main class="min-h-screen bg-background">
+    <!-- Header -->
+    <section class="pt-16 pb-12 border-b border-border">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-4xl sm:text-5xl font-bold text-text-primary mb-6">
+          Developer Blog
+        </h1>
+        <p class="text-lg text-text-secondary max-w-2xl mx-auto">
+          Tutorials, best practices, and insights for capturing screenshots and generating PDFs at scale.
+        </p>
+      </div>
+    </section>
+
+    <!-- Blog Posts Grid -->
+    <section class="py-16">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid gap-8">
+          {blogPosts.map((post, index) => (
+            <a
+              href={`/blog/${post.slug}`}
+              class="group block p-8 bg-surface border border-border rounded-xl hover:border-accent-primary transition-all duration-200"
+            >
+              <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                <div class="flex-1">
+                  <div class="flex flex-wrap items-center gap-3 mb-4">
+                    {post.tags.map(tag => (
+                      <span class="px-3 py-1 text-xs font-medium bg-accent-secondary/10 text-accent-secondary rounded-full">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <h2 class="text-xl sm:text-2xl font-semibold text-text-primary group-hover:text-accent-primary transition mb-4">
+                    {post.title}
+                  </h2>
+
+                  <p class="text-text-secondary leading-relaxed mb-4">
+                    {post.description}
+                  </p>
+
+                  <div class="flex items-center gap-4 text-sm text-text-muted">
+                    <time datetime={post.date}>{post.date}</time>
+                    <span class="text-border">|</span>
+                    <span>{post.readTime}</span>
+                  </div>
+                </div>
+
+                <div class="flex-shrink-0 lg:self-center">
+                  <span class="inline-flex items-center gap-2 text-accent-primary group-hover:translate-x-1 transition-transform">
+                    Read more
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Newsletter CTA -->
+    <section class="py-16 border-t border-border bg-surface/30">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-2xl sm:text-3xl font-bold text-text-primary mb-4">
+          Stay Updated
+        </h2>
+        <p class="text-text-secondary mb-8">
+          Get the latest tutorials and API updates delivered to your inbox.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+          <a
+            href="/docs"
+            class="inline-flex items-center justify-center px-6 py-3 bg-accent-primary hover:bg-accent-primary/90 text-white font-medium rounded-lg transition"
+          >
+            Explore Documentation
+          </a>
+          <a
+            href="/dashboard"
+            class="inline-flex items-center justify-center px-6 py-3 border border-border hover:bg-surface text-text-primary font-medium rounded-lg transition"
+          >
+            Get API Key
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>

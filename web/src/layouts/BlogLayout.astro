@@ -1,0 +1,345 @@
+---
+import Layout from "./Layout.astro";
+import Navbar from "../components/Navbar.astro";
+import Footer from "../components/Footer.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  keywords: string;
+  publishDate: string;
+  author?: string;
+  readTime?: string;
+  image?: string;
+}
+
+const {
+  title,
+  description,
+  keywords,
+  publishDate,
+  author = "ScreenCraft Team",
+  readTime = "5 min read",
+  image
+} = Astro.props;
+
+const canonicalURL = Astro.site
+  ? new URL(Astro.url.pathname, Astro.site)
+  : new URL(Astro.url.pathname, "https://screencraftapi.com");
+const siteUrl = Astro.site?.toString() || 'https://screencraftapi.com';
+
+// BlogPosting Schema
+const blogSchema = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": title,
+  "description": description,
+  "image": image || `${siteUrl}/og-image.png`,
+  "author": {
+    "@type": "Organization",
+    "name": author
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "ScreenCraft",
+    "logo": {
+      "@type": "ImageObject",
+      "url": `${siteUrl}/logo.png`
+    }
+  },
+  "datePublished": publishDate,
+  "dateModified": publishDate,
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": canonicalURL.toString()
+  }
+};
+---
+
+<Layout
+  title={`${title} | ScreenCraft Blog`}
+  description={description}
+  keywords={keywords}
+  ogType="article"
+>
+  <Navbar />
+
+  <main class="min-h-screen bg-background">
+    <!-- Article Header -->
+    <header class="pt-16 pb-12 border-b border-border">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center gap-3 text-sm text-text-muted mb-6">
+          <a href="/blog" class="hover:text-text-primary transition">Blog</a>
+          <span>/</span>
+          <span class="text-text-secondary">{title.substring(0, 40)}...</span>
+        </div>
+
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-text-primary mb-6 leading-tight">
+          {title}
+        </h1>
+
+        <p class="text-lg sm:text-xl text-text-secondary mb-8 leading-relaxed">
+          {description}
+        </p>
+
+        <div class="flex flex-wrap items-center gap-4 text-sm text-text-muted">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-accent-primary/20 rounded-full flex items-center justify-center">
+              <svg class="w-4 h-4 text-accent-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <span>{author}</span>
+          </div>
+          <span class="text-border">|</span>
+          <time datetime={publishDate}>{publishDate}</time>
+          <span class="text-border">|</span>
+          <span>{readTime}</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Article Content -->
+    <article class="py-16">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="prose prose-lg prose-invert max-w-none">
+          <slot />
+        </div>
+      </div>
+    </article>
+
+    <!-- CTA Section -->
+    <section class="py-16 border-t border-border bg-surface/50">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-2xl sm:text-3xl font-bold text-text-primary mb-4">
+          Ready to Try ScreenCraft?
+        </h2>
+        <p class="text-text-secondary mb-8 max-w-xl mx-auto">
+          Start capturing screenshots and generating PDFs in minutes. Free tier includes 100 screenshots/month.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a
+            href="/dashboard"
+            class="inline-flex items-center justify-center px-8 py-3 bg-accent-primary hover:bg-accent-primary/90 text-white font-medium rounded-lg transition"
+          >
+            Get Free API Key
+          </a>
+          <a
+            href="/docs"
+            class="inline-flex items-center justify-center px-8 py-3 border border-border hover:bg-surface text-text-primary font-medium rounded-lg transition"
+          >
+            View Documentation
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Related Posts Placeholder -->
+    <section class="py-16 border-t border-border">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h3 class="text-xl font-semibold text-text-primary mb-8">More Articles</h3>
+        <div class="grid sm:grid-cols-2 gap-6">
+          <a href="/blog" class="group block p-6 bg-surface border border-border rounded-lg hover:border-accent-primary transition">
+            <span class="text-text-primary font-medium group-hover:text-accent-primary transition">
+              Browse All Articles
+            </span>
+            <p class="text-text-secondary text-sm mt-2">
+              Explore more tutorials, guides, and best practices
+            </p>
+          </a>
+          <a href="/docs/quickstart" class="group block p-6 bg-surface border border-border rounded-lg hover:border-accent-primary transition">
+            <span class="text-text-primary font-medium group-hover:text-accent-primary transition">
+              Quickstart Guide
+            </span>
+            <p class="text-text-secondary text-sm mt-2">
+              Get started with ScreenCraft in under 5 minutes
+            </p>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+
+  <!-- Schema.org BlogPosting -->
+  <script type="application/ld+json" set:html={JSON.stringify(blogSchema)} />
+</Layout>
+
+<style>
+  /* Base prose styling */
+  .prose {
+    color: #8B949E;
+    line-height: 1.75;
+  }
+
+  /* Heading styles with proper spacing */
+  .prose :global(h2) {
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #F0F6FC;
+    scroll-margin-top: 6rem;
+  }
+
+  .prose :global(h3) {
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.375rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #F0F6FC;
+    scroll-margin-top: 6rem;
+  }
+
+  .prose :global(h4) {
+    margin-top: 2rem;
+    margin-bottom: 0.875rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #F0F6FC;
+  }
+
+  /* Paragraph spacing */
+  .prose :global(p) {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* List spacing */
+  .prose :global(ul),
+  .prose :global(ol) {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .prose :global(ul > li),
+  .prose :global(ol > li) {
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .prose :global(li > ul),
+  .prose :global(li > ol) {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Code block styling */
+  .prose :global(pre) {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    padding: 1.25rem;
+    background-color: #161B22;
+    border: 1px solid #30363D;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+  }
+
+  .prose :global(code) {
+    color: #1F6FEB;
+    background-color: rgba(31, 111, 235, 0.1);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+  }
+
+  .prose :global(pre code) {
+    background-color: transparent;
+    padding: 0;
+    color: #F0F6FC;
+    font-size: 0.875rem;
+  }
+
+  /* Link styling */
+  .prose :global(a) {
+    color: #1F6FEB;
+    text-decoration: none;
+  }
+
+  .prose :global(a:hover) {
+    text-decoration: underline;
+  }
+
+  /* Strong text */
+  .prose :global(strong) {
+    color: #F0F6FC;
+    font-weight: 600;
+  }
+
+  /* Blockquote */
+  .prose :global(blockquote) {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    padding-left: 1.25rem;
+    border-left: 3px solid #30363D;
+    color: #8B949E;
+    font-style: italic;
+  }
+
+  /* Table styling */
+  .prose :global(table) {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .prose :global(th),
+  .prose :global(td) {
+    padding: 0.75rem 1rem;
+    border: 1px solid #30363D;
+    text-align: left;
+  }
+
+  .prose :global(th) {
+    background-color: #161B22;
+    color: #F0F6FC;
+    font-weight: 600;
+  }
+
+  /* HR styling */
+  .prose :global(hr) {
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+    border: none;
+    border-top: 1px solid #30363D;
+  }
+
+  /* Image styling */
+  .prose :global(img) {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    border-radius: 0.5rem;
+  }
+
+  /* TL;DR Box Styling */
+  .prose :global(.tldr-box) {
+    margin-top: 0;
+    margin-bottom: 2.5rem;
+    padding: 1.5rem;
+    background-color: rgba(35, 134, 54, 0.1);
+    border-left: 4px solid #238636;
+    border-radius: 0 0.75rem 0.75rem 0;
+  }
+
+  .prose :global(.tldr-box p) {
+    margin: 0;
+  }
+
+  .prose :global(.tldr-box strong) {
+    color: #238636;
+  }
+
+  /* First/Last element margin fixes */
+  .prose :global(> :first-child) {
+    margin-top: 0;
+  }
+
+  .prose :global(> :last-child) {
+    margin-bottom: 0;
+  }
+</style>

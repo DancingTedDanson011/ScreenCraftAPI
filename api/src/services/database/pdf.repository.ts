@@ -81,10 +81,21 @@ export class PdfRepository {
 
   /**
    * Find PDF by ID
+   * @deprecated Use findByIdAndAccountId for secure access
    */
   async findById(id: string): Promise<Pdf | null> {
     return prisma.pdf.findUnique({
       where: { id },
+    });
+  }
+
+  /**
+   * Find PDF by ID with ownership verification (BOLA protection)
+   * Returns null if PDF doesn't exist OR doesn't belong to account
+   */
+  async findByIdAndAccountId(id: string, accountId: string): Promise<Pdf | null> {
+    return prisma.pdf.findFirst({
+      where: { id, accountId },
     });
   }
 
@@ -176,7 +187,19 @@ export class PdfRepository {
   }
 
   /**
-   * Delete PDF
+   * Delete PDF with ownership verification (BOLA protection)
+   * Returns true if deleted, false if not found or unauthorized
+   */
+  async deleteByIdAndAccountId(id: string, accountId: string): Promise<boolean> {
+    const result = await prisma.pdf.deleteMany({
+      where: { id, accountId },
+    });
+    return result.count > 0;
+  }
+
+  /**
+   * Delete PDF by ID only (for internal/admin use)
+   * @deprecated Use deleteByIdAndAccountId for user-facing operations
    */
   async delete(id: string): Promise<void> {
     await prisma.pdf.delete({

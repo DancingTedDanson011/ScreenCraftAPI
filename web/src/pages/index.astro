@@ -7,9 +7,17 @@ import CodeExample from '../components/CodeExample.astro';
 import Pricing from '../components/Pricing.astro';
 import FAQ from '../components/FAQ.astro';
 import Footer from '../components/Footer.astro';
+
+const pageTitle = "Screenshot API - Capture Any URL as PNG, PDF | ScreenCraft";
+const pageDescription = "Generate pixel-perfect screenshots and PDFs from any URL with our simple REST API. No Puppeteer setup required. Free tier with 100 screenshots/month. Sub-2-second response times. Built for developers.";
+const pageKeywords = "screenshot API, PDF generation API, URL to image, web capture API, headless browser API, website screenshot, HTML to PDF, REST API screenshots, webpage to PNG, automated screenshots, visual regression testing, Puppeteer alternative";
 ---
 
-<Layout title="Screenshot API - Capture Any URL as PNG, PDF | ScreenCraft">
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  keywords={pageKeywords}
+>
   <Navbar />
   <main>
     <Hero />

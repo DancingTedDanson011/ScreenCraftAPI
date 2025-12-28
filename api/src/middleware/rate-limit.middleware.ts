@@ -125,6 +125,69 @@ export function createRateLimitMiddleware(options: RateLimitMiddlewareOptions) {
 }
 
 /**
+ * Login brute-force protection
+ * Tracks by IP + email to prevent credential stuffing
+ * C-03: Critical security fix
+ */
+export function createLoginRateLimiter(options: RateLimitMiddlewareOptions) {
+  const { redis } = options;
+
+  // Track failed login attempts
+  const limiter = new RateLimiterRedis({
+    storeClient: redis,
+    keyPrefix: 'login_fail:',
+    points: 5, // 5 failed attempts allowed
+    duration: 15 * 60, // per 15 minutes
+    blockDuration: 30 * 60, // Block for 30 minutes after exceeding
+  });
+
+  return {
+    /**
+     * Consume a point on login attempt (call before validating credentials)
+     * Returns true if allowed, false if blocked
+     */
+    async consume(ip: string, email: string): Promise<{ allowed: boolean; retryAfter?: number }> {
+      const key = `${ip}:${email.toLowerCase()}`;
+
+      try {
+        await limiter.consume(key, 1);
+        return { allowed: true };
+      } catch (rateLimiterRes) {
+        if (rateLimiterRes instanceof Error) {
+          throw rateLimiterRes;
+        }
+        const res = rateLimiterRes as RateLimiterRes;
+        return {
+          allowed: false,
+          retryAfter: Math.ceil(res.msBeforeNext / 1000),
+        };
+      }
+    },
+
+    /**
+     * Reset attempts on successful login
+     */
+    async reset(ip: string, email: string): Promise<void> {
+      const key = `${ip}:${email.toLowerCase()}`;
+      await limiter.delete(key);
+    },
+
+    /**
+     * Get remaining attempts for a key
+     */
+    async getRemaining(ip: string, email: string): Promise<number> {
+      const key = `${ip}:${email.toLowerCase()}`;
+      try {
+        const res = await limiter.get(key);
+        return res ? Math.max(0, 5 - res.consumedPoints) : 5;
+      } catch {
+        return 5;
+      }
+    },
+  };
+}
+
+/**
  * IP-based rate limiter for unauthenticated requests
  * More restrictive than authenticated limits
  */

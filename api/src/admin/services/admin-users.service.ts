@@ -7,6 +7,7 @@ import type {
   PaginatedResponse,
 } from '../types/admin.types.js';
 import { Tier } from '@prisma/client';
+import { createSafeOrderBy, validatePagination } from '../utils/query-validator.js';
 
 /**
  * Admin Users Service
@@ -22,8 +23,11 @@ export class AdminUsersService {
       tier?: Tier;
     }
   ): Promise<PaginatedResponse<AdminUserListItem>> {
-    const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', search, tier } = params;
-    const skip = (page - 1) * limit;
+    const { sortBy, sortOrder, search, tier } = params;
+
+    // M-03: Validate pagination and sort parameters
+    const { page, limit, skip } = validatePagination(params.page, params.limit, 100);
+    const orderBy = createSafeOrderBy('account', sortBy, sortOrder, 'createdAt');
 
     // Build where clause
     const where: any = {};
@@ -43,11 +47,12 @@ export class AdminUsersService {
     const total = await prisma.account.count({ where });
 
     // Get accounts with related data
+    // M-03: Using validated orderBy to prevent injection
     const accounts = await prisma.account.findMany({
       where,
       skip,
       take: limit,
-      orderBy: { [sortBy]: sortOrder },
+      orderBy,
       include: {
         user: {
           select: {

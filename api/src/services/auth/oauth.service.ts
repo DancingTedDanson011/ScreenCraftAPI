@@ -1,26 +1,32 @@
-// OAuth Service - Google Authentication Handler
+// OAuth Service - Multi-Provider Authentication Handler
 
 import { prisma } from '../../lib/db.js';
 
-interface GoogleUser {
+type OAuthProvider = 'google' | 'github';
+
+interface OAuthUser {
   id: string;
   email: string;
   name: string;
   picture: string;
+  provider: OAuthProvider;
 }
 
 export class OAuthService {
   /**
-   * Find existing user or create new one from Google OAuth data
-   * Links Google account to existing user if email matches
+   * Find existing user or create new one from OAuth data
+   * Supports multiple providers (Google, GitHub)
+   * Links OAuth account to existing user if email matches
    */
-  async findOrCreateUser(googleUser: GoogleUser) {
+  async findOrCreateUser(oauthUser: OAuthUser) {
+    const { provider, id: providerAccountId, email, name, picture } = oauthUser;
+
     // Check if OAuth account already exists
     let oauthAccount = await prisma.oAuthAccount.findUnique({
       where: {
         provider_providerAccountId: {
-          provider: 'google',
-          providerAccountId: googleUser.id,
+          provider,
+          providerAccountId,
         },
       },
       include: {
@@ -41,7 +47,7 @@ export class OAuthService {
 
     // Check if user with this email already exists (link account)
     let user = await prisma.user.findUnique({
-      where: { email: googleUser.email },
+      where: { email },
       include: { account: true },
     });
 
@@ -51,7 +57,7 @@ export class OAuthService {
         // Create Account first
         const newAccount = await tx.account.create({
           data: {
-            email: googleUser.email,
+            email,
             tier: 'FREE',
             monthlyCredits: 100,
             usedCredits: 0,
@@ -61,9 +67,9 @@ export class OAuthService {
         // Create User linked to Account
         const newUser = await tx.user.create({
           data: {
-            email: googleUser.email,
-            name: googleUser.name,
-            image: googleUser.picture,
+            email,
+            name,
+            image: picture,
             emailVerified: new Date(),
             lastLoginAt: new Date(),
             accountId: newAccount.id,
@@ -79,8 +85,8 @@ export class OAuthService {
     await prisma.oAuthAccount.create({
       data: {
         userId: user.id,
-        provider: 'google',
-        providerAccountId: googleUser.id,
+        provider,
+        providerAccountId,
       },
     });
 

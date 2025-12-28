@@ -12,6 +12,7 @@ import type {
   WebhookListItem,
 } from '../../types/dashboard.types.js';
 import crypto from 'node:crypto';
+import { encryptWebhookSecret, decryptWebhookSecret } from '../crypto/encryption.service.js';
 
 export class DashboardRepository {
   /**
@@ -373,20 +374,23 @@ export class DashboardRepository {
 
   /**
    * Create a new webhook
+   * H-10: Webhook secrets are encrypted before storage
    */
   async createWebhook(
     accountId: string,
     url: string,
     events: string[]
   ): Promise<{ id: string; secret: string; createdAt: Date }> {
-    const secret = this.generateWebhookSecret();
+    const plaintextSecret = this.generateWebhookSecret();
+    // H-10: Encrypt the secret before storing in database
+    const encryptedSecret = encryptWebhookSecret(plaintextSecret);
 
     const webhook = await prisma.webhook.create({
       data: {
         accountId,
         url,
         events,
-        secret,
+        secret: encryptedSecret,
         isActive: true,
       },
       select: {
@@ -395,9 +399,10 @@ export class DashboardRepository {
       },
     });
 
+    // Return the plaintext secret to the user (shown only once)
     return {
       id: webhook.id,
-      secret,
+      secret: plaintextSecret,
       createdAt: webhook.createdAt,
     };
   }

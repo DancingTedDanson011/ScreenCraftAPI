@@ -67,10 +67,21 @@ export class ScreenshotRepository {
 
   /**
    * Find screenshot by ID
+   * @deprecated Use findByIdAndAccountId for secure access
    */
   async findById(id: string): Promise<Screenshot | null> {
     return prisma.screenshot.findUnique({
       where: { id },
+    });
+  }
+
+  /**
+   * Find screenshot by ID with ownership verification (BOLA protection)
+   * Returns null if screenshot doesn't exist OR doesn't belong to account
+   */
+  async findByIdAndAccountId(id: string, accountId: string): Promise<Screenshot | null> {
+    return prisma.screenshot.findFirst({
+      where: { id, accountId },
     });
   }
 
@@ -158,7 +169,19 @@ export class ScreenshotRepository {
   }
 
   /**
-   * Delete screenshot
+   * Delete screenshot with ownership verification (BOLA protection)
+   * Returns true if deleted, false if not found or unauthorized
+   */
+  async deleteByIdAndAccountId(id: string, accountId: string): Promise<boolean> {
+    const result = await prisma.screenshot.deleteMany({
+      where: { id, accountId },
+    });
+    return result.count > 0;
+  }
+
+  /**
+   * Delete screenshot by ID only (for internal/admin use)
+   * @deprecated Use deleteByIdAndAccountId for user-facing operations
    */
   async delete(id: string): Promise<void> {
     await prisma.screenshot.delete({

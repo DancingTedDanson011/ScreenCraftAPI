@@ -4,7 +4,8 @@ import type {
   PdfMargin,
   PdfFormat,
 } from '../../schemas/pdf.schema.js';
-import { validateUrl, UrlValidationError } from '../../utils/url-validator.js';
+import { validateUrl, validateUrlWithDns, UrlValidationError } from '../../utils/url-validator.js';
+import { sanitizeHtml, sanitizePdfTemplate } from '../../utils/html-sanitizer.js';
 
 /**
  * PDF Generation Options
@@ -283,6 +284,16 @@ export class PdfService {
       throw new PdfServiceError('URL is required', 'MISSING_URL');
     }
 
+    // H-07: Validate URL with async DNS resolution (SSRF protection)
+    try {
+      await validateUrlWithDns(options.url);
+    } catch (error) {
+      if (error instanceof UrlValidationError) {
+        throw new PdfServiceError(error.message, 'SSRF_BLOCKED');
+      }
+      throw error;
+    }
+
     try {
       const waitUntil = options.waitOptions?.waitUntil || 'load';
       const timeout = options.waitOptions?.timeout || 30000;
@@ -304,6 +315,7 @@ export class PdfService {
 
   /**
    * Load HTML content into page
+   * H-08: Sanitizes HTML to prevent XSS before rendering
    */
   private async loadHtml(page: Page, options: PdfGenerationOptions): Promise<void> {
     if (!options.html) {
@@ -311,7 +323,10 @@ export class PdfService {
     }
 
     try {
-      await page.setContent(options.html, {
+      // H-08: Sanitize HTML content to prevent XSS
+      const sanitizedHtml = sanitizeHtml(options.html);
+
+      await page.setContent(sanitizedHtml, {
         waitUntil: 'load',
         timeout: options.waitOptions?.timeout || 30000,
       });
@@ -345,12 +360,13 @@ export class PdfService {
       }
 
       // Add header/footer templates if specified
+      // H-08: Sanitize templates to prevent XSS
       if (options.headerTemplate) {
-        pdfOptions.headerTemplate = options.headerTemplate;
+        pdfOptions.headerTemplate = sanitizePdfTemplate(options.headerTemplate);
       }
 
       if (options.footerTemplate) {
-        pdfOptions.footerTemplate = options.footerTemplate;
+        pdfOptions.footerTemplate = sanitizePdfTemplate(options.footerTemplate);
       }
 
       // Add page ranges if specified

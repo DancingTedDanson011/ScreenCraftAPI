@@ -53,7 +53,23 @@ export async function createPdf(
     const validatedData = pdfRequestSchema.parse(request.body);
 
     // Get account ID from auth context (set by auth middleware)
-    const accountId = request.auth?.accountId || 'default'; // TODO: Remove fallback when auth is required
+    const accountId = request.auth?.accountId;
+    if (!accountId) {
+      const response: ApiResponse = {
+        success: false,
+        error: {
+          code: ErrorCode.AUTHENTICATION_REQUIRED,
+          message: 'Authentication required',
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: request.id,
+          version: 'v1',
+        },
+      };
+      reply.code(401).send(response);
+      return;
+    }
 
     // Check if async processing is requested
     const isAsync = validatedData.async;
@@ -239,8 +255,27 @@ export async function getPdf(
 ): Promise<void> {
   try {
     const { id } = request.params;
+    const accountId = request.auth?.accountId;
 
-    const pdf = await pdfRepository.findById(id);
+    if (!accountId) {
+      const response: ApiResponse = {
+        success: false,
+        error: {
+          code: ErrorCode.AUTHENTICATION_REQUIRED,
+          message: 'Authentication required',
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: request.id,
+          version: 'v1',
+        },
+      };
+      reply.code(401).send(response);
+      return;
+    }
+
+    // BOLA protection: verify ownership before returning data
+    const pdf = await pdfRepository.findByIdAndAccountId(id, accountId);
 
     if (!pdf) {
       const response: ApiResponse = {
@@ -299,7 +334,24 @@ export async function listPdfs(
 ): Promise<void> {
   try {
     const { page, limit, status, type, sortBy, sortOrder } = request.query;
-    const accountId = request.auth?.accountId || 'default';
+    const accountId = request.auth?.accountId;
+
+    if (!accountId) {
+      const response: ApiResponse = {
+        success: false,
+        error: {
+          code: ErrorCode.AUTHENTICATION_REQUIRED,
+          message: 'Authentication required',
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: request.id,
+          version: 'v1',
+        },
+      };
+      reply.code(401).send(response);
+      return;
+    }
 
     // Convert status and type to uppercase for Prisma enums
     const prismaStatus = status ? (status.toUpperCase() as any) : undefined;
@@ -367,8 +419,27 @@ export async function downloadPdf(
 ): Promise<void> {
   try {
     const { id } = request.params;
+    const accountId = request.auth?.accountId;
 
-    const pdf = await pdfRepository.findById(id);
+    if (!accountId) {
+      const response: ApiResponse = {
+        success: false,
+        error: {
+          code: ErrorCode.AUTHENTICATION_REQUIRED,
+          message: 'Authentication required',
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: request.id,
+          version: 'v1',
+        },
+      };
+      reply.code(401).send(response);
+      return;
+    }
+
+    // BOLA protection: verify ownership before allowing download
+    const pdf = await pdfRepository.findByIdAndAccountId(id, accountId);
 
     if (!pdf) {
       const response: ApiResponse = {
@@ -462,8 +533,27 @@ export async function deletePdf(
 ): Promise<void> {
   try {
     const { id } = request.params;
+    const accountId = request.auth?.accountId;
 
-    const pdf = await pdfRepository.findById(id);
+    if (!accountId) {
+      const response: ApiResponse = {
+        success: false,
+        error: {
+          code: ErrorCode.AUTHENTICATION_REQUIRED,
+          message: 'Authentication required',
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: request.id,
+          version: 'v1',
+        },
+      };
+      reply.code(401).send(response);
+      return;
+    }
+
+    // BOLA protection: verify ownership before deletion
+    const pdf = await pdfRepository.findByIdAndAccountId(id, accountId);
 
     if (!pdf) {
       const response: ApiResponse = {
@@ -493,8 +583,8 @@ export async function deletePdf(
       }
     }
 
-    // Delete from database
-    await pdfRepository.delete(id);
+    // Delete from database with ownership verification
+    await pdfRepository.deleteByIdAndAccountId(id, accountId);
 
     reply.code(204).send();
   } catch (error) {

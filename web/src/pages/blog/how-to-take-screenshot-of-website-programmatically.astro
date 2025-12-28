@@ -1,0 +1,245 @@
+---
+import BlogLayout from '../../layouts/BlogLayout.astro';
+---
+
+<BlogLayout
+  title="How to Take a Screenshot of a Website Programmatically"
+  description="Learn multiple approaches to capture website screenshots using JavaScript, Python, and APIs. Compare Puppeteer, Playwright, and Screenshot APIs."
+  keywords="take screenshot of website programmatically, capture website screenshot javascript, screenshot API, puppeteer screenshot, playwright screenshot"
+  publishDate="2025-01-15"
+  readTime="8 min read"
+>
+  <div class="tldr-box">
+    <p>
+      <strong>TL;DR:</strong> Use a <strong>Screenshot API</strong> for production workloads (simplest, most reliable).
+      Use <strong>Puppeteer/Playwright</strong> for development or when you need full browser control.
+      Avoid legacy solutions like PhantomJS.
+    </p>
+  </div>
+
+  <h2>Why Capture Screenshots Programmatically?</h2>
+
+  <p>
+    Automated screenshot capture is essential for many use cases: visual regression testing,
+    generating thumbnails for link previews, archiving web pages, creating PDF reports,
+    and building screenshot-as-a-service applications.
+  </p>
+
+  <p>
+    In this guide, we'll explore the most popular methods to capture website screenshots
+    programmatically, from simple API calls to full browser automation.
+  </p>
+
+  <h2>Method 1: Using a Screenshot API (Recommended)</h2>
+
+  <p>
+    The fastest way to capture screenshots is using a dedicated API service.
+    No browser installation, no dependency management, no infrastructure to maintain.
+  </p>
+
+  <h3>JavaScript / Node.js</h3>
+
+  <pre><code class="language-javascript">const response = await fetch('https://api.screencraft.dev/v2/screenshot', &#123;
+  method: 'POST',
+  headers: &#123;
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json',
+  &#125;,
+  body: JSON.stringify(&#123;
+    url: 'https://example.com',
+    viewport: &#123; width: 1920, height: 1080 &#125;,
+    format: 'png'
+  &#125;)
+&#125;);
+
+const data = await response.json();
+console.log('Screenshot URL:', data.data.url);</code></pre>
+
+  <h3>Python</h3>
+
+  <pre><code class="language-python">import requests
+
+response = requests.post(
+    'https://api.screencraft.dev/v2/screenshot',
+    headers=&#123;
+        'Authorization': 'Bearer YOUR_API_KEY',
+        'Content-Type': 'application/json',
+    &#125;,
+    json=&#123;
+        'url': 'https://example.com',
+        'viewport': &#123;'width': 1920, 'height': 1080&#125;,
+        'format': 'png'
+    &#125;
+)
+
+data = response.json()
+print('Screenshot URL:', data['data']['url'])</code></pre>
+
+  <p>
+    <strong>Advantages:</strong> Zero infrastructure, sub-2-second response times,
+    handles JavaScript rendering, automatic retries, CDN-hosted results.
+  </p>
+
+  <h2>Method 2: Puppeteer (Node.js)</h2>
+
+  <p>
+    Puppeteer is Google's official headless Chrome library. It provides full browser
+    automation capabilities, including screenshot capture.
+  </p>
+
+  <pre><code class="language-javascript">const puppeteer = require('puppeteer');
+
+async function captureScreenshot(url) &#123;
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+
+  await page.setViewport(&#123; width: 1920, height: 1080 &#125;);
+  await page.goto(url, &#123; waitUntil: 'networkidle2' &#125;);
+
+  const screenshot = await page.screenshot(&#123;
+    path: 'screenshot.png',
+    fullPage: false
+  &#125;);
+
+  await browser.close();
+  return screenshot;
+&#125;
+
+captureScreenshot('https://example.com');</code></pre>
+
+  <p>
+    <strong>Advantages:</strong> Full browser control, works offline, free and open source.
+  </p>
+
+  <p>
+    <strong>Disadvantages:</strong> Requires Chrome installation, memory-intensive,
+    slow cold starts, needs infrastructure management.
+  </p>
+
+  <h2>Method 3: Playwright (Cross-Browser)</h2>
+
+  <p>
+    Playwright is Microsoft's browser automation library that supports Chrome, Firefox,
+    and Safari with a unified API.
+  </p>
+
+  <pre><code class="language-javascript">const &#123; chromium &#125; = require('playwright');
+
+async function captureScreenshot(url) &#123;
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+
+  await page.setViewportSize(&#123; width: 1920, height: 1080 &#125;);
+  await page.goto(url, &#123; waitUntil: 'networkidle' &#125;);
+
+  await page.screenshot(&#123;
+    path: 'screenshot.png',
+    fullPage: false
+  &#125;);
+
+  await browser.close();
+&#125;
+
+captureScreenshot('https://example.com');</code></pre>
+
+  <p>
+    <strong>Advantages:</strong> Cross-browser support, better auto-waiting,
+    more reliable than Puppeteer in some scenarios.
+  </p>
+
+  <h2>Method 4: Python with Selenium</h2>
+
+  <p>
+    Selenium is a mature browser automation framework available in multiple languages.
+  </p>
+
+  <pre><code class="language-python">from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+chrome_options = Options()
+chrome_options.add_argument('--headless')
+chrome_options.add_argument('--window-size=1920,1080')
+
+driver = webdriver.Chrome(options=chrome_options)
+driver.get('https://example.com')
+driver.save_screenshot('screenshot.png')
+driver.quit()</code></pre>
+
+  <p>
+    <strong>Advantages:</strong> Multi-language support, extensive ecosystem,
+    good for existing Selenium projects.
+  </p>
+
+  <h2>Comparison: Which Method Should You Use?</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>Best For</th>
+        <th>Complexity</th>
+        <th>Speed</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Screenshot API</td>
+        <td>Production, high volume</td>
+        <td>Low</td>
+        <td>Fast</td>
+      </tr>
+      <tr>
+        <td>Puppeteer</td>
+        <td>Node.js projects, full control</td>
+        <td>Medium</td>
+        <td>Medium</td>
+      </tr>
+      <tr>
+        <td>Playwright</td>
+        <td>Cross-browser testing</td>
+        <td>Medium</td>
+        <td>Medium</td>
+      </tr>
+      <tr>
+        <td>Selenium</td>
+        <td>Existing test suites</td>
+        <td>High</td>
+        <td>Slow</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Best Practices</h2>
+
+  <ul>
+    <li>
+      <strong>Wait for content to load:</strong> Use <code>networkidle</code> or wait
+      for specific selectors before capturing.
+    </li>
+    <li>
+      <strong>Set appropriate viewport:</strong> Match your target device dimensions
+      for accurate screenshots.
+    </li>
+    <li>
+      <strong>Handle errors gracefully:</strong> Websites can timeout, block bots,
+      or return errors. Always implement retry logic.
+    </li>
+    <li>
+      <strong>Consider caching:</strong> If you're capturing the same URLs repeatedly,
+      implement caching to reduce load and costs.
+    </li>
+  </ul>
+
+  <h2>Conclusion</h2>
+
+  <p>
+    For most production use cases, a Screenshot API provides the best balance of
+    simplicity, reliability, and performance. For development environments or when
+    you need full browser control, Puppeteer or Playwright are excellent choices.
+  </p>
+
+  <p>
+    Ready to start capturing screenshots? <a href="/dashboard">Get your free API key</a>
+    and capture your first screenshot in under 5 minutes.
+  </p>
+</BlogLayout>

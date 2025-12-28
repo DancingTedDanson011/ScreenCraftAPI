@@ -57,7 +57,23 @@ export async function createScreenshot(
     const validatedData = screenshotRequestSchema.parse(request.body);
 
     // Get account ID from auth context (set by auth middleware)
-    const accountId = request.auth?.accountId || 'default'; // TODO: Remove fallback when auth is required
+    const accountId = request.auth?.accountId;
+    if (!accountId) {
+      const response: ApiResponse = {
+        success: false,
+        error: {
+          code: ErrorCode.AUTHENTICATION_REQUIRED,
+          message: 'Authentication required',
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: request.id,
+          version: 'v1',
+        },
+      };
+      reply.code(401).send(response);
+      return;
+    }
 
     // Check if async processing is requested
     const isAsync = validatedData.async;
@@ -233,8 +249,27 @@ export async function getScreenshot(
 ): Promise<void> {
   try {
     const { id } = request.params;
+    const accountId = request.auth?.accountId;
 
-    const screenshot = await screenshotRepository.findById(id);
+    if (!accountId) {
+      const response: ApiResponse = {
+        success: false,
+        error: {
+          code: ErrorCode.AUTHENTICATION_REQUIRED,
+          message: 'Authentication required',
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: request.id,
+          version: 'v1',
+        },
+      };
+      reply.code(401).send(response);
+      return;
+    }
+
+    // BOLA protection: verify ownership before returning data
+    const screenshot = await screenshotRepository.findByIdAndAccountId(id, accountId);
 
     if (!screenshot) {
       const response: ApiResponse = {
@@ -293,7 +328,24 @@ export async function listScreenshots(
 ): Promise<void> {
   try {
     const { page, limit, status, sortBy, sortOrder } = request.query;
-    const accountId = request.auth?.accountId || 'default';
+    const accountId = request.auth?.accountId;
+
+    if (!accountId) {
+      const response: ApiResponse = {
+        success: false,
+        error: {
+          code: ErrorCode.AUTHENTICATION_REQUIRED,
+          message: 'Authentication required',
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: request.id,
+          version: 'v1',
+        },
+      };
+      reply.code(401).send(response);
+      return;
+    }
 
     // Convert status to uppercase for Prisma enum
     const prismaStatus = status ? (status.toUpperCase() as any) : undefined;
@@ -359,8 +411,27 @@ export async function downloadScreenshot(
 ): Promise<void> {
   try {
     const { id } = request.params;
+    const accountId = request.auth?.accountId;
 
-    const screenshot = await screenshotRepository.findById(id);
+    if (!accountId) {
+      const response: ApiResponse = {
+        success: false,
+        error: {
+          code: ErrorCode.AUTHENTICATION_REQUIRED,
+          message: 'Authentication required',
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: request.id,
+          version: 'v1',
+        },
+      };
+      reply.code(401).send(response);
+      return;
+    }
+
+    // BOLA protection: verify ownership before allowing download
+    const screenshot = await screenshotRepository.findByIdAndAccountId(id, accountId);
 
     if (!screenshot) {
       const response: ApiResponse = {
@@ -460,8 +531,27 @@ export async function deleteScreenshot(
 ): Promise<void> {
   try {
     const { id } = request.params;
+    const accountId = request.auth?.accountId;
 
-    const screenshot = await screenshotRepository.findById(id);
+    if (!accountId) {
+      const response: ApiResponse = {
+        success: false,
+        error: {
+          code: ErrorCode.AUTHENTICATION_REQUIRED,
+          message: 'Authentication required',
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: request.id,
+          version: 'v1',
+        },
+      };
+      reply.code(401).send(response);
+      return;
+    }
+
+    // BOLA protection: verify ownership before deletion
+    const screenshot = await screenshotRepository.findByIdAndAccountId(id, accountId);
 
     if (!screenshot) {
       const response: ApiResponse = {
@@ -491,8 +581,8 @@ export async function deleteScreenshot(
       }
     }
 
-    // Delete from database
-    await screenshotRepository.delete(id);
+    // Delete from database with ownership verification
+    await screenshotRepository.deleteByIdAndAccountId(id, accountId);
 
     reply.code(204).send();
   } catch (error) {

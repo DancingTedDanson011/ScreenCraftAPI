@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { strictCookieSchema } from './cookie.schema.js';
 
 // PDF Margin Schema
 export const pdfMarginSchema = z.object({
@@ -41,16 +42,8 @@ export const pdfFromUrlRequestSchema = z.object({
     delay: z.number().int().min(0).max(10000).optional(),
   }).optional(),
   headers: z.record(z.string()).optional(),
-  cookies: z.array(z.object({
-    name: z.string(),
-    value: z.string(),
-    domain: z.string().optional(),
-    path: z.string().optional(),
-    expires: z.number().optional(),
-    httpOnly: z.boolean().optional(),
-    secure: z.boolean().optional(),
-    sameSite: z.enum(['Strict', 'Lax', 'None']).optional(),
-  })).optional(),
+  // L-01: Use strict cookie validation to prevent header injection
+  cookies: z.array(strictCookieSchema).optional(),
   userAgent: z.string().optional(),
   async: z.boolean().default(false),
   webhookUrl: z.string().url().optional(),

@@ -1,6 +1,16 @@
 // API Client for Dashboard
 
-const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+// Normalize API URL: Remove trailing /api if present to avoid /api/api/ double prefix
+function normalizeApiUrl(url: string): string {
+  const normalized = url.replace(/\/+$/, ''); // Remove trailing slashes
+  // If URL ends with /api, remove it since our paths already include /api/v1
+  if (normalized.endsWith('/api')) {
+    return normalized.slice(0, -4);
+  }
+  return normalized;
+}
+
+const API_BASE = normalizeApiUrl(import.meta.env.PUBLIC_API_URL || 'http://localhost:3000');
 
 // ============================================
 // TYPES

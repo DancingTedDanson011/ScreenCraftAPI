@@ -1,24 +1,58 @@
 /**
  * Admin-specific Rate Limiting Middleware
+ * M-09: Redis-based rate limiting for distributed environments
  * Provides brute-force protection for admin authentication
  */
 
 import { FastifyRequest, FastifyReply } from 'fastify';
-
-// Simple in-memory rate limiter for login attempts
-// In production, use Redis for distributed rate limiting
-interface LoginAttempt {
-  count: number;
-  firstAttempt: number;
-  blockedUntil?: number;
-}
-
-const loginAttempts = new Map<string, LoginAttempt>();
+import { Redis } from 'ioredis';
+import { config } from '../../config/index.js';
 
 // Configuration
-const MAX_ATTEMPTS = 5;              // Max failed attempts
-const WINDOW_MS = 15 * 60 * 1000;    // 15 minutes window
-const BLOCK_DURATION_MS = 30 * 60 * 1000; // 30 minutes block
+const MAX_ATTEMPTS = 5;                    // Max failed attempts
+const WINDOW_SECONDS = 15 * 60;            // 15 minutes window
+const BLOCK_DURATION_SECONDS = 30 * 60;    // 30 minutes block
+
+// Redis key prefixes
+const RATE_LIMIT_PREFIX = 'admin_rate_limit:';
+const BLOCK_PREFIX = 'admin_blocked:';
+
+// Shared Redis instance (created lazily)
+let redis: Redis | null = null;
+
+/**
+ * Get or create Redis connection
+ */
+function getRedis(): Redis {
+  if (!redis) {
+    redis = new Redis({
+      host: config.redis.host,
+      port: config.redis.port,
+      password: config.redis.password,
+      lazyConnect: true,
+      // Reconnect strategy
+      retryStrategy(times) {
+        const delay = Math.min(times * 50, 2000);
+        return delay;
+      },
+    });
+
+    redis.on('error', (err) => {
+      console.error('Admin rate limit Redis error:', err);
+    });
+  }
+  return redis;
+}
+
+/**
+ * Close Redis connection (for cleanup)
+ */
+export async function closeRateLimitRedis(): Promise<void> {
+  if (redis) {
+    await redis.quit();
+    redis = null;
+  }
+}
 
 /**
  * Get client identifier (IP address)
@@ -30,24 +64,6 @@ function getClientId(request: FastifyRequest): string {
 }
 
 /**
- * Clean up old entries periodically
- */
-function cleanupOldEntries(): void {
-  const now = Date.now();
-  for (const [key, attempt] of loginAttempts.entries()) {
-    if (now - attempt.firstAttempt > WINDOW_MS && !attempt.blockedUntil) {
-      loginAttempts.delete(key);
-    }
-    if (attempt.blockedUntil && now > attempt.blockedUntil) {
-      loginAttempts.delete(key);
-    }
-  }
-}
-
-// Run cleanup every 5 minutes
-setInterval(cleanupOldEntries, 5 * 60 * 1000);
-
-/**
  * Admin login rate limit middleware
  * Blocks IP after too many failed login attempts
  */
@@ -56,24 +72,24 @@ export async function adminLoginRateLimit(
   reply: FastifyReply
 ): Promise<void> {
   const clientId = getClientId(request);
-  const now = Date.now();
+  const redisClient = getRedis();
 
-  let attempt = loginAttempts.get(clientId);
+  try {
+    // Check if currently blocked
+    const blockKey = `${BLOCK_PREFIX}${clientId}`;
+    const blockedTtl = await redisClient.ttl(blockKey);
 
-  // Check if currently blocked
-  if (attempt?.blockedUntil && now < attempt.blockedUntil) {
-    const remainingSeconds = Math.ceil((attempt.blockedUntil - now) / 1000);
-    return reply.status(429).send({
-      error: 'Too many login attempts',
-      message: `Please try again in ${remainingSeconds} seconds`,
-      retryAfter: remainingSeconds,
-    });
-  }
-
-  // Reset if window expired
-  if (attempt && (now - attempt.firstAttempt > WINDOW_MS)) {
-    loginAttempts.delete(clientId);
-    attempt = undefined;
+    if (blockedTtl > 0) {
+      return reply.status(429).send({
+        error: 'Too many login attempts',
+        message: `Please try again in ${blockedTtl} seconds`,
+        retryAfter: blockedTtl,
+        code: 'RATE_LIMITED',
+      });
+    }
+  } catch (error) {
+    // Log error but don't block the request if Redis fails
+    request.log.error(error, 'Admin rate limit check failed');
   }
 }
 
@@ -81,54 +97,82 @@ export async function adminLoginRateLimit(
  * Record a failed login attempt
  * Call this after a failed login
  */
-export function recordFailedLogin(request: FastifyRequest): void {
+export async function recordFailedLogin(request: FastifyRequest): Promise<void> {
   const clientId = getClientId(request);
-  const now = Date.now();
+  const redisClient = getRedis();
 
-  let attempt = loginAttempts.get(clientId);
+  try {
+    const attemptKey = `${RATE_LIMIT_PREFIX}${clientId}`;
+    const blockKey = `${BLOCK_PREFIX}${clientId}`;
 
-  if (!attempt || (now - attempt.firstAttempt > WINDOW_MS)) {
-    attempt = { count: 1, firstAttempt: now };
-  } else {
-    attempt.count++;
+    // Increment attempt counter with atomic operation
+    const attempts = await redisClient.incr(attemptKey);
+
+    // Set expiry on first attempt
+    if (attempts === 1) {
+      await redisClient.expire(attemptKey, WINDOW_SECONDS);
+    }
 
     // Block if too many attempts
-    if (attempt.count >= MAX_ATTEMPTS) {
-      attempt.blockedUntil = now + BLOCK_DURATION_MS;
+    if (attempts >= MAX_ATTEMPTS) {
+      await redisClient.set(blockKey, '1', 'EX', BLOCK_DURATION_SECONDS);
+      // Clear the attempts counter
+      await redisClient.del(attemptKey);
     }
+  } catch (error) {
+    // Log error but continue - rate limiting is defense in depth
+    console.error('Failed to record login attempt:', error);
   }
-
-  loginAttempts.set(clientId, attempt);
 }
 
 /**
  * Clear login attempts after successful login
  */
-export function clearLoginAttempts(request: FastifyRequest): void {
+export async function clearLoginAttempts(request: FastifyRequest): Promise<void> {
   const clientId = getClientId(request);
-  loginAttempts.delete(clientId);
+  const redisClient = getRedis();
+
+  try {
+    const attemptKey = `${RATE_LIMIT_PREFIX}${clientId}`;
+    await redisClient.del(attemptKey);
+  } catch (error) {
+    // Log error but continue
+    console.error('Failed to clear login attempts:', error);
+  }
 }
 
 /**
  * Get current attempt status (for logging/monitoring)
  */
-export function getAttemptStatus(request: FastifyRequest): {
+export async function getAttemptStatus(request: FastifyRequest): Promise<{
   attempts: number;
   blocked: boolean;
   remainingAttempts: number;
-} {
+  blockTtl?: number;
+}> {
   const clientId = getClientId(request);
-  const attempt = loginAttempts.get(clientId);
+  const redisClient = getRedis();
 
-  if (!attempt) {
+  try {
+    const attemptKey = `${RATE_LIMIT_PREFIX}${clientId}`;
+    const blockKey = `${BLOCK_PREFIX}${clientId}`;
+
+    const [attemptsStr, blockedTtl] = await Promise.all([
+      redisClient.get(attemptKey),
+      redisClient.ttl(blockKey),
+    ]);
+
+    const attempts = attemptsStr ? parseInt(attemptsStr, 10) : 0;
+    const blocked = blockedTtl > 0;
+
+    return {
+      attempts,
+      blocked,
+      remainingAttempts: Math.max(0, MAX_ATTEMPTS - attempts),
+      ...(blocked && { blockTtl: blockedTtl }),
+    };
+  } catch (error) {
+    console.error('Failed to get attempt status:', error);
     return { attempts: 0, blocked: false, remainingAttempts: MAX_ATTEMPTS };
   }
-
-  const blocked = attempt.blockedUntil ? Date.now() < attempt.blockedUntil : false;
-
-  return {
-    attempts: attempt.count,
-    blocked,
-    remainingAttempts: Math.max(0, MAX_ATTEMPTS - attempt.count),
-  };
 }

@@ -6,6 +6,7 @@ import type {
   PaginationParams,
   PaginatedResponse,
 } from '../types/admin.types.js';
+import { createSafeOrderBy, validatePagination } from '../utils/query-validator.js';
 
 /**
  * Admin API Keys Service
@@ -22,8 +23,11 @@ export class AdminApiKeysService {
       accountId?: string;
     }
   ): Promise<PaginatedResponse<AdminApiKeyListItem>> {
-    const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', search, isActive, accountId } = params;
-    const skip = (page - 1) * limit;
+    const { sortBy, sortOrder, search, isActive, accountId } = params;
+
+    // M-03: Validate pagination and sort parameters
+    const { page, limit, skip } = validatePagination(params.page, params.limit, 100);
+    const orderBy = createSafeOrderBy('apiKey', sortBy, sortOrder, 'createdAt');
 
     // Build where clause
     const where: any = {};
@@ -48,11 +52,12 @@ export class AdminApiKeysService {
     const total = await prisma.apiKey.count({ where });
 
     // Get API keys with account info
+    // M-03: Using validated orderBy to prevent injection
     const apiKeys = await prisma.apiKey.findMany({
       where,
       skip,
       take: limit,
-      orderBy: { [sortBy]: sortOrder },
+      orderBy,
       include: {
         account: {
           select: {

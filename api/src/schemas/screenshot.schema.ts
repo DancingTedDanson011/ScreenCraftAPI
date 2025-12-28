@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { strictCookieSchema } from './cookie.schema.js';
 
 // Viewport Schema
 export const viewportSchema = z.object({
@@ -38,16 +39,8 @@ export const screenshotRequestSchema = z.object({
   encoding: z.enum(['base64', 'binary']).default('binary'),
   waitOptions: waitOptionsSchema.optional(),
   headers: z.record(z.string()).optional(),
-  cookies: z.array(z.object({
-    name: z.string(),
-    value: z.string(),
-    domain: z.string().optional(),
-    path: z.string().optional(),
-    expires: z.number().optional(),
-    httpOnly: z.boolean().optional(),
-    secure: z.boolean().optional(),
-    sameSite: z.enum(['Strict', 'Lax', 'None']).optional(),
-  })).optional(),
+  // L-01: Use strict cookie validation to prevent header injection
+  cookies: z.array(strictCookieSchema).optional(),
   userAgent: z.string().optional(),
   blockResources: z.array(z.enum(['image', 'stylesheet', 'font', 'script', 'media'])).optional(),
   async: z.boolean().default(false),

@@ -2,6 +2,7 @@
 
 import crypto from 'node:crypto';
 import { prisma } from '../../lib/db.js';
+import { anonymizeIp } from '../../utils/pii-sanitizer.js';
 
 export class SessionService {
   /**
@@ -20,10 +21,14 @@ export class SessionService {
 
   /**
    * Create a new session for a user
+   * M-14: IP addresses are anonymized before storage for GDPR compliance
    */
   async createSession(userId: string, userAgent?: string, ipAddress?: string) {
     const sessionToken = this.generateToken();
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    // M-14: Anonymize IP address before storing (GDPR compliance)
+    const anonymizedIp = anonymizeIp(ipAddress);
 
     await prisma.session.create({
       data: {
@@ -31,7 +36,7 @@ export class SessionService {
         sessionToken: this.hashToken(sessionToken),
         expires,
         userAgent,
-        ipAddress,
+        ipAddress: anonymizedIp,
       },
     });
 

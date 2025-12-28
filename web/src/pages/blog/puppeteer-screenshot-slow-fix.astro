@@ -1,0 +1,276 @@
+---
+import BlogLayout from '../../layouts/BlogLayout.astro';
+---
+
+<BlogLayout
+  title="Puppeteer Screenshot Too Slow? 7 Ways to Fix It"
+  description="Speed up your Puppeteer screenshots by 10x with these optimization techniques. Learn buffer usage, viewport reduction, and when to consider alternatives."
+  keywords="puppeteer screenshot slow, puppeteer performance, speed up puppeteer, puppeteer optimization, headless chrome slow"
+  publishDate="2025-01-10"
+  readTime="6 min read"
+>
+  <div class="tldr-box">
+    <p>
+      <strong>TL;DR:</strong> Speed up Puppeteer screenshots by:
+      <strong>1)</strong> Using buffers instead of files,
+      <strong>2)</strong> Reducing viewport size,
+      <strong>3)</strong> Blocking ads/trackers,
+      <strong>4)</strong> Using JPG format,
+      <strong>5)</strong> Setting <code>optimizeForSpeed: true</code>.
+      For high-volume needs, consider a Screenshot API instead.
+    </p>
+  </div>
+
+  <h2>Why Are Puppeteer Screenshots Slow?</h2>
+
+  <p>
+    Puppeteer launches a full Chromium browser instance for each screenshot operation.
+    This includes browser startup time, page rendering, JavaScript execution, and image encoding.
+    Without optimization, a single screenshot can take 3-10 seconds.
+  </p>
+
+  <p>
+    Let's explore seven proven techniques to dramatically reduce screenshot capture time.
+  </p>
+
+  <h2>1. Use Buffers Instead of Files</h2>
+
+  <p>
+    Writing to disk is significantly slower than keeping data in memory.
+    Return the screenshot as a buffer instead of saving to a file.
+  </p>
+
+  <pre><code class="language-javascript">// Slow: Writing to disk
+await page.screenshot(&#123; path: 'screenshot.png' &#125;);
+
+// Fast: Return as buffer
+const buffer = await page.screenshot();
+// Process buffer in memory or stream to storage</code></pre>
+
+  <p>
+    This alone can save 100-500ms per screenshot, especially on slower storage systems.
+  </p>
+
+  <h2>2. Reduce Viewport Size</h2>
+
+  <p>
+    Larger viewports mean more pixels to render and encode. Use the minimum viewport
+    size that meets your requirements.
+  </p>
+
+  <pre><code class="language-javascript">// Large viewport (slow)
+await page.setViewport(&#123; width: 1920, height: 1080 &#125;);
+
+// Optimized viewport (faster)
+await page.setViewport(&#123; width: 1280, height: 720 &#125;);
+
+// Mobile viewport (fastest)
+await page.setViewport(&#123; width: 375, height: 667 &#125;);</code></pre>
+
+  <p>
+    A 1280x720 screenshot is 44% smaller than 1920x1080, which translates to
+    significant speed improvements.
+  </p>
+
+  <h2>3. Block Ads and Trackers</h2>
+
+  <p>
+    Third-party scripts, ads, and trackers can add seconds to page load time.
+    Block these resources to speed up rendering.
+  </p>
+
+  <pre><code class="language-javascript">await page.setRequestInterception(true);
+
+page.on('request', (request) => &#123;
+  const blockedDomains = [
+    'googleads', 'doubleclick', 'facebook',
+    'analytics', 'tracking', 'adservice'
+  ];
+
+  const url = request.url();
+  const shouldBlock = blockedDomains.some(domain =>
+    url.includes(domain)
+  );
+
+  if (shouldBlock) &#123;
+    request.abort();
+  &#125; else &#123;
+    request.continue();
+  &#125;
+&#125;);</code></pre>
+
+  <p>
+    This can reduce page load time by 1-5 seconds on ad-heavy websites.
+  </p>
+
+  <h2>4. Use JPG Format Instead of PNG</h2>
+
+  <p>
+    JPG encoding is faster than PNG, and the file size is smaller.
+    Use JPG when you don't need transparency.
+  </p>
+
+  <pre><code class="language-javascript">// Slower (PNG)
+await page.screenshot(&#123; type: 'png' &#125;);
+
+// Faster (JPG with quality setting)
+await page.screenshot(&#123;
+  type: 'jpeg',
+  quality: 80  // 80% quality is usually sufficient
+&#125;);</code></pre>
+
+  <p>
+    JPG screenshots are typically 2-5x faster to encode than PNG.
+  </p>
+
+  <h2>5. Enable optimizeForSpeed Flag</h2>
+
+  <p>
+    Puppeteer 19+ includes an <code>optimizeForSpeed</code> option that uses
+    a faster encoding algorithm.
+  </p>
+
+  <pre><code class="language-javascript">await page.screenshot(&#123;
+  type: 'png',
+  optimizeForSpeed: true
+&#125;);</code></pre>
+
+  <p>
+    This can reduce encoding time by 30-50% for PNG screenshots.
+  </p>
+
+  <h2>6. Reuse Browser Instances</h2>
+
+  <p>
+    Browser startup takes 1-3 seconds. Reuse browser instances across
+    multiple screenshots instead of launching a new browser each time.
+  </p>
+
+  <pre><code class="language-javascript">// Bad: New browser for each screenshot
+async function captureScreenshot(url) &#123;
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto(url);
+  const screenshot = await page.screenshot();
+  await browser.close();
+  return screenshot;
+&#125;
+
+// Good: Reuse browser instance
+let browser;
+
+async function getBrowser() &#123;
+  if (!browser) &#123;
+    browser = await puppeteer.launch();
+  &#125;
+  return browser;
+&#125;
+
+async function captureScreenshot(url) &#123;
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+  await page.goto(url);
+  const screenshot = await page.screenshot();
+  await page.close();  // Close page, not browser
+  return screenshot;
+&#125;</code></pre>
+
+  <h2>7. Use Faster Wait Strategies</h2>
+
+  <p>
+    <code>networkidle0</code> waits for zero network connections, which can be slow.
+    Use faster alternatives when appropriate.
+  </p>
+
+  <pre><code class="language-javascript">// Slowest: Wait for zero network activity
+await page.goto(url, &#123; waitUntil: 'networkidle0' &#125;);
+
+// Medium: Wait for max 2 connections
+await page.goto(url, &#123; waitUntil: 'networkidle2' &#125;);
+
+// Faster: Wait for DOM content
+await page.goto(url, &#123; waitUntil: 'domcontentloaded' &#125;);
+
+// Fastest: Just wait for load event
+await page.goto(url, &#123; waitUntil: 'load' &#125;);</code></pre>
+
+  <h2>Performance Comparison</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Optimization</th>
+        <th>Time Saved</th>
+        <th>Effort</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Buffer instead of file</td>
+        <td>100-500ms</td>
+        <td>Low</td>
+      </tr>
+      <tr>
+        <td>Smaller viewport</td>
+        <td>200-800ms</td>
+        <td>Low</td>
+      </tr>
+      <tr>
+        <td>Block ads/trackers</td>
+        <td>1-5s</td>
+        <td>Medium</td>
+      </tr>
+      <tr>
+        <td>JPG format</td>
+        <td>100-300ms</td>
+        <td>Low</td>
+      </tr>
+      <tr>
+        <td>optimizeForSpeed</td>
+        <td>50-200ms</td>
+        <td>Low</td>
+      </tr>
+      <tr>
+        <td>Reuse browser</td>
+        <td>1-3s</td>
+        <td>Medium</td>
+      </tr>
+      <tr>
+        <td>Faster wait strategy</td>
+        <td>500ms-2s</td>
+        <td>Low</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>When to Consider Alternatives</h2>
+
+  <p>
+    Even with all optimizations, self-hosted Puppeteer has limitations:
+  </p>
+
+  <ul>
+    <li>Each screenshot still takes 1-3 seconds minimum</li>
+    <li>Scaling requires managing multiple browser instances</li>
+    <li>Memory usage is high (200-500MB per browser)</li>
+    <li>Browser crashes require restart logic</li>
+  </ul>
+
+  <p>
+    For high-volume or production use cases, a Screenshot API eliminates these concerns
+    with sub-second response times, automatic scaling, and zero maintenance.
+  </p>
+
+  <h2>Conclusion</h2>
+
+  <p>
+    By implementing these optimizations, you can reduce Puppeteer screenshot time from
+    5-10 seconds to 1-2 seconds. For the fastest results with zero infrastructure overhead,
+    consider using a dedicated Screenshot API.
+  </p>
+
+  <p>
+    <a href="/dashboard">Try ScreenCraft's API</a> - get 100 free screenshots per month
+    with sub-2-second response times.
+  </p>
+</BlogLayout>

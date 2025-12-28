@@ -31,13 +31,14 @@ export class PaymentController {
       // Validate request body
       const { tier } = createCheckoutSchema.parse(request.body);
 
-      // Get account ID from auth middleware (assumes auth middleware adds accountId)
-      const accountId = (request as any).accountId;
+      // H-02: Get account ID from auth middleware using correct property
+      const accountId = request.auth?.accountId;
 
       if (!accountId) {
         return reply.code(401).send({
           success: false,
-          error: 'Unauthorized',
+          error: 'Authentication required',
+          code: 'AUTHENTICATION_REQUIRED',
         });
       }
 
@@ -87,13 +88,14 @@ export class PaymentController {
    */
   async createPortal(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     try {
-      // Get account ID from auth middleware
-      const accountId = (request as any).accountId;
+      // H-02: Get account ID from auth middleware using correct property
+      const accountId = request.auth?.accountId;
 
       if (!accountId) {
         return reply.code(401).send({
           success: false,
-          error: 'Unauthorized',
+          error: 'Authentication required',
+          code: 'AUTHENTICATION_REQUIRED',
         });
       }
 
@@ -185,12 +187,14 @@ export class PaymentController {
    */
   async getSubscription(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     try {
-      const accountId = (request as any).accountId;
+      // H-02: Get account ID from auth middleware using correct property
+      const accountId = request.auth?.accountId;
 
       if (!accountId) {
         return reply.code(401).send({
           success: false,
-          error: 'Unauthorized',
+          error: 'Authentication required',
+          code: 'AUTHENTICATION_REQUIRED',
         });
       }
 
@@ -221,12 +225,14 @@ export class PaymentController {
     reply: FastifyReply
   ): Promise<void> {
     try {
-      const accountId = (request as any).accountId;
+      // H-02: Get account ID from auth middleware using correct property
+      const accountId = request.auth?.accountId;
 
       if (!accountId) {
         return reply.code(401).send({
           success: false,
-          error: 'Unauthorized',
+          error: 'Authentication required',
+          code: 'AUTHENTICATION_REQUIRED',
         });
       }
 

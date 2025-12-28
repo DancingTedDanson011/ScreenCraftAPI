@@ -2,10 +2,18 @@
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import oauthPlugin from '@fastify/oauth2';
+import { Redis } from 'ioredis';
+import { randomBytes } from 'crypto';
 import { oauthService } from '../services/auth/oauth.service.js';
 import { sessionService } from '../services/auth/session.service.js';
 import { passwordService } from '../services/auth/password.service.js';
 import { authConfig } from '../config/auth.config.js';
+import { config } from '../config/index.js';
+import { createLoginRateLimiter } from '../middleware/rate-limit.middleware.js';
+import { setCsrfCookie } from '../middleware/csrf.middleware.js';
+
+// M-08: OAuth state prefix for Redis storage
+const OAUTH_STATE_PREFIX = 'oauth_state:';
 
 // Extend FastifyInstance to include googleOAuth2
 declare module 'fastify' {
@@ -19,7 +27,49 @@ declare module 'fastify' {
 }
 
 export async function authRoutes(fastify: FastifyInstance) {
-  // Register Google OAuth2 Plugin
+  // Initialize Redis for login rate limiting (C-03: Brute-force protection)
+  const redis = new Redis({
+    host: config.redis.host,
+    port: config.redis.port,
+    password: config.redis.password,
+  });
+
+  const loginRateLimiter = createLoginRateLimiter({ redis });
+
+  // Cleanup Redis on server close
+  fastify.addHook('onClose', async () => {
+    await redis.quit();
+  });
+
+  // M-08: OAuth state generation function for CSRF protection
+  const generateStateFunction = async (): Promise<string> => {
+    const state = randomBytes(32).toString('hex');
+    // Store state in Redis with 10-minute TTL
+    await redis.set(`${OAUTH_STATE_PREFIX}${state}`, '1', 'EX', 600);
+    return state;
+  };
+
+  // M-08: OAuth state validation function
+  const checkStateFunction = async (request: FastifyRequest, callback: (err?: Error) => void): Promise<void> => {
+    const state = (request.query as { state?: string }).state;
+
+    if (!state) {
+      return callback(new Error('Missing OAuth state parameter'));
+    }
+
+    const key = `${OAUTH_STATE_PREFIX}${state}`;
+    const exists = await redis.get(key);
+
+    if (!exists) {
+      return callback(new Error('Invalid or expired OAuth state'));
+    }
+
+    // Delete state after use (one-time use)
+    await redis.del(key);
+    callback();
+  };
+
+  // Register Google OAuth2 Plugin with CSRF state protection
   await fastify.register(oauthPlugin, {
     name: 'googleOAuth2',
     scope: ['profile', 'email'],
@@ -32,6 +82,9 @@ export async function authRoutes(fastify: FastifyInstance) {
     },
     startRedirectPath: '/auth/google',
     callbackUri: authConfig.google.callbackUrl,
+    // M-08: Enable CSRF protection via state parameter
+    generateStateFunction,
+    checkStateFunction,
   });
 
   /**
@@ -66,6 +119,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         email: googleUser.email,
         name: googleUser.name,
         picture: googleUser.picture,
+        provider: 'google',
       });
 
       // Create session
@@ -76,13 +130,17 @@ export async function authRoutes(fastify: FastifyInstance) {
       );
 
       // Set HttpOnly session cookie
+      // H-05: Use SameSite=Strict for better CSRF protection
       reply.setCookie(authConfig.session.cookieName, session.sessionToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: 'strict',
         path: '/',
         maxAge: authConfig.session.maxAge / 1000, // Convert to seconds
       });
+
+      // H-06: Set CSRF cookie for session-based auth
+      setCsrfCookie(reply);
 
       // Redirect to frontend dashboard
       return reply.redirect(`${authConfig.frontendUrl}/dashboard`);
@@ -92,6 +150,129 @@ export async function authRoutes(fastify: FastifyInstance) {
       return reply.redirect(`${authConfig.frontendUrl}/login?error=auth_failed`);
     }
   });
+
+  // ============================================
+  // GITHUB OAUTH
+  // ============================================
+
+  // Register GitHub OAuth2 Plugin with CSRF state protection
+  if (authConfig.github.clientId && authConfig.github.clientSecret) {
+    await fastify.register(oauthPlugin, {
+      name: 'githubOAuth2',
+      scope: ['read:user', 'user:email'],
+      credentials: {
+        client: {
+          id: authConfig.github.clientId,
+          secret: authConfig.github.clientSecret,
+        },
+        auth: oauthPlugin.GITHUB_CONFIGURATION,
+      },
+      startRedirectPath: '/auth/github',
+      callbackUri: authConfig.github.callbackUrl,
+      // M-08: Enable CSRF protection via state parameter
+      generateStateFunction,
+      checkStateFunction,
+    });
+
+    // Extend FastifyInstance for GitHub OAuth
+    const githubOAuth2 = (fastify as any).githubOAuth2;
+
+    /**
+     * GitHub OAuth Callback
+     * Handles the redirect from GitHub after user authentication
+     */
+    fastify.get('/auth/github/callback', async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        // Exchange authorization code for access token
+        const { token } = await githubOAuth2.getAccessTokenFromAuthorizationCodeFlow(request);
+
+        // Fetch user info from GitHub
+        const userInfoResponse = await fetch('https://api.github.com/user', {
+          headers: {
+            Authorization: `Bearer ${token.access_token}`,
+            Accept: 'application/vnd.github.v3+json',
+            'User-Agent': 'ScreenCraft-API',
+          },
+        });
+
+        if (!userInfoResponse.ok) {
+          fastify.log.error('Failed to fetch GitHub user info');
+          return reply.redirect(`${authConfig.frontendUrl}/login?error=github_fetch_failed`);
+        }
+
+        const githubUser = await userInfoResponse.json() as {
+          id: number;
+          login: string;
+          name: string | null;
+          email: string | null;
+          avatar_url: string;
+        };
+
+        // If no public email, fetch from emails endpoint
+        let email = githubUser.email;
+        if (!email) {
+          const emailsResponse = await fetch('https://api.github.com/user/emails', {
+            headers: {
+              Authorization: `Bearer ${token.access_token}`,
+              Accept: 'application/vnd.github.v3+json',
+              'User-Agent': 'ScreenCraft-API',
+            },
+          });
+
+          if (emailsResponse.ok) {
+            const emails = await emailsResponse.json() as Array<{
+              email: string;
+              primary: boolean;
+              verified: boolean;
+            }>;
+            const primaryEmail = emails.find(e => e.primary && e.verified);
+            email = primaryEmail?.email || emails.find(e => e.verified)?.email || null;
+          }
+        }
+
+        if (!email) {
+          fastify.log.error('No verified email found for GitHub user');
+          return reply.redirect(`${authConfig.frontendUrl}/login?error=github_no_email`);
+        }
+
+        // Find or create user in database
+        const user = await oauthService.findOrCreateUser({
+          id: String(githubUser.id),
+          email: email,
+          name: githubUser.name || githubUser.login,
+          picture: githubUser.avatar_url,
+          provider: 'github',
+        });
+
+        // Create session
+        const session = await sessionService.createSession(
+          user.id,
+          request.headers['user-agent'],
+          request.ip
+        );
+
+        // Set HttpOnly session cookie
+        // H-05: Use SameSite=Strict for better CSRF protection
+        reply.setCookie(authConfig.session.cookieName, session.sessionToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          path: '/',
+          maxAge: authConfig.session.maxAge / 1000,
+        });
+
+        // H-06: Set CSRF cookie for session-based auth
+        setCsrfCookie(reply);
+
+        // Redirect to frontend dashboard
+        return reply.redirect(`${authConfig.frontendUrl}/dashboard`);
+
+      } catch (error) {
+        fastify.log.error(error, 'GitHub OAuth callback error');
+        return reply.redirect(`${authConfig.frontendUrl}/login?error=auth_failed`);
+      }
+    });
+  }
 
   // ============================================
   // EMAIL/PASSWORD AUTHENTICATION
@@ -127,10 +308,13 @@ export async function authRoutes(fastify: FastifyInstance) {
       reply.setCookie(authConfig.session.cookieName, session.sessionToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: 'strict',
         path: '/',
         maxAge: authConfig.session.maxAge / 1000,
       });
+
+      // H-06: Set CSRF cookie for session-based auth
+      const csrfToken = setCsrfCookie(reply);
 
       return {
         success: true,
@@ -139,6 +323,7 @@ export async function authRoutes(fastify: FastifyInstance) {
           email: user.email,
           name: user.name,
         },
+        csrfToken, // Return token so client can use it immediately
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Registration failed';
@@ -151,6 +336,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   /**
    * Login with Email/Password
+   * C-03: Protected against brute-force attacks with progressive rate limiting
    */
   fastify.post<{
     Body: { email: string; password: string };
@@ -165,8 +351,25 @@ export async function authRoutes(fastify: FastifyInstance) {
         });
       }
 
+      // C-03: Check brute-force protection before attempting login
+      const rateLimitResult = await loginRateLimiter.consume(request.ip, email);
+      if (!rateLimitResult.allowed) {
+        return reply.status(429).send({
+          error: 'Too many login attempts. Please try again later.',
+          code: 'TOO_MANY_ATTEMPTS',
+          retryAfter: rateLimitResult.retryAfter,
+        });
+      }
+
       // Authenticate user
-      const user = await passwordService.login(email, password);
+      // H-16: Pass context for security logging
+      const user = await passwordService.login(email, password, {
+        ipAddress: request.ip,
+        userAgent: request.headers['user-agent'],
+      });
+
+      // C-03: Reset rate limiter on successful login
+      await loginRateLimiter.reset(request.ip, email);
 
       // Create session
       const session = await sessionService.createSession(
@@ -179,10 +382,13 @@ export async function authRoutes(fastify: FastifyInstance) {
       reply.setCookie(authConfig.session.cookieName, session.sessionToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: 'strict',
         path: '/',
         maxAge: authConfig.session.maxAge / 1000,
       });
+
+      // H-06: Set CSRF cookie for session-based auth
+      const csrfToken = setCsrfCookie(reply);
 
       return {
         success: true,
@@ -198,8 +404,10 @@ export async function authRoutes(fastify: FastifyInstance) {
           monthlyCredits: user.account.monthlyCredits,
           usedCredits: user.account.usedCredits,
         } : null,
+        csrfToken, // Return token so client can use it immediately
       };
     } catch (error) {
+      // C-03: Rate limit point already consumed, so failed attempts are tracked
       const message = error instanceof Error ? error.message : 'Login failed';
       return reply.status(401).send({
         error: message,

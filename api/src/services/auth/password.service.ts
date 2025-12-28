@@ -2,6 +2,7 @@
 
 import bcrypt from 'bcrypt';
 import { prisma } from '../../lib/db.js';
+import { securityLogger } from '../security/security-logger.service.js';
 
 const SALT_ROUNDS = 12;
 
@@ -70,25 +71,52 @@ export class PasswordService {
 
   /**
    * Login with email and password
+   * H-16: Includes security audit logging
    */
-  async login(email: string, password: string) {
+  async login(email: string, password: string, context?: { ipAddress?: string; userAgent?: string }) {
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
       include: { account: true },
     });
 
     if (!user) {
+      // H-16: Log failed login attempt
+      await securityLogger.loginFailed({
+        email: email.toLowerCase(),
+        ipAddress: context?.ipAddress,
+        userAgent: context?.userAgent,
+        additionalInfo: { reason: 'user_not_found' },
+      });
       throw new Error('Invalid credentials');
     }
 
-    // Check if user has a password set
+    // H-04: Check if user has a password set
+    // Use generic error to prevent user enumeration (don't reveal auth method)
     if (!user.passwordHash) {
-      throw new Error('Please use Google login for this account');
+      // H-16: Log failed login attempt
+      await securityLogger.loginFailed({
+        email: email.toLowerCase(),
+        userId: user.id,
+        accountId: user.accountId || undefined,
+        ipAddress: context?.ipAddress,
+        userAgent: context?.userAgent,
+        additionalInfo: { reason: 'no_password_set' },
+      });
+      throw new Error('Invalid credentials');
     }
 
     // Verify password
     const isValid = await this.verifyPassword(password, user.passwordHash);
     if (!isValid) {
+      // H-16: Log failed login attempt
+      await securityLogger.loginFailed({
+        email: email.toLowerCase(),
+        userId: user.id,
+        accountId: user.accountId || undefined,
+        ipAddress: context?.ipAddress,
+        userAgent: context?.userAgent,
+        additionalInfo: { reason: 'invalid_password' },
+      });
       throw new Error('Invalid credentials');
     }
 
@@ -96,6 +124,15 @@ export class PasswordService {
     await prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
+    });
+
+    // H-16: Log successful login
+    await securityLogger.loginSuccess({
+      email: email.toLowerCase(),
+      userId: user.id,
+      accountId: user.accountId || undefined,
+      ipAddress: context?.ipAddress,
+      userAgent: context?.userAgent,
     });
 
     return user;
@@ -116,6 +153,7 @@ export class PasswordService {
 
   /**
    * Change password (requires current password)
+   * H-16: Includes security audit logging
    */
   async changePassword(userId: string, currentPassword: string, newPassword: string) {
     const user = await prisma.user.findUnique({
@@ -132,6 +170,13 @@ export class PasswordService {
     }
 
     await this.setPassword(userId, newPassword);
+
+    // H-16: Log password change
+    await securityLogger.passwordChanged({
+      userId,
+      accountId: user.accountId || undefined,
+      email: user.email,
+    });
   }
 
   /**

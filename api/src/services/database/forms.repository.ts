@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/db';
 import { randomUUID } from 'crypto';
+import { anonymizeIp } from '../../utils/pii-sanitizer.js';
 
 // Type aliases for Prisma models
 type NewsletterSubscriber = {
@@ -200,6 +201,7 @@ export class FormsRepository {
 
   /**
    * Create a new contact form submission
+   * M-14: IP addresses are anonymized before storage for GDPR compliance
    */
   async createContactSubmission(data: CreateContactData): Promise<ContactSubmission> {
     return prisma.contactSubmission.create({
@@ -208,7 +210,8 @@ export class FormsRepository {
         email: data.email.toLowerCase().trim(),
         subject: data.subject,
         message: data.message,
-        ipAddress: data.ipAddress,
+        // M-14: Anonymize IP address before storing (GDPR compliance)
+        ipAddress: anonymizeIp(data.ipAddress),
         userAgent: data.userAgent,
         status: 'NEW',
       },

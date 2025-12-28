@@ -7,7 +7,16 @@ interface Props {
 }
 
 const { title, activeTab = 'overview' } = Astro.props;
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+
+// Normalize API URL: Remove trailing /api if present to avoid /api/api/ double prefix
+function normalizeApiUrl(url: string): string {
+  const normalized = url.replace(/\/+$/, '');
+  if (normalized.endsWith('/api')) {
+    return normalized.slice(0, -4);
+  }
+  return normalized;
+}
+const API_URL = normalizeApiUrl(import.meta.env.PUBLIC_API_URL || 'http://localhost:3000');
 
 const navItems = [
   { name: 'Overview', href: '/dashboard', icon: 'home', key: 'overview' },

@@ -3,7 +3,7 @@ import type { BrowserContextOptions } from 'playwright-core';
 import { getBrowserPool } from '../browser-pool/index.js';
 import type { BrowserPoolService } from '../browser-pool/browser-pool.service.js';
 import type { ScreenshotRequest, WaitOptions } from '../../schemas/screenshot.schema.js';
-import { validateUrl, UrlValidationError } from '../../utils/url-validator.js';
+import { validateUrl, validateUrlWithDns, UrlValidationError } from '../../utils/url-validator.js';
 
 /**
  * Screenshot capture result
@@ -104,6 +104,16 @@ export class ScreenshotService {
       // Block resources if requested
       if (options.blockResources && options.blockResources.length > 0) {
         await this.setupResourceBlocking(page, options.blockResources);
+      }
+
+      // H-07: Validate URL with async DNS resolution (SSRF protection)
+      try {
+        await validateUrlWithDns(options.url);
+      } catch (error) {
+        if (error instanceof UrlValidationError) {
+          throw new ScreenshotError(error.message, 'SSRF_BLOCKED', 403);
+        }
+        throw error;
       }
 
       // Navigate to URL with timeout and wait options

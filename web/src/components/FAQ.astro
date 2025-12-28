@@ -30,7 +30,24 @@ const faqs = [
     answer: 'Free tier has no SLA. Pro tier targets 99.5% uptime. Business tier guarantees 99.9% uptime with credits for any downtime. Check status.screencraft.io for live metrics.'
   }
 ];
+
+// FAQ Schema for SEO
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map(faq => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+};
 ---
+
+<!-- FAQ Schema Markup -->
+<script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
 
 <section id="faq" class="py-20 md:py-32 bg-[#161B22]">
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">

@@ -3,6 +3,59 @@ import type { LaunchOptions } from 'playwright-core';
 /**
  * Browser Launch Configuration
  * Optimized for Docker environments and memory efficiency
+ *
+ * H-19: SECURITY CONSIDERATIONS FOR CHROMIUM SANDBOX
+ * ===================================================
+ *
+ * This configuration disables the Chromium sandbox (--no-sandbox) for Docker compatibility.
+ * This is ONLY acceptable under the following conditions:
+ *
+ * 1. CONTAINER ISOLATION: The worker runs in an isolated Docker container
+ *    - Container should NOT run as root (use --user flag in docker-compose)
+ *    - Container should have limited capabilities (cap_drop: ALL)
+ *    - Container should use seccomp profiles for additional syscall filtering
+ *
+ * 2. NETWORK ISOLATION: The worker container should:
+ *    - Only have access to required services (Redis, PostgreSQL, MinIO)
+ *    - Use internal Docker network, not host network
+ *    - Have no direct internet egress (use proxy if needed)
+ *
+ * 3. INPUT VALIDATION: All URLs are validated for SSRF before loading:
+ *    - No internal IPs allowed (10.x, 172.x, 192.168.x, 127.x)
+ *    - No cloud metadata endpoints (169.254.169.254)
+ *    - DNS resolution is checked to prevent rebinding attacks
+ *
+ * 4. RESOURCE LIMITS: Container should have memory/CPU limits:
+ *    - Memory limit: 2GB max per worker container
+ *    - CPU limit: 1-2 CPUs per worker container
+ *    - PIDs limit to prevent fork bombs
+ *
+ * RECOMMENDED PRODUCTION DOCKER-COMPOSE SETTINGS:
+ * ```yaml
+ * worker:
+ *   security_opt:
+ *     - no-new-privileges:true
+ *     - seccomp:chrome.json  # Chrome-specific seccomp profile
+ *   cap_drop:
+ *     - ALL
+ *   user: "1000:1000"  # Non-root user
+ *   read_only: true
+ *   tmpfs:
+ *     - /tmp
+ *   deploy:
+ *     resources:
+ *       limits:
+ *         memory: 2G
+ *         cpus: '2'
+ *       reservations:
+ *         memory: 512M
+ *         cpus: '0.5'
+ * ```
+ *
+ * ALTERNATIVE: Use Chrome sandbox with proper privileges:
+ * 1. Build container with Chrome installed as root
+ * 2. Add SYS_ADMIN capability (less secure than sandboxless in isolated container)
+ * 3. Or use gVisor/Kata containers for additional isolation
  */
 export const BROWSER_LAUNCH_OPTIONS: LaunchOptions = {
   headless: true,

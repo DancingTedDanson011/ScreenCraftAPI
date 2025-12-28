@@ -6,6 +6,7 @@ import type {
   PaginationParams,
   PaginatedResponse,
 } from '../types/admin.types.js';
+import { createSafeOrderBy, validatePagination } from '../utils/query-validator.js';
 
 /**
  * Admin Logs Service
@@ -26,10 +27,8 @@ export class AdminLogsService {
     }
   ): Promise<PaginatedResponse<AuditLogEntry>> {
     const {
-      page = 1,
-      limit = 50,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
+      sortBy,
+      sortOrder,
       adminId,
       accountId,
       action,
@@ -37,7 +36,10 @@ export class AdminLogsService {
       startDate,
       endDate,
     } = params;
-    const skip = (page - 1) * limit;
+
+    // M-03: Validate pagination and sort parameters
+    const { page, limit, skip } = validatePagination(params.page, params.limit, 100);
+    const orderBy = createSafeOrderBy('auditLog', sortBy, sortOrder, 'createdAt');
 
     // Build where clause
     const where: any = {};
@@ -72,11 +74,12 @@ export class AdminLogsService {
     const total = await prisma.auditLog.count({ where });
 
     // Get logs with admin info
+    // M-03: Using validated orderBy to prevent injection
     const logs = await prisma.auditLog.findMany({
       where,
       skip,
       take: limit,
-      orderBy: { [sortBy]: sortOrder },
+      orderBy,
       include: {
         admin: {
           select: {

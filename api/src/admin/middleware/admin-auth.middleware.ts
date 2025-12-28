@@ -6,6 +6,7 @@ import bcrypt from 'bcrypt';
 import { prisma } from '../../lib/db.js';
 import type { AdminInfo, AdminJwtPayload } from '../types/admin.types.js';
 import { AdminRole } from '@prisma/client';
+import { anonymizeIp } from '../../utils/pii-sanitizer.js';
 
 // Extend Fastify Request to include admin info
 declare module 'fastify' {
@@ -54,8 +55,30 @@ export async function adminAuthMiddleware(
   }
 
   try {
-    // Verify JWT token
-    const decoded = jwt.verify(token, getAdminJwtSecret()) as AdminJwtPayload;
+    // M-07: Verify JWT token with explicit algorithm to prevent algorithm confusion attacks
+    const decoded = jwt.verify(token, getAdminJwtSecret(), {
+      algorithms: ['HS256'],
+    }) as AdminJwtPayload;
+
+    // M-02: Check if token is in active sessions (blacklist check)
+    // This ensures logged-out tokens are immediately invalidated
+    const crypto = await import('crypto');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex').substring(0, 64);
+
+    const activeSession = await prisma.adminSession.findFirst({
+      where: {
+        token: tokenHash,
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!activeSession) {
+      return reply.status(401).send({
+        error: 'Unauthorized',
+        message: 'Session has been invalidated',
+        code: 'SESSION_INVALIDATED',
+      });
+    }
 
     // Verify admin still exists and is active
     const adminUser = await prisma.adminUser.findUnique({
@@ -192,8 +215,10 @@ export async function adminLogin(
     role: adminUser.role,
   };
 
+  // M-07: Explicitly specify algorithm to prevent algorithm confusion attacks
   const token = jwt.sign(payload, getAdminJwtSecret(), {
     expiresIn,
+    algorithm: 'HS256',
   });
 
   // Create session record with unique token identifier
@@ -201,11 +226,12 @@ export async function adminLogin(
   const crypto = await import('crypto');
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex').substring(0, 64);
 
+  // M-14: Anonymize IP address before storing (GDPR compliance)
   await prisma.adminSession.create({
     data: {
       adminId: adminUser.id,
       token: tokenHash,
-      ipAddress: ipAddress || 'unknown',
+      ipAddress: anonymizeIp(ipAddress) || 'unknown',
       userAgent: userAgent,
       expiresAt,
     },
@@ -246,7 +272,25 @@ export async function adminLogout(token: string): Promise<void> {
  */
 export async function validateAdminToken(token: string): Promise<AdminInfo | null> {
   try {
-    const decoded = jwt.verify(token, getAdminJwtSecret()) as AdminJwtPayload;
+    // M-07: Explicit algorithm verification
+    const decoded = jwt.verify(token, getAdminJwtSecret(), {
+      algorithms: ['HS256'],
+    }) as AdminJwtPayload;
+
+    // M-02: Check if token is in active sessions
+    const crypto = await import('crypto');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex').substring(0, 64);
+
+    const activeSession = await prisma.adminSession.findFirst({
+      where: {
+        token: tokenHash,
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!activeSession) {
+      return null; // Token has been logged out
+    }
 
     const adminUser = await prisma.adminUser.findUnique({
       where: { id: decoded.adminId },
@@ -284,6 +328,7 @@ export async function hashAdminPassword(password: string): Promise<string> {
 
 /**
  * Create audit log entry
+ * M-14/L-03: IP addresses are anonymized and PII is sanitized before storage
  */
 export async function createAuditLog(
   adminId: string | null,
@@ -300,7 +345,8 @@ export async function createAuditLog(
       targetType,
       targetId,
       details: details || null,
-      ipAddress,
+      // M-14: Anonymize IP address before storing (GDPR compliance)
+      ipAddress: anonymizeIp(ipAddress),
     },
   });
 }
