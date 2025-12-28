@@ -224,7 +224,7 @@ jobs:
             -o cyclonedx-json > web-container-sbom.json
 
       - name: Upload container SBOMs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: container-sboms
           path: |
