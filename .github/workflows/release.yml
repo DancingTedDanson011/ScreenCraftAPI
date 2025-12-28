@@ -81,7 +81,7 @@ jobs:
       # Build and push API image
       - name: Build and push API image
         id: api_push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./api
           file: ./api/Dockerfile
@@ -95,7 +95,7 @@ jobs:
       # Build and push Web image
       - name: Build and push Web image
         id: web_push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./web
           file: ./web/Dockerfile
@@ -109,7 +109,7 @@ jobs:
       # Build and push Worker image (same as API with different entrypoint)
       - name: Build and push Worker image
         id: worker_push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./api
           file: ./api/Dockerfile
