@@ -222,7 +222,7 @@ export function UserTable() {
                           </svg>
                         </button>
                         <a
-                          href={`/admin/users/${user.id}`}
+                          href={`/admin/user?id=${user.id}`}
                           className="p-2 rounded-lg hover:bg-[#30363D] text-[#8B949E] hover:text-[#F0F6FC] transition-colors"
                           title="View Details"
                         >

@@ -163,7 +163,7 @@ export function ApiKeyTable() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-[#F0F6FC]">
-                      <a href={`/admin/users/${key.accountId}`} className="hover:text-purple-400 transition-colors">
+                      <a href={`/admin/user?id=${key.accountId}`} className="hover:text-purple-400 transition-colors">
                         {key.accountEmail}
                       </a>
                     </td>
