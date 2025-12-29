@@ -293,8 +293,9 @@ export default function DemoWidget({ apiEndpoint = '' }: DemoWidgetProps) {
           {/* Basic Options Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             <div>
-              <label className="block text-xs text-[#8B949E] mb-1">Format</label>
+              <label htmlFor="demo-format" className="block text-xs text-[#8B949E] mb-1">Format</label>
               <select
+                id="demo-format"
                 value={format}
                 onChange={(e) => setFormat(e.target.value as 'png' | 'jpeg' | 'webp')}
                 disabled={loading}
@@ -306,8 +307,9 @@ export default function DemoWidget({ apiEndpoint = '' }: DemoWidgetProps) {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-[#8B949E] mb-1">Width</label>
+              <label htmlFor="demo-width" className="block text-xs text-[#8B949E] mb-1">Width</label>
               <input
+                id="demo-width"
                 type="number"
                 value={width}
                 onChange={(e) => setWidth(parseInt(e.target.value) || 1920)}
@@ -318,8 +320,9 @@ export default function DemoWidget({ apiEndpoint = '' }: DemoWidgetProps) {
               />
             </div>
             <div>
-              <label className="block text-xs text-[#8B949E] mb-1">Height</label>
+              <label htmlFor="demo-height" className="block text-xs text-[#8B949E] mb-1">Height</label>
               <input
+                id="demo-height"
                 type="number"
                 value={height}
                 onChange={(e) => setHeight(parseInt(e.target.value) || 1080)}
@@ -429,8 +432,9 @@ export default function DemoWidget({ apiEndpoint = '' }: DemoWidgetProps) {
       {mode === 'pdf' && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
           <div>
-            <label className="block text-xs text-[#8B949E] mb-1">Paper Size</label>
+            <label htmlFor="demo-paper-size" className="block text-xs text-[#8B949E] mb-1">Paper Size</label>
             <select
+              id="demo-paper-size"
               value={pdfFormat}
               onChange={(e) => setPdfFormat(e.target.value as 'A4' | 'Letter' | 'Legal')}
               disabled={loading}
@@ -454,8 +458,9 @@ export default function DemoWidget({ apiEndpoint = '' }: DemoWidgetProps) {
             </label>
           </div>
           <div>
-            <label className="block text-xs text-[#8B949E] mb-1">Delay (ms)</label>
+            <label htmlFor="demo-pdf-delay" className="block text-xs text-[#8B949E] mb-1">Delay (ms)</label>
             <input
+              id="demo-pdf-delay"
               type="number"
               value={delay}
               onChange={(e) => setDelay(parseInt(e.target.value) || 0)}
@@ -637,7 +642,7 @@ export default function DemoWidget({ apiEndpoint = '' }: DemoWidgetProps) {
       )}
 
       {/* Rate Limit Info */}
-      <div className="mt-4 text-xs text-[#6E7681] text-center">
+      <div className="mt-4 text-xs text-[#8B949E] text-center">
         Demo limited to 10 requests per minute
       </div>
     </div>
