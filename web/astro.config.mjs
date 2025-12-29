@@ -19,6 +19,7 @@ export default defineConfig({
   site: 'https://screencraftapi.com',
   compressHTML: true,
   build: {
-    inlineStylesheets: 'auto',
+    inlineStylesheets: 'always',
   },
+  prefetch: false,
 });
