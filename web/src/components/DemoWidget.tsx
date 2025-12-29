@@ -234,9 +234,9 @@ export default function DemoWidget({ apiEndpoint = '' }: DemoWidgetProps) {
 
   return (
     <div className="bg-[#0D1117] border border-[#30363D] rounded-xl p-6 shadow-lg">
-      <h3 className="text-lg font-semibold text-[#F0F6FC] mb-4">
+      <p className="text-lg font-semibold text-[#F0F6FC] mb-4">
         Try it now (No signup required)
-      </h3>
+      </p>
 
       {/* Mode Toggle */}
       <div className="flex gap-2 mb-4 p-1 bg-[#161B22] rounded-lg">
@@ -556,10 +556,10 @@ export default function DemoWidget({ apiEndpoint = '' }: DemoWidgetProps) {
           <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-[#8B949E] bg-[#161B22] border border-[#30363D] rounded-lg p-4">
             <div className="flex flex-wrap items-center gap-3">
               <span className="flex items-center gap-1">
-                <svg className="w-4 h-4 text-[#238636]" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-4 h-4 text-[#3FB950]" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span className="text-[#238636] font-medium">{result.duration.toFixed(2)}s</span>
+                <span className="text-[#3FB950] font-medium">{result.duration.toFixed(2)}s</span>
               </span>
               <span className="text-[#30363D]">|</span>
               <span>{formatBytes(result.size)}</span>
@@ -632,10 +632,10 @@ export default function DemoWidget({ apiEndpoint = '' }: DemoWidgetProps) {
           {/* Metadata */}
           <div className="flex items-center justify-center gap-4 text-xs text-[#8B949E]">
             <span className="flex items-center gap-1">
-              <svg className="w-4 h-4 text-[#238636]" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-4 h-4 text-[#3FB950]" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              <span className="text-[#238636] font-medium">Generated in {result.duration.toFixed(2)}s</span>
+              <span className="text-[#3FB950] font-medium">Generated in {result.duration.toFixed(2)}s</span>
             </span>
           </div>
         </div>
