@@ -72,7 +72,7 @@ const apiEndpoint = import.meta.env.PUBLIC_API_URL || '';
 
       <!-- Right: Demo Widget -->
       <div class="relative">
-        <DemoWidget client:idle apiEndpoint={apiEndpoint} />
+        <DemoWidget client:visible apiEndpoint={apiEndpoint} />
         <!-- Decorative Glow -->
         <div class="absolute -inset-4 bg-gradient-to-r from-[#238636]/10 to-[#1F6FEB]/10 blur-3xl -z-10 opacity-50"></div>
       </div>
