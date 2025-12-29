@@ -2,7 +2,7 @@
 
 import { FastifyRequest, FastifyReply } from 'fastify';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { prisma } from '../../lib/db.js';
 import type { AdminInfo, AdminJwtPayload } from '../types/admin.types.js';
 import { AdminRole } from '@prisma/client';

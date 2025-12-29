@@ -1,6 +1,42 @@
 import { z } from 'zod';
 import { strictCookieSchema } from './cookie.schema.js';
 
+// SSRF-safe URL validator - blocks internal/private addresses
+const ssrfSafeUrl = z.string().url('Invalid URL format').refine((url) => {
+  try {
+    const parsed = new URL(url);
+
+    // Only allow http and https
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return false;
+    }
+
+    const hostname = parsed.hostname.toLowerCase();
+
+    // Block localhost variants
+    if (hostname === 'localhost' || hostname === '::1') {
+      return false;
+    }
+
+    // Check if IP address
+    const ipMatch = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ipMatch) {
+      const [, a, b, c, d] = ipMatch.map(Number);
+      // Block private ranges
+      if (a === 10) return false; // 10.0.0.0/8
+      if (a === 172 && b >= 16 && b <= 31) return false; // 172.16.0.0/12
+      if (a === 192 && b === 168) return false; // 192.168.0.0/16
+      if (a === 127) return false; // 127.0.0.0/8
+      if (a === 169 && b === 254) return false; // 169.254.0.0/16 (link-local + metadata)
+      if (a === 0) return false; // 0.0.0.0/8
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}, { message: 'URL not allowed: internal or private addresses are blocked' });
+
 // PDF Margin Schema
 export const pdfMarginSchema = z.object({
   top: z.string().regex(/^\d+(px|in|cm|mm)$/).optional(),
@@ -23,7 +59,7 @@ export const templateSchema = z.object({
 
 // PDF Request from URL
 export const pdfFromUrlRequestSchema = z.object({
-  url: z.string().url('Invalid URL format'),
+  url: ssrfSafeUrl,
   format: pdfFormatSchema.default('A4'),
   landscape: z.boolean().default(false),
   printBackground: z.boolean().default(true),

@@ -5,7 +5,7 @@ import Stripe from 'stripe';
 import { prisma } from '../../lib/prisma.js';
 import { logger } from '../../lib/logger.js';
 import { stripeService } from './stripe.service.js';
-import { getCreditsForTier } from '../../config/stripe.config.js';
+import { getRequestsForTier } from '../../config/stripe.config.js';
 
 export class SubscriptionService {
   /**
@@ -98,7 +98,7 @@ export class SubscriptionService {
    * @param tier - New tier
    */
   async updateAccountTier(accountId: string, tier: Tier): Promise<void> {
-    const monthlyCredits = getCreditsForTier(tier);
+    const monthlyCredits = getRequestsForTier(tier);
 
     await prisma.account.update({
       where: { id: accountId },

@@ -63,8 +63,9 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      # C-04: Bind to localhost only for security
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - minio_data:/data
     networks:
@@ -105,6 +106,8 @@ services:
       dockerfile: Dockerfile
       target: development
     container_name: screencraft-api
+    env_file:
+      - ./api/.env
     environment:
       NODE_ENV: development
       PORT: 3000
@@ -148,6 +151,8 @@ services:
       dockerfile: Dockerfile
       target: development
     container_name: screencraft-worker
+    env_file:
+      - ./api/.env
     environment:
       NODE_ENV: development
       # C-04: Use env vars with dev defaults
@@ -191,7 +196,8 @@ services:
     container_name: screencraft-web
     environment:
       NODE_ENV: development
-      PUBLIC_API_URL: http://localhost:3000
+      # Empty = same-origin, nginx handles /api/ routing
+      PUBLIC_API_URL: ""
     ports:
       - "4321:4321"
     volumes:

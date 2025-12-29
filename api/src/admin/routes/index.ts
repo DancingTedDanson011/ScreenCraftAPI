@@ -18,7 +18,8 @@ import { adminUsersService } from '../services/admin-users.service.js';
 import { adminApiKeysService } from '../services/admin-apikeys.service.js';
 import { adminJobsService } from '../services/admin-jobs.service.js';
 import { adminLogsService } from '../services/admin-logs.service.js';
-import { Tier, AdminRole } from '@prisma/client';
+import { adminMessagesService } from '../services/admin-messages.service.js';
+import { Tier, AdminRole, ContactStatus } from '@prisma/client';
 
 /**
  * Admin Routes
@@ -641,5 +642,106 @@ export async function adminRoutes(fastify: FastifyInstance): Promise<void> {
         return logs;
       }
     );
+
+    // ============================================
+    // CONTACT MESSAGES
+    // ============================================
+
+    /**
+     * List contact messages
+     */
+    protectedRoutes.get('/messages', async (request: FastifyRequest) => {
+      const query = request.query as any;
+      return await adminMessagesService.listMessages({
+        page: Number(query.page) || 1,
+        limit: Number(query.limit) || 20,
+        sortBy: query.sortBy || 'createdAt',
+        sortOrder: query.sortOrder || 'desc',
+        search: query.search,
+        status: query.status as ContactStatus | undefined,
+      });
+    });
+
+    /**
+     * Get message details
+     */
+    protectedRoutes.get('/messages/:id', async (request: FastifyRequest, reply: FastifyReply) => {
+      const { id } = request.params as { id: string };
+      const message = await adminMessagesService.getMessage(id);
+
+      if (!message) {
+        return reply.status(404).send({
+          error: 'Not Found',
+          message: 'Message not found',
+        });
+      }
+
+      return message;
+    });
+
+    /**
+     * Update message status
+     */
+    protectedRoutes.patch(
+      '/messages/:id/status',
+      { preHandler: requireRole(AdminRole.SUPER_ADMIN, AdminRole.ADMIN) },
+      async (request: FastifyRequest, reply: FastifyReply) => {
+        const { id } = request.params as { id: string };
+        const { status } = request.body as { status: ContactStatus };
+
+        if (!Object.values(ContactStatus).includes(status)) {
+          return reply.status(400).send({
+            error: 'Bad Request',
+            message: 'Invalid status',
+          });
+        }
+
+        await adminMessagesService.updateStatus(id, status, request.admin!.adminId);
+
+        // Log the action
+        await createAuditLog(
+          request.admin!.adminId,
+          'MESSAGE_STATUS_UPDATED',
+          'contact_submission',
+          id,
+          { newStatus: status },
+          request.ip
+        );
+
+        return { success: true };
+      }
+    );
+
+    /**
+     * Delete message
+     */
+    protectedRoutes.delete(
+      '/messages/:id',
+      { preHandler: requireRole(AdminRole.SUPER_ADMIN) },
+      async (request: FastifyRequest) => {
+        const { id } = request.params as { id: string };
+
+        await adminMessagesService.deleteMessage(id, request.admin!.adminId);
+
+        // Log the action
+        await createAuditLog(
+          request.admin!.adminId,
+          'MESSAGE_DELETED',
+          'contact_submission',
+          id,
+          {},
+          request.ip
+        );
+
+        return { success: true };
+      }
+    );
+
+    /**
+     * Get message statistics
+     */
+    protectedRoutes.get('/messages/stats/overview', async () => {
+      return await adminMessagesService.getMessageStats();
+    });
   });
 }

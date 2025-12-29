@@ -4,14 +4,19 @@
  */
 
 import { PrismaClient, AdminRole } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = 'xinicetm@gmail.com';
-  const password = 'Lebstein112233.*';
-  const name = 'Super Admin';
+  const email = process.env.ADMIN_EMAIL || 'admin@example.com';
+  const password = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
+  const name = process.env.ADMIN_NAME || 'Super Admin';
+
+  // Warn if using default credentials
+  if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+    console.warn('WARNING: Using default admin credentials. Set ADMIN_EMAIL and ADMIN_PASSWORD environment variables for production!');
+  }
 
   // Hash password with bcrypt (12 rounds)
   const passwordHash = await bcrypt.hash(password, 12);

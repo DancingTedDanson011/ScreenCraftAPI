@@ -1,6 +1,6 @@
 // Password Auth Service - Email/Password Authentication
 
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { prisma } from '../../lib/db.js';
 import { securityLogger } from '../security/security-logger.service.js';
 

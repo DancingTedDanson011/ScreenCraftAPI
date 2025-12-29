@@ -58,7 +58,8 @@ RUN npm ci && npm cache clean --force
 COPY . .
 
 # Build argument for API URL
-ARG PUBLIC_API_URL=http://localhost:3000
+# Empty = same-origin, nginx handles /api/ routing
+ARG PUBLIC_API_URL=""
 ENV PUBLIC_API_URL=$PUBLIC_API_URL
 
 # Build Astro site

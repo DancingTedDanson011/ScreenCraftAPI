@@ -9,3 +9,4 @@ export { UserTable } from './UserTable';
 export { ApiKeyTable } from './ApiKeyTable';
 export { JobTable } from './JobTable';
 export { AuditLogTable } from './AuditLogTable';
+export { MessagesTable } from './MessagesTable';

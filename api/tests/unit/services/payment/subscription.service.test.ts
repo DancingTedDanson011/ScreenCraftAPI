@@ -41,14 +41,14 @@ vi.mock('../../../../src/lib/logger.js', () => ({
 
 // Mock stripe config
 vi.mock('../../../../src/config/stripe.config.js', () => ({
-  getCreditsForTier: vi.fn((tier: string) => {
-    const credits: Record<string, number> = {
-      FREE: 100,
-      PRO: 1000,
-      BUSINESS: 5000,
-      ENTERPRISE: 25000,
+  getRequestsForTier: vi.fn((tier: string) => {
+    const requests: Record<string, number> = {
+      FREE: 250,
+      PRO: 5000,
+      BUSINESS: 20000,
+      ENTERPRISE: 75000,
     };
-    return credits[tier] || 0;
+    return requests[tier] || 0;
   }),
 }));
 
@@ -240,7 +240,7 @@ describe('SubscriptionService', () => {
         where: { id: 'acc_test123' },
         data: {
           tier: 'PRO',
-          monthlyCredits: 1000,
+          monthlyCredits: 5000,
           usedCredits: 0,
           lastResetAt: expect.any(Date),
         },
@@ -362,7 +362,7 @@ describe('SubscriptionService', () => {
         where: { id: 'acc_tier123' },
         data: {
           tier: 'PRO',
-          monthlyCredits: 1000,
+          monthlyCredits: 5000,
           usedCredits: 0,
           lastResetAt: expect.any(Date),
         },
@@ -378,7 +378,7 @@ describe('SubscriptionService', () => {
         where: { id: 'acc_business' },
         data: {
           tier: 'BUSINESS',
-          monthlyCredits: 5000,
+          monthlyCredits: 20000,
           usedCredits: 0,
           lastResetAt: expect.any(Date),
         },
@@ -394,7 +394,7 @@ describe('SubscriptionService', () => {
         where: { id: 'acc_enterprise' },
         data: {
           tier: 'ENTERPRISE',
-          monthlyCredits: 25000,
+          monthlyCredits: 75000,
           usedCredits: 0,
           lastResetAt: expect.any(Date),
         },
@@ -410,7 +410,7 @@ describe('SubscriptionService', () => {
         where: { id: 'acc_free' },
         data: {
           tier: 'FREE',
-          monthlyCredits: 100,
+          monthlyCredits: 250,
           usedCredits: 0,
           lastResetAt: expect.any(Date),
         },
@@ -424,7 +424,7 @@ describe('SubscriptionService', () => {
       await service.updateAccountTier('acc_log', 'PRO');
 
       expect(logger.info).toHaveBeenCalledWith(
-        { accountId: 'acc_log', tier: 'PRO', monthlyCredits: 1000 },
+        { accountId: 'acc_log', tier: 'PRO', monthlyCredits: 5000 },
         'Account tier updated'
       );
     });
@@ -492,7 +492,7 @@ describe('SubscriptionService', () => {
         where: { id: 'acc_downgrade123' },
         data: {
           tier: 'FREE',
-          monthlyCredits: 100,
+          monthlyCredits: 250,
           usedCredits: 0,
           lastResetAt: expect.any(Date),
         },
@@ -589,7 +589,7 @@ describe('SubscriptionService', () => {
         where: { id: 'acc_test123' },
         data: {
           tier: 'FREE',
-          monthlyCredits: 100,
+          monthlyCredits: 250,
           usedCredits: 0,
           lastResetAt: expect.any(Date),
         },

@@ -130,17 +130,18 @@ export async function authRoutes(fastify: FastifyInstance) {
       );
 
       // Set HttpOnly session cookie
-      // H-05: Use SameSite=Strict for better CSRF protection
+      // Note: Use 'lax' for OAuth flows (strict blocks cross-origin redirects)
       reply.setCookie(authConfig.session.cookieName, session.sessionToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: 'lax',
         path: '/',
         maxAge: authConfig.session.maxAge / 1000, // Convert to seconds
+        domain: authConfig.session.cookieDomain, // For cross-subdomain auth
       });
 
       // H-06: Set CSRF cookie for session-based auth
-      setCsrfCookie(reply);
+      setCsrfCookie(reply, authConfig.session.cookieDomain);
 
       // Redirect to frontend dashboard
       return reply.redirect(`${authConfig.frontendUrl}/dashboard`);
@@ -252,17 +253,18 @@ export async function authRoutes(fastify: FastifyInstance) {
         );
 
         // Set HttpOnly session cookie
-        // H-05: Use SameSite=Strict for better CSRF protection
+        // Note: Use 'lax' for OAuth flows (strict blocks cross-origin redirects)
         reply.setCookie(authConfig.session.cookieName, session.sessionToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
+          sameSite: 'lax',
           path: '/',
           maxAge: authConfig.session.maxAge / 1000,
+          domain: authConfig.session.cookieDomain, // For cross-subdomain auth
         });
 
         // H-06: Set CSRF cookie for session-based auth
-        setCsrfCookie(reply);
+        setCsrfCookie(reply, authConfig.session.cookieDomain);
 
         // Redirect to frontend dashboard
         return reply.redirect(`${authConfig.frontendUrl}/dashboard`);
@@ -311,10 +313,11 @@ export async function authRoutes(fastify: FastifyInstance) {
         sameSite: 'strict',
         path: '/',
         maxAge: authConfig.session.maxAge / 1000,
+        domain: authConfig.session.cookieDomain, // For cross-subdomain auth
       });
 
       // H-06: Set CSRF cookie for session-based auth
-      const csrfToken = setCsrfCookie(reply);
+      const csrfToken = setCsrfCookie(reply, authConfig.session.cookieDomain);
 
       return {
         success: true,
@@ -385,10 +388,11 @@ export async function authRoutes(fastify: FastifyInstance) {
         sameSite: 'strict',
         path: '/',
         maxAge: authConfig.session.maxAge / 1000,
+        domain: authConfig.session.cookieDomain, // For cross-subdomain auth
       });
 
       // H-06: Set CSRF cookie for session-based auth
-      const csrfToken = setCsrfCookie(reply);
+      const csrfToken = setCsrfCookie(reply, authConfig.session.cookieDomain);
 
       return {
         success: true,
@@ -558,7 +562,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   /**
    * Session Check
-   * Quick endpoint to check if session is valid
+   * Quick endpoint to check if session is valid and get user info
    */
   fastify.get('/auth/session', async (request: FastifyRequest, reply: FastifyReply) => {
     const sessionToken = request.cookies[authConfig.session.cookieName];
@@ -569,9 +573,19 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     const session = await sessionService.validateSession(sessionToken);
 
+    if (!session) {
+      return { authenticated: false };
+    }
+
     return {
-      authenticated: !!session,
-      expiresAt: session?.expires?.toISOString() || null,
+      authenticated: true,
+      expiresAt: session.expires?.toISOString() || null,
+      user: {
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+        avatarUrl: session.user.image,
+      },
     };
   });
 

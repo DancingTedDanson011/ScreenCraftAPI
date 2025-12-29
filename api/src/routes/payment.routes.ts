@@ -143,6 +143,51 @@ export async function paymentRoutes(
     paymentController.getSubscription.bind(paymentController)
   );
 
+  // Get Payment History (Invoices)
+  fastify.get(
+    '/invoices',
+    {
+      schema: {
+        description: 'Get payment history (invoices)',
+        tags: ['payment'],
+        response: {
+          200: {
+            description: 'Invoices retrieved successfully',
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    amount: { type: 'number' },
+                    currency: { type: 'string' },
+                    status: { type: 'string' },
+                    date: { type: 'string', format: 'date-time' },
+                    invoiceUrl: { type: ['string', 'null'] },
+                    invoicePdf: { type: ['string', 'null'] },
+                    description: { type: ['string', 'null'] },
+                  },
+                },
+              },
+            },
+          },
+          401: {
+            description: 'Unauthorized',
+            type: 'object',
+          },
+          500: {
+            description: 'Internal server error',
+            type: 'object',
+          },
+        },
+      },
+    },
+    paymentController.getInvoices.bind(paymentController)
+  );
+
   // Cancel Subscription
   fastify.post(
     '/subscription/cancel',
@@ -229,5 +274,5 @@ export async function paymentRoutes(
   );
 }
 
-// Export default for auto-loading
+// Default export for auto-loading (named export via function declaration)
 export default paymentRoutes;

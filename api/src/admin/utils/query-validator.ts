@@ -15,6 +15,7 @@ export const VALID_SORT_FIELDS = {
   job: ['createdAt', 'status', 'completedAt', 'priority'] as const,
   screenshot: ['createdAt', 'status', 'url'] as const,
   pdf: ['createdAt', 'status', 'url', 'type'] as const,
+  contactSubmission: ['createdAt', 'name', 'email', 'subject', 'status', 'repliedAt'] as const,
 } as const;
 
 export type EntityType = keyof typeof VALID_SORT_FIELDS;

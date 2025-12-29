@@ -3,7 +3,7 @@
 import { PrismaClient, Tier, AdminRole } from '@prisma/client';
 import { ApiKeyService } from '../src/services/auth/api-key.service.js';
 import { Redis } from 'ioredis';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
 const prisma = new PrismaClient();

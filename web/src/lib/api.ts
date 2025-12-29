@@ -10,7 +10,9 @@ function normalizeApiUrl(url: string): string {
   return normalized;
 }
 
-const API_BASE = normalizeApiUrl(import.meta.env.PUBLIC_API_URL || 'http://localhost:3000');
+// Use empty string for same-origin (nginx proxy handles /api/ routing)
+// Only set PUBLIC_API_URL if API is on a different domain
+const API_BASE = normalizeApiUrl(import.meta.env.PUBLIC_API_URL || '');
 
 // ============================================
 // TYPES
@@ -147,13 +149,18 @@ async function fetchWithAuth<T>(
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   try {
+    // Only set Content-Type for requests with body
+    const headers: HeadersInit = {
+      ...options.headers,
+    };
+    if (options.body) {
+      (headers as Record<string, string>)['Content-Type'] = 'application/json';
+    }
+
     const response = await fetch(`${API_BASE}${url}`, {
       ...options,
       credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
     });
 
     const data = await response.json();
@@ -278,7 +285,65 @@ export const api = {
         { method: 'DELETE' }
       ),
   },
+
+  billing: {
+    /**
+     * Get current subscription
+     */
+    getSubscription: () =>
+      fetchWithAuth<SubscriptionInfo | null>('/api/v1/payment/subscription'),
+
+    /**
+     * Create checkout session for upgrade
+     */
+    createCheckout: (tier: 'PRO' | 'BUSINESS' | 'ENTERPRISE') =>
+      fetchWithAuth<{ url: string; sessionId: string }>('/api/v1/payment/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ tier }),
+      }),
+
+    /**
+     * Create Stripe portal session
+     */
+    createPortal: () =>
+      fetchWithAuth<{ url: string }>('/api/v1/payment/portal'),
+
+    /**
+     * Cancel subscription
+     */
+    cancelSubscription: (immediately: boolean = false) =>
+      fetchWithAuth<{ success: boolean; message: string }>('/api/v1/payment/subscription/cancel', {
+        method: 'POST',
+        body: JSON.stringify({ immediately }),
+      }),
+
+    /**
+     * Get payment history (invoices)
+     */
+    getInvoices: () =>
+      fetchWithAuth<Invoice[]>('/api/v1/payment/invoices'),
+  },
 };
+
+export interface Invoice {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  date: string;
+  invoiceUrl: string | null;
+  invoicePdf: string | null;
+  description: string | null;
+}
+
+export interface SubscriptionInfo {
+  id: string;
+  tier: string;
+  status: string;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+}
 
 export { ApiClientError };
 export default api;

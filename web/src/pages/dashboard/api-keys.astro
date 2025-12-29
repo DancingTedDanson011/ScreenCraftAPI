@@ -1,0 +1,265 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="API Keys" activeTab="api-keys">
+  <div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <p class="text-text-secondary">
+          Manage your API keys. Create new keys to access the ScreenCraft API.
+        </p>
+      </div>
+      <button
+        id="create-key-btn"
+        class="px-4 py-2.5 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Create API Key
+      </button>
+    </div>
+
+    <div class="bg-accent-secondary/10 border border-accent-secondary/20 rounded-lg p-4">
+      <div class="flex items-start gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent-secondary flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <div>
+          <p class="text-accent-secondary font-medium text-sm">Security Notice</p>
+          <p class="text-text-secondary text-sm mt-1">
+            API keys are only shown once when created. Store them securely and never share them publicly.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div id="loading-state" class="bg-surface border border-border rounded-lg p-8">
+      <div class="flex items-center justify-center">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary"></div>
+        <span class="ml-3 text-text-secondary">Loading API keys...</span>
+      </div>
+    </div>
+
+    <div id="keys-container" class="hidden"></div>
+
+    <div id="error-state" class="hidden bg-red-500/10 border border-red-500/20 rounded-lg p-6 text-center">
+      <p id="error-message" class="text-text-secondary mb-4">Failed to load API keys.</p>
+      <button id="retry-btn" class="px-4 py-2 bg-accent-primary text-white rounded-lg">Try Again</button>
+    </div>
+
+    <div class="bg-surface border border-border rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-text-primary mb-4">Using Your API Key</h3>
+      <p class="text-text-secondary text-sm">
+        Include your API key in the Authorization header: <code class="bg-background px-2 py-1 rounded">Authorization: Bearer YOUR_API_KEY</code>
+      </p>
+    </div>
+  </div>
+  <div id="modal-container"></div>
+</DashboardLayout>
+
+<script>
+  import { api } from '../../lib/api';
+
+  let apiKeys: any[] = [];
+  let isModalOpen = false;
+
+  async function loadApiKeys() {
+    const loadingState = document.getElementById('loading-state');
+    const keysContainer = document.getElementById('keys-container');
+    const errorState = document.getElementById('error-state');
+
+    loadingState?.classList.remove('hidden');
+    keysContainer?.classList.add('hidden');
+    errorState?.classList.add('hidden');
+
+    try {
+      const response = await api.dashboard.getApiKeys();
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Failed to load API keys');
+      }
+      apiKeys = response.data;
+      renderApiKeys();
+      loadingState?.classList.add('hidden');
+      keysContainer?.classList.remove('hidden');
+    } catch (error) {
+      console.error('Load API keys error:', error);
+      loadingState?.classList.add('hidden');
+      errorState?.classList.remove('hidden');
+    }
+  }
+
+  function renderApiKeys() {
+    const container = document.getElementById('keys-container');
+    if (!container) return;
+
+    if (apiKeys.length === 0) {
+      container.innerHTML = `
+        <div class="bg-surface border border-border rounded-lg p-8 text-center">
+          <p class="text-text-secondary mb-4">No API keys yet. Create one to get started.</p>
+          <button id="create-empty-btn" class="px-4 py-2 bg-accent-primary text-white rounded-lg">Create API Key</button>
+        </div>
+      `;
+      document.getElementById('create-empty-btn')?.addEventListener('click', openCreateModal);
+      return;
+    }
+
+    let rows = '';
+    for (const key of apiKeys) {
+      const statusBadge = key.isActive
+        ? '<span class="px-2.5 py-0.5 rounded-full text-xs bg-green-500/20 text-green-400">Active</span>'
+        : '<span class="px-2.5 py-0.5 rounded-full text-xs bg-red-500/20 text-red-400">Revoked</span>';
+
+      const revokeBtn = key.isActive
+        ? `<button class="revoke-btn text-red-400 hover:text-red-300" data-id="${key.id}">Revoke</button>`
+        : '';
+
+      const createdDate = new Date(key.createdAt).toLocaleDateString();
+      rows += `<tr class="border-b border-border">
+        <td class="px-6 py-4">
+          <div class="font-medium text-text-primary">${key.name || 'Unnamed'}</div>
+          <div class="text-sm text-text-muted font-mono">${key.prefix}...</div>
+        </td>
+        <td class="px-6 py-4">${statusBadge}</td>
+        <td class="px-6 py-4 text-sm text-text-secondary">${createdDate}</td>
+        <td class="px-6 py-4 text-right">${revokeBtn}</td>
+      </tr>`;
+    }
+
+    container.innerHTML = `
+      <div class="bg-surface border border-border rounded-lg overflow-hidden">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-border bg-surface-hover">
+              <th class="px-6 py-3 text-left text-sm font-medium text-text-secondary">Name / Key</th>
+              <th class="px-6 py-3 text-left text-sm font-medium text-text-secondary">Status</th>
+              <th class="px-6 py-3 text-left text-sm font-medium text-text-secondary">Created</th>
+              <th class="px-6 py-3 text-right text-sm font-medium text-text-secondary">Actions</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+
+    // Add event listeners for revoke buttons
+    container.querySelectorAll('.revoke-btn').forEach(btn => {
+      btn.addEventListener('click', () => revokeKey((btn as HTMLElement).dataset.id!));
+    });
+  }
+
+  async function revokeKey(id: string) {
+    if (!confirm('Are you sure you want to revoke this API key?')) return;
+    try {
+      const response = await api.dashboard.revokeApiKey(id);
+      if (response.success) {
+        await loadApiKeys();
+      } else {
+        alert(response.error || 'Failed to revoke API key');
+      }
+    } catch (error: any) {
+      console.error('Revoke API key error:', error);
+      const message = error?.message || error?.response?.error || 'Failed to revoke API key';
+      alert(message);
+    }
+  }
+
+  function openCreateModal() {
+    isModalOpen = true;
+    const container = document.getElementById('modal-container');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="fixed inset-0 z-50 flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/60" id="modal-backdrop"></div>
+        <div class="relative bg-surface border border-border rounded-xl p-6 w-full max-w-md mx-4">
+          <h2 class="text-lg font-semibold text-text-primary mb-4">Create API Key</h2>
+          <form id="create-key-form">
+            <div class="mb-4">
+              <label class="block text-sm text-text-secondary mb-2">Key Name (optional)</label>
+              <input type="text" id="keyName" class="w-full px-4 py-2 bg-background border border-border rounded-lg text-text-primary" placeholder="e.g., Production Server" />
+            </div>
+            <div class="flex gap-3">
+              <button type="button" id="cancel-btn" class="flex-1 px-4 py-2 border border-border text-text-secondary rounded-lg">Cancel</button>
+              <button type="submit" class="flex-1 px-4 py-2 bg-accent-primary text-white rounded-lg">Create</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('modal-backdrop')?.addEventListener('click', closeModal);
+    document.getElementById('cancel-btn')?.addEventListener('click', closeModal);
+
+    document.getElementById('create-key-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById('keyName') as HTMLInputElement;
+      try {
+        const response = await api.dashboard.createApiKey(nameInput?.value || undefined);
+        if (response.success && response.data) {
+          showKeySuccess(response.data);
+        }
+      } catch (error) {
+        alert('Failed to create API key');
+      }
+    });
+  }
+
+  function showKeySuccess(key: { key: string; name?: string }) {
+    const container = document.getElementById('modal-container');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="fixed inset-0 z-50 flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/60" id="modal-backdrop"></div>
+        <div class="relative bg-surface border border-border rounded-xl p-6 w-full max-w-md mx-4">
+          <h2 class="text-lg font-semibold text-text-primary mb-4">API Key Created</h2>
+          <div class="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+            <p class="text-yellow-400 text-sm">Save this key now! You will not be able to see it again.</p>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm text-text-secondary mb-2">Your API Key</label>
+            <div class="flex gap-2">
+              <input type="text" id="key-display" value="${key.key}" readonly class="flex-1 px-4 py-2 bg-background border border-border rounded-lg text-text-primary font-mono text-sm" />
+              <button id="copy-btn" class="px-4 py-2 bg-accent-primary text-white rounded-lg">Copy</button>
+            </div>
+          </div>
+          <button id="done-btn" class="w-full px-4 py-2 bg-accent-primary text-white rounded-lg">Done</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('copy-btn')?.addEventListener('click', async () => {
+      const keyDisplay = document.getElementById('key-display') as HTMLInputElement;
+      await navigator.clipboard.writeText(keyDisplay.value);
+      const btn = document.getElementById('copy-btn')!;
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+
+    document.getElementById('done-btn')?.addEventListener('click', () => {
+      closeModal();
+      loadApiKeys();
+    });
+  }
+
+  function closeModal() {
+    isModalOpen = false;
+    const container = document.getElementById('modal-container');
+    if (container) container.innerHTML = '';
+  }
+
+  // Setup
+  document.getElementById('create-key-btn')?.addEventListener('click', openCreateModal);
+  document.getElementById('retry-btn')?.addEventListener('click', loadApiKeys);
+
+  // Load on page ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadApiKeys);
+  } else {
+    loadApiKeys();
+  }
+</script>

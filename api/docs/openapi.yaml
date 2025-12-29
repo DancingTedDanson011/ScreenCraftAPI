@@ -138,6 +138,37 @@ paths:
                   fullPage: true
                   async: true
                   webhookUrl: https://your-app.com/webhooks/screenshot
+              scrollPosition:
+                summary: Screenshot at scroll position
+                value:
+                  url: https://example.com/long-page
+                  scrollPosition:
+                    y: 1500
+                    behavior: instant
+                  viewport:
+                    width: 1920
+                    height: 1080
+              scrollWithDelay:
+                summary: Scroll with delay for lazy-loaded content
+                value:
+                  url: https://example.com/lazy-content
+                  scrollPosition:
+                    y: 2000
+                    behavior: smooth
+                  waitOptions:
+                    waitUntil: networkidle0
+                    delay: 2000
+              noCookieAccept:
+                summary: Disable cookie banner auto-accept
+                value:
+                  url: https://example.com
+                  acceptCookies: false
+              cookieWithTimeout:
+                summary: Cookie acceptance with custom timeout
+                value:
+                  url: https://gdpr-heavy-site.com
+                  acceptCookies: true
+                  cookieAcceptTimeout: 5000
       responses:
         '201':
           description: Screenshot created successfully (synchronous)
@@ -632,6 +663,23 @@ components:
           type: string
           description: Wait for a specific CSS selector to appear
 
+    ScrollPosition:
+      type: object
+      description: Scroll to a specific position before capturing (cannot be used with fullPage)
+      properties:
+        y:
+          type: integer
+          minimum: 0
+          maximum: 50000
+          description: Vertical scroll position in pixels from the top
+        behavior:
+          type: string
+          enum: [instant, smooth]
+          default: instant
+          description: |
+            - `instant`: Scroll immediately without animation
+            - `smooth`: Smooth scroll animation (waits for completion)
+
     Cookie:
       type: object
       required: [name, value]
@@ -681,6 +729,8 @@ components:
           description: Image quality (jpeg/webp only, 1-100)
         clip:
           $ref: '#/components/schemas/Clip'
+        scrollPosition:
+          $ref: '#/components/schemas/ScrollPosition'
         omitBackground:
           type: boolean
           default: false
@@ -711,6 +761,16 @@ components:
             type: string
             enum: [image, stylesheet, font, script, media]
           description: Resource types to block for faster loading
+        acceptCookies:
+          type: boolean
+          default: true
+          description: Automatically accept cookie consent banners before capturing
+        cookieAcceptTimeout:
+          type: integer
+          minimum: 0
+          maximum: 10000
+          default: 2500
+          description: Timeout in milliseconds to wait for cookie banner detection
         async:
           type: boolean
           default: false

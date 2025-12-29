@@ -1,5 +1,18 @@
 ---
-// Navbar Component - ScreenCraft
+// Navbar Component - ScreenCraft with Auth State Detection
+
+// Normalize API URL
+function normalizeApiUrl(url: string): string {
+  const normalized = url.replace(/\/+$/, '');
+  if (normalized.endsWith('/api')) {
+    return normalized.slice(0, -4);
+  }
+  return normalized;
+}
+
+// Use empty string for same-origin (nginx proxy handles /api/ routing)
+const API_URL = normalizeApiUrl(import.meta.env.PUBLIC_API_URL || '');
+
 const navLinks = [
   { href: '/docs', label: 'Docs' },
   { href: '/pricing', label: 'Pricing' },
@@ -18,7 +31,7 @@ const navLinks = [
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         </div>
-        <span class="text-lg font-bold text-[#F0F6FC]">ScreenCraft</span>
+        <span class="text-lg font-bold text-[#F0F6FC]">ScreenCraft API</span>
       </a>
 
       <!-- Desktop Navigation -->
@@ -33,20 +46,130 @@ const navLinks = [
         ))}
       </div>
 
-      <!-- Auth Buttons -->
-      <div class="hidden md:flex items-center gap-4">
-        <a
-          href="/login"
-          class="text-sm text-[#8B949E] hover:text-[#F0F6FC] transition-colors"
-        >
-          Sign In
-        </a>
-        <a
-          href="/login"
-          class="px-4 py-2 bg-[#238636] text-white text-sm font-medium rounded-lg hover:bg-[#2EA043] transition-colors"
-        >
-          Get API Key
-        </a>
+      <!-- Auth Section - Desktop -->
+      <div class="hidden md:flex items-center gap-3">
+        <!-- Loading State -->
+        <div id="auth-loading" class="flex items-center gap-2">
+          <div class="w-4 h-4 border-2 border-[#8B949E] border-t-transparent rounded-full animate-spin"></div>
+        </div>
+
+        <!-- Not Logged In State -->
+        <div id="auth-guest" class="hidden items-center gap-2">
+          <!-- GitHub OAuth - Small round icon -->
+          <a
+            id="github-btn"
+            href="#"
+            class="w-8 h-8 flex items-center justify-center bg-[#21262D] border border-[#30363D] text-[#8B949E] rounded-full hover:bg-[#30363D] hover:text-[#F0F6FC] transition-colors"
+            title="Sign in with GitHub"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+            </svg>
+          </a>
+
+          <!-- Google OAuth - Small round icon -->
+          <a
+            id="google-btn"
+            href="#"
+            class="w-8 h-8 flex items-center justify-center bg-[#21262D] border border-[#30363D] text-[#8B949E] rounded-full hover:bg-[#30363D] hover:text-[#F0F6FC] transition-colors"
+            title="Sign in with Google"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+          </a>
+
+          <!-- Sign In Link -->
+          <a
+            href="/login"
+            class="ml-2 px-3 py-1.5 text-sm text-[#8B949E] hover:text-[#F0F6FC] transition-colors"
+          >
+            Sign In
+          </a>
+        </div>
+
+        <!-- Logged In State - Dropdown -->
+        <div id="auth-user" class="hidden items-center gap-3 relative">
+          <!-- User Profile Button (triggers dropdown) -->
+          <button
+            id="user-dropdown-btn"
+            class="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-[#21262D] transition-colors"
+          >
+            <div id="user-avatar" class="w-8 h-8 rounded-full bg-[#238636] flex items-center justify-center text-white text-sm font-medium overflow-hidden">
+              <!-- Will be filled with avatar or initial -->
+            </div>
+            <span id="user-email" class="text-sm text-[#F0F6FC] max-w-[150px] truncate hidden sm:block"></span>
+            <svg class="w-4 h-4 text-[#8B949E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div id="user-dropdown" class="hidden fixed right-4 top-16 w-56 bg-[#161B22] border border-[#30363D] rounded-lg shadow-xl z-50 py-2">
+            <!-- User Info -->
+            <div class="px-4 py-3 border-b border-[#30363D]">
+              <p id="dropdown-email" class="text-sm text-[#F0F6FC] font-medium truncate"></p>
+              <p class="text-xs text-[#8B949E]">Logged in</p>
+            </div>
+
+            <!-- Dashboard -->
+            <a
+              href="/dashboard"
+              class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#F0F6FC] hover:bg-[#21262D] transition-colors"
+            >
+              <svg class="w-4 h-4 text-[#8B949E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              Dashboard
+            </a>
+
+            <!-- Divider -->
+            <div class="border-t border-[#30363D] my-2"></div>
+
+            <!-- Nav Links -->
+            <a href="/docs" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#8B949E] hover:bg-[#21262D] hover:text-[#F0F6FC] transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Docs
+            </a>
+            <a href="/pricing" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#8B949E] hover:bg-[#21262D] hover:text-[#F0F6FC] transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Pricing
+            </a>
+            <a href="/status" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#8B949E] hover:bg-[#21262D] hover:text-[#F0F6FC] transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Status
+            </a>
+            <a href="/changelog" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#8B949E] hover:bg-[#21262D] hover:text-[#F0F6FC] transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              Changelog
+            </a>
+
+            <!-- Divider -->
+            <div class="border-t border-[#30363D] my-2"></div>
+
+            <!-- Logout -->
+            <button
+              id="logout-btn"
+              class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#F85149] hover:bg-[#21262D] transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Logout
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Mobile Menu Button -->
@@ -72,19 +195,64 @@ const navLinks = [
             {link.label}
           </a>
         ))}
-        <div class="flex flex-col gap-2 pt-4 border-t border-[#30363D]">
+
+        <!-- Mobile Auth - Guest -->
+        <div id="mobile-auth-guest" class="hidden flex-col gap-3 pt-4 border-t border-[#30363D]">
+          <div class="flex items-center gap-3">
+            <!-- Small round OAuth buttons -->
+            <a
+              id="mobile-github-btn"
+              href="#"
+              class="w-10 h-10 flex items-center justify-center bg-[#21262D] border border-[#30363D] text-[#8B949E] rounded-full hover:bg-[#30363D] hover:text-[#F0F6FC] transition-colors"
+              title="Sign in with GitHub"
+            >
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+              </svg>
+            </a>
+            <a
+              id="mobile-google-btn"
+              href="#"
+              class="w-10 h-10 flex items-center justify-center bg-[#21262D] border border-[#30363D] text-[#8B949E] rounded-full hover:bg-[#30363D] hover:text-[#F0F6FC] transition-colors"
+              title="Sign in with Google"
+            >
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+            </a>
+            <a
+              href="/login"
+              class="text-sm text-[#8B949E] hover:text-[#F0F6FC] transition-colors"
+            >
+              Sign in with Email
+            </a>
+          </div>
+        </div>
+
+        <!-- Mobile Auth - User -->
+        <div id="mobile-auth-user" class="hidden flex-col gap-3 pt-4 border-t border-[#30363D]">
+          <!-- User Profile Mobile -->
+          <div class="flex items-center gap-3">
+            <div id="mobile-user-avatar" class="w-10 h-10 rounded-full bg-[#238636] flex items-center justify-center text-white text-sm font-medium overflow-hidden">
+              <!-- Will be filled with avatar or initial -->
+            </div>
+            <span id="mobile-user-email" class="text-sm text-[#F0F6FC]"></span>
+          </div>
           <a
-            href="/login"
-            class="text-sm text-[#8B949E] hover:text-[#F0F6FC] transition-colors"
-          >
-            Sign In
-          </a>
-          <a
-            href="/login"
+            href="/dashboard"
             class="px-4 py-2 bg-[#238636] text-white text-sm font-medium rounded-lg hover:bg-[#2EA043] transition-colors text-center"
           >
-            Get API Key
+            Dashboard
           </a>
+          <button
+            id="mobile-logout-btn"
+            class="text-sm text-[#8B949E] hover:text-[#F0F6FC] transition-colors text-center py-2"
+          >
+            Logout
+          </button>
         </div>
       </div>
     </div>
@@ -94,11 +262,185 @@ const navLinks = [
 <!-- Spacer for fixed header -->
 <div class="h-16"></div>
 
-<script>
+<script define:vars={{ API_URL }}>
+  // Auth state management
+  let isAuthenticated = false;
+  let userData = null;
+
+  // Elements
+  const authLoading = document.getElementById('auth-loading');
+  const authGuest = document.getElementById('auth-guest');
+  const authUser = document.getElementById('auth-user');
+  const mobileAuthGuest = document.getElementById('mobile-auth-guest');
+  const mobileAuthUser = document.getElementById('mobile-auth-user');
+
+  // User display elements
+  const userAvatar = document.getElementById('user-avatar');
+  const userEmail = document.getElementById('user-email');
+  const dropdownEmail = document.getElementById('dropdown-email');
+  const mobileUserAvatar = document.getElementById('mobile-user-avatar');
+  const mobileUserEmail = document.getElementById('mobile-user-email');
+
+  // Dropdown elements
+  const userDropdownBtn = document.getElementById('user-dropdown-btn');
+  const userDropdown = document.getElementById('user-dropdown');
+
+  // OAuth buttons
+  const githubBtn = document.getElementById('github-btn');
+  const googleBtn = document.getElementById('google-btn');
+  const mobileGithubBtn = document.getElementById('mobile-github-btn');
+  const mobileGoogleBtn = document.getElementById('mobile-google-btn');
+
+  // Logout buttons
+  const logoutBtn = document.getElementById('logout-btn');
+  const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+
+  // Mobile menu
   const menuBtn = document.getElementById('mobile-menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
+
+  // Set OAuth URLs
+  const githubUrl = `${API_URL}/api/v1/auth/github`;
+  const googleUrl = `${API_URL}/api/v1/auth/google`;
+
+  if (githubBtn) githubBtn.href = githubUrl;
+  if (googleBtn) googleBtn.href = googleUrl;
+  if (mobileGithubBtn) mobileGithubBtn.href = githubUrl;
+  if (mobileGoogleBtn) mobileGoogleBtn.href = googleUrl;
+
+  // Check authentication status
+  async function checkAuth() {
+    try {
+      const res = await fetch(`${API_URL}/api/v1/auth/session`, {
+        credentials: 'include',
+      });
+      const data = await res.json();
+      isAuthenticated = data.authenticated === true;
+      if (isAuthenticated && data.user) {
+        userData = data.user;
+      }
+    } catch (e) {
+      console.error('Auth check failed:', e);
+      isAuthenticated = false;
+      userData = null;
+    }
+
+    updateUI();
+  }
+
+  // Get user initial from email
+  function getUserInitial(email) {
+    if (!email) return '?';
+    return email.charAt(0).toUpperCase();
+  }
+
+  // Update UI based on auth state
+  function updateUI() {
+    // Hide loading
+    authLoading?.classList.add('hidden');
+
+    if (isAuthenticated) {
+      // Show logged in state
+      authGuest?.classList.add('hidden');
+      authGuest?.classList.remove('flex');
+      authUser?.classList.remove('hidden');
+      authUser?.classList.add('flex');
+
+      mobileAuthGuest?.classList.add('hidden');
+      mobileAuthGuest?.classList.remove('flex');
+      mobileAuthUser?.classList.remove('hidden');
+      mobileAuthUser?.classList.add('flex');
+
+      // Update user display
+      if (userData) {
+        const email = userData.email || '';
+        const avatarUrl = userData.avatarUrl || userData.avatar;
+        const initial = getUserInitial(email);
+
+        // Desktop
+        if (userAvatar) {
+          if (avatarUrl) {
+            userAvatar.innerHTML = `<img src="${avatarUrl}" alt="Avatar" class="w-full h-full object-cover" />`;
+          } else {
+            userAvatar.textContent = initial;
+          }
+        }
+        if (userEmail) {
+          userEmail.textContent = email;
+        }
+        if (dropdownEmail) {
+          dropdownEmail.textContent = email;
+        }
+
+        // Mobile
+        if (mobileUserAvatar) {
+          if (avatarUrl) {
+            mobileUserAvatar.innerHTML = `<img src="${avatarUrl}" alt="Avatar" class="w-full h-full object-cover" />`;
+          } else {
+            mobileUserAvatar.textContent = initial;
+          }
+        }
+        if (mobileUserEmail) {
+          mobileUserEmail.textContent = email;
+        }
+      }
+    } else {
+      // Show guest state
+      authGuest?.classList.remove('hidden');
+      authGuest?.classList.add('flex');
+      authUser?.classList.add('hidden');
+      authUser?.classList.remove('flex');
+
+      mobileAuthGuest?.classList.remove('hidden');
+      mobileAuthGuest?.classList.add('flex');
+      mobileAuthUser?.classList.add('hidden');
+      mobileAuthUser?.classList.remove('flex');
+    }
+  }
+
+  // Logout handler
+  async function handleLogout() {
+    try {
+      await fetch(`${API_URL}/api/v1/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (e) {
+      // Ignore errors
+    }
+    window.location.href = '/';
+  }
+
+  // Event listeners
+  logoutBtn?.addEventListener('click', handleLogout);
+  mobileLogoutBtn?.addEventListener('click', handleLogout);
 
   menuBtn?.addEventListener('click', () => {
     mobileMenu?.classList.toggle('hidden');
   });
+
+  // Dropdown toggle
+  userDropdownBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    userDropdown?.classList.toggle('hidden');
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (userDropdown && !userDropdown.classList.contains('hidden')) {
+      if (!userDropdownBtn?.contains(e.target) && !userDropdown.contains(e.target)) {
+        userDropdown.classList.add('hidden');
+      }
+    }
+  });
+
+  // Close dropdown on escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && userDropdown && !userDropdown.classList.contains('hidden')) {
+      userDropdown.classList.add('hidden');
+    }
+  });
+
+  // Check auth on load
+  checkAuth();
 </script>

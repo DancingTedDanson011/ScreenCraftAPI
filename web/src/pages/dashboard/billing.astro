@@ -1,0 +1,501 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+
+const plans = [
+  {
+    name: 'Free',
+    tier: 'FREE',
+    price: 0,
+    requests: 250,
+    features: [
+      '250 requests/month',
+      'Screenshots & PDFs',
+      'Basic viewport sizes',
+      'PNG & JPEG formats',
+      'Community support',
+    ],
+  },
+  {
+    name: 'Pro',
+    tier: 'PRO',
+    price: 19,
+    requests: 5000,
+    features: [
+      '5,000 requests/month',
+      'All viewport sizes',
+      'WebP format',
+      'Custom headers & cookies',
+      'Webhook callbacks',
+      'Email support (24h)',
+    ],
+    popular: true,
+  },
+  {
+    name: 'Business',
+    tier: 'BUSINESS',
+    price: 49,
+    requests: 20000,
+    features: [
+      '20,000 requests/month',
+      'Custom CSS injection',
+      'JavaScript execution',
+      'Block ads & popups',
+      'Priority rendering queue',
+      'Slack support (4h)',
+    ],
+  },
+  {
+    name: 'Enterprise',
+    tier: 'ENTERPRISE',
+    price: 99,
+    requests: 75000,
+    features: [
+      '75,000 requests/month',
+      'Dedicated infrastructure',
+      'Custom integrations',
+      '99.9% uptime SLA',
+      'Priority support',
+    ],
+  },
+];
+---
+
+<DashboardLayout title="Billing" activeTab="billing">
+  <div class="space-y-6">
+    <!-- Current Plan Section -->
+    <div class="bg-surface border border-border rounded-lg p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h3 class="text-lg font-semibold text-text-primary mb-2">Current Plan</h3>
+          <div id="current-plan-loading" class="flex items-center gap-2">
+            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-accent-primary"></div>
+            <span class="text-text-secondary text-sm">Loading...</span>
+          </div>
+          <div id="current-plan-info" class="hidden">
+            <div class="flex items-center gap-3">
+              <span id="current-tier" class="text-2xl font-bold text-text-primary">Free</span>
+              <span id="subscription-status" class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400">Active</span>
+            </div>
+            <p id="plan-limits-info" class="text-text-secondary text-sm mt-1">250 requests/month</p>
+            <p id="billing-period" class="text-text-muted text-xs mt-1 hidden"></p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button
+            id="manage-billing-btn"
+            class="hidden px-4 py-2.5 border border-border text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg font-medium transition-colors"
+          >
+            Manage Billing
+          </button>
+        </div>
+      </div>
+
+      <!-- Cancel Notice -->
+      <div id="cancel-notice" class="hidden mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+        <div class="flex items-start gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <div>
+            <p class="text-yellow-400 font-medium text-sm">Subscription will be canceled</p>
+            <p id="cancel-date" class="text-text-secondary text-sm mt-1">Your subscription will end on the billing period end date.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Payments Section -->
+    <div class="bg-surface border border-border rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-text-primary mb-4">Recent Payments</h3>
+      <div id="payments-loading" class="flex items-center gap-2">
+        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-accent-primary"></div>
+        <span class="text-text-secondary text-sm">Loading payment history...</span>
+      </div>
+      <div id="payments-empty" class="hidden text-text-secondary text-sm">
+        No payments found. Your payment history will appear here after you make a purchase.
+      </div>
+      <div id="payments-list" class="hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="text-left text-text-muted text-sm border-b border-border">
+                <th class="pb-3 font-medium">Date</th>
+                <th class="pb-3 font-medium">Description</th>
+                <th class="pb-3 font-medium">Amount</th>
+                <th class="pb-3 font-medium">Status</th>
+                <th class="pb-3 font-medium">Invoice</th>
+              </tr>
+            </thead>
+            <tbody id="payments-table-body" class="divide-y divide-border">
+              <!-- Payments will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Plans Section -->
+    <div>
+      <h3 class="text-lg font-semibold text-text-primary mb-4">Available Plans</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {plans.map((plan) => (
+          <div class={`bg-surface border rounded-lg p-6 relative ${plan.popular ? 'border-accent-primary' : 'border-border'}`}>
+            {plan.popular && (
+              <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-accent-primary text-white text-xs font-medium rounded-full">
+                Most Popular
+              </div>
+            )}
+            <div class="text-center mb-6">
+              <h4 class="text-xl font-bold text-text-primary">{plan.name}</h4>
+              <div class="mt-2">
+                {plan.price !== null ? (
+                  <>
+                    <span class="text-3xl font-bold text-text-primary">${plan.price}</span>
+                    <span class="text-text-secondary">/month</span>
+                  </>
+                ) : (
+                  <span class="text-3xl font-bold text-text-primary">Contact Us</span>
+                )}
+              </div>
+              <p class="text-text-muted text-sm mt-1">{plan.requests.toLocaleString()} requests/month</p>
+            </div>
+
+            <ul class="space-y-3 mb-6">
+              {plan.features.map((feature) => (
+                <li class="flex items-start gap-2 text-sm text-text-secondary">
+                  <svg class="w-5 h-5 text-green-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  {feature}
+                </li>
+              ))}
+            </ul>
+
+            <button
+              data-tier={plan.tier}
+              class={`plan-btn w-full py-2.5 rounded-lg font-medium transition-colors ${
+                plan.tier === 'FREE'
+                  ? 'bg-surface-hover text-text-secondary cursor-default'
+                  : plan.popular
+                    ? 'bg-accent-primary hover:bg-accent-primary/90 text-white'
+                    : 'border border-border text-text-primary hover:bg-surface-hover'
+              }`}
+              disabled={plan.tier === 'FREE'}
+            >
+              {plan.tier === 'FREE' ? 'Current Plan' : 'Upgrade'}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="bg-surface border border-border rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-text-primary mb-4">Frequently Asked Questions</h3>
+      <div class="space-y-4">
+        <div>
+          <h4 class="font-medium text-text-primary">What counts as a request?</h4>
+          <p class="text-text-secondary text-sm mt-1">
+            1 request = 1 screenshot OR 1 PDF. You can use your monthly limit for any combination of screenshots and PDFs.
+          </p>
+        </div>
+        <div>
+          <h4 class="font-medium text-text-primary">What happens if I reach my limit?</h4>
+          <p class="text-text-secondary text-sm mt-1">
+            Your API requests will return a 429 (Too Many Requests) error until your limits reset at the start of your billing cycle.
+          </p>
+        </div>
+        <div>
+          <h4 class="font-medium text-text-primary">Can I change plans at any time?</h4>
+          <p class="text-text-secondary text-sm mt-1">
+            Yes! You can upgrade or downgrade at any time. Changes take effect immediately, and we'll prorate your billing accordingly.
+          </p>
+        </div>
+        <div>
+          <h4 class="font-medium text-text-primary">Do unused requests roll over?</h4>
+          <p class="text-text-secondary text-sm mt-1">
+            No, your request limit resets at the start of each billing cycle. Make sure to use them before they expire!
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</DashboardLayout>
+
+<script>
+  import { api, type SubscriptionInfo, type Invoice } from '../../lib/api';
+
+  let currentSubscription: SubscriptionInfo | null = null;
+  let currentTier: string = 'FREE';
+
+  const REQUESTS_BY_TIER: Record<string, number> = {
+    FREE: 250,
+    PRO: 5000,
+    BUSINESS: 20000,
+    ENTERPRISE: 75000,
+  };
+
+  async function loadBillingData() {
+    await Promise.all([
+      loadSubscription(),
+      loadPayments(),
+    ]);
+    updatePlanButtons();
+  }
+
+  async function loadPayments() {
+    const loadingEl = document.getElementById('payments-loading');
+    const emptyEl = document.getElementById('payments-empty');
+    const listEl = document.getElementById('payments-list');
+    const tableBody = document.getElementById('payments-table-body');
+
+    try {
+      const response = await api.billing.getInvoices();
+
+      loadingEl?.classList.add('hidden');
+
+      if (response.success && response.data && response.data.length > 0) {
+        listEl?.classList.remove('hidden');
+
+        if (tableBody) {
+          tableBody.innerHTML = response.data.map((invoice: Invoice) => {
+            const date = new Date(invoice.date).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            });
+
+            const statusColors: Record<string, string> = {
+              paid: 'bg-green-500/20 text-green-400',
+              open: 'bg-yellow-500/20 text-yellow-400',
+              draft: 'bg-gray-500/20 text-gray-400',
+              uncollectible: 'bg-red-500/20 text-red-400',
+              void: 'bg-gray-500/20 text-gray-400',
+            };
+
+            const statusClass = statusColors[invoice.status] || 'bg-gray-500/20 text-gray-400';
+
+            return `
+              <tr class="text-sm">
+                <td class="py-3 text-text-secondary">${date}</td>
+                <td class="py-3 text-text-primary">${invoice.description || 'Subscription'}</td>
+                <td class="py-3 text-text-primary font-medium">$${invoice.amount.toFixed(2)} ${invoice.currency}</td>
+                <td class="py-3">
+                  <span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">
+                    ${invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                  </span>
+                </td>
+                <td class="py-3">
+                  ${invoice.invoiceUrl ? `
+                    <a href="${invoice.invoiceUrl}" target="_blank" class="text-accent-primary hover:underline text-sm">
+                      View
+                    </a>
+                  ` : '-'}
+                  ${invoice.invoicePdf ? `
+                    <a href="${invoice.invoicePdf}" target="_blank" class="ml-2 text-accent-primary hover:underline text-sm">
+                      PDF
+                    </a>
+                  ` : ''}
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+      } else {
+        emptyEl?.classList.remove('hidden');
+      }
+    } catch (error) {
+      console.error('Load payments error:', error);
+      loadingEl?.classList.add('hidden');
+      emptyEl?.classList.remove('hidden');
+    }
+  }
+
+  async function loadSubscription() {
+    const loadingEl = document.getElementById('current-plan-loading');
+    const infoEl = document.getElementById('current-plan-info');
+    const tierEl = document.getElementById('current-tier');
+    const statusEl = document.getElementById('subscription-status');
+    const limitsEl = document.getElementById('plan-limits-info');
+    const periodEl = document.getElementById('billing-period');
+    const manageBtnEl = document.getElementById('manage-billing-btn');
+    const cancelNoticeEl = document.getElementById('cancel-notice');
+    const cancelDateEl = document.getElementById('cancel-date');
+
+    try {
+      const response = await api.billing.getSubscription();
+
+      loadingEl?.classList.add('hidden');
+      infoEl?.classList.remove('hidden');
+
+      if (response.success && response.data) {
+        currentSubscription = response.data;
+        currentTier = response.data.tier;
+
+        if (tierEl) tierEl.textContent = response.data.tier;
+        const requests = REQUESTS_BY_TIER[response.data.tier];
+        if (limitsEl && requests) limitsEl.textContent = `${requests.toLocaleString()} requests/month`;
+
+        // Update status badge
+        if (statusEl) {
+          const statusColors: Record<string, string> = {
+            ACTIVE: 'bg-green-500/20 text-green-400',
+            PAST_DUE: 'bg-yellow-500/20 text-yellow-400',
+            CANCELED: 'bg-red-500/20 text-red-400',
+            TRIALING: 'bg-blue-500/20 text-blue-400',
+          };
+          statusEl.className = `px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[response.data.status] || 'bg-gray-500/20 text-gray-400'}`;
+          statusEl.textContent = response.data.status;
+        }
+
+        // Show billing period
+        if (periodEl && response.data.currentPeriodEnd) {
+          const endDate = new Date(response.data.currentPeriodEnd).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
+          periodEl.textContent = `Current period ends ${endDate}`;
+          periodEl.classList.remove('hidden');
+        }
+
+        // Show cancel notice
+        if (response.data.cancelAtPeriodEnd && cancelNoticeEl && cancelDateEl) {
+          const endDate = new Date(response.data.currentPeriodEnd).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
+          cancelDateEl.textContent = `Your subscription will end on ${endDate}. You'll be downgraded to the Free plan.`;
+          cancelNoticeEl.classList.remove('hidden');
+        }
+
+        // Show manage billing button for paid plans
+        if (response.data.tier !== 'FREE' && manageBtnEl) {
+          manageBtnEl.classList.remove('hidden');
+        }
+      } else {
+        // Free tier
+        currentTier = 'FREE';
+        if (tierEl) tierEl.textContent = 'Free';
+        if (limitsEl) limitsEl.textContent = '250 requests/month';
+        if (statusEl) {
+          statusEl.className = 'px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-500/20 text-gray-400';
+          statusEl.textContent = 'Free Tier';
+        }
+      }
+    } catch (error) {
+      console.error('Load subscription error:', error);
+      currentTier = 'FREE';
+      loadingEl?.classList.add('hidden');
+      infoEl?.classList.remove('hidden');
+      if (tierEl) tierEl.textContent = 'Free';
+      if (limitsEl) limitsEl.textContent = '250 requests/month';
+      if (statusEl) {
+        statusEl.className = 'px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-500/20 text-gray-400';
+        statusEl.textContent = 'Free Tier';
+      }
+    }
+  }
+
+  function updatePlanButtons() {
+    document.querySelectorAll('.plan-btn').forEach((btn) => {
+      const tier = (btn as HTMLButtonElement).dataset.tier;
+      if (!tier) return;
+
+      if (tier === currentTier) {
+        btn.textContent = 'Current Plan';
+        (btn as HTMLButtonElement).disabled = true;
+        btn.className = 'plan-btn w-full py-2.5 rounded-lg font-medium transition-colors bg-surface-hover text-text-secondary cursor-default';
+      } else if (tier === 'FREE') {
+        btn.textContent = 'Downgrade';
+        (btn as HTMLButtonElement).disabled = false;
+        btn.className = 'plan-btn w-full py-2.5 rounded-lg font-medium transition-colors border border-border text-text-primary hover:bg-surface-hover';
+      } else {
+        const tierOrder = ['FREE', 'PRO', 'BUSINESS', 'ENTERPRISE'];
+        const currentIndex = tierOrder.indexOf(currentTier);
+        const btnIndex = tierOrder.indexOf(tier);
+
+        if (btnIndex > currentIndex) {
+          btn.textContent = 'Upgrade';
+        } else {
+          btn.textContent = 'Downgrade';
+        }
+
+        const isPopular = tier === 'PRO';
+        btn.className = `plan-btn w-full py-2.5 rounded-lg font-medium transition-colors ${
+          isPopular
+            ? 'bg-accent-primary hover:bg-accent-primary/90 text-white'
+            : 'border border-border text-text-primary hover:bg-surface-hover'
+        }`;
+      }
+    });
+  }
+
+  async function handleUpgrade(tier: string) {
+    if (tier === 'FREE') {
+      // Can't downgrade to free via checkout - need to cancel subscription
+      if (currentSubscription) {
+        if (confirm('Do you want to cancel your subscription and downgrade to Free at the end of your billing period?')) {
+          try {
+            await api.billing.cancelSubscription(false);
+            alert('Your subscription will be canceled at the end of the billing period.');
+            await loadBillingData();
+          } catch (error) {
+            alert('Failed to cancel subscription. Please try again.');
+          }
+        }
+      }
+      return;
+    }
+
+    try {
+      const response = await api.billing.createCheckout(tier as 'PRO' | 'BUSINESS' | 'ENTERPRISE');
+
+      if (response.success && response.data?.url) {
+        window.location.href = response.data.url;
+      } else {
+        throw new Error(response.error || 'Failed to create checkout session');
+      }
+    } catch (error: any) {
+      console.error('Upgrade error:', error);
+      alert(error.message || 'Failed to start checkout. Please try again.');
+    }
+  }
+
+  async function handleManageBilling() {
+    try {
+      const response = await api.billing.createPortal();
+
+      if (response.success && response.data?.url) {
+        window.location.href = response.data.url;
+      } else {
+        throw new Error(response.error || 'Failed to open billing portal');
+      }
+    } catch (error: any) {
+      console.error('Portal error:', error);
+      alert(error.message || 'Failed to open billing portal. Please try again.');
+    }
+  }
+
+  // Setup event listeners
+  document.querySelectorAll('.plan-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const tier = (btn as HTMLButtonElement).dataset.tier;
+      if (tier && tier !== currentTier) {
+        handleUpgrade(tier);
+      }
+    });
+  });
+
+  document.getElementById('manage-billing-btn')?.addEventListener('click', handleManageBilling);
+
+  // Load data on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadBillingData);
+  } else {
+    loadBillingData();
+  }
+</script>

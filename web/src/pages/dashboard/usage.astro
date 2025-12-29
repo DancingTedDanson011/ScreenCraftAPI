@@ -38,6 +38,29 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
       <!-- Filled by JS -->
     </div>
 
+    <!-- This Month's Usage -->
+    <div class="bg-surface border border-border rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-text-primary mb-4">This Month's Usage</h3>
+      <div id="monthly-usage-loading" class="flex items-center gap-2">
+        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-accent-primary"></div>
+        <span class="text-text-secondary text-sm">Loading...</span>
+      </div>
+      <div id="monthly-usage-info" class="hidden">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-text-secondary text-sm">Requests Used</span>
+          <span id="monthly-usage-percentage" class="text-accent-primary text-sm font-medium">0%</span>
+        </div>
+        <div class="h-3 bg-surface-hover rounded-full overflow-hidden mb-2">
+          <div id="monthly-usage-bar" class="h-full bg-accent-primary rounded-full transition-all" style="width: 0%"></div>
+        </div>
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-text-secondary"><span id="monthly-usage-used">0</span> used</span>
+          <span class="text-text-muted"><span id="monthly-usage-limit">250</span> limit</span>
+        </div>
+        <p class="text-text-muted text-xs mt-3">1 request = 1 screenshot or 1 PDF</p>
+      </div>
+    </div>
+
     <!-- Usage Chart -->
     <div class="bg-surface border border-border rounded-lg p-6">
       <div class="flex items-center justify-between mb-6">
@@ -83,7 +106,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
       <div class="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-border">
         <div class="flex items-center gap-2">
           <div class="w-3 h-3 rounded-full bg-accent-primary"></div>
-          <span class="text-sm text-text-secondary">Credits Used</span>
+          <span class="text-sm text-text-secondary">Requests Used</span>
         </div>
         <div class="flex items-center gap-2">
           <div class="w-3 h-3 rounded-full bg-accent-secondary"></div>
@@ -140,11 +163,53 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
   let usageStats: UsageStats | null = null;
   let timelineData: UsageTimelineItem[] = [];
 
+  const REQUESTS_BY_TIER: Record<string, number> = {
+    FREE: 250,
+    PRO: 5000,
+    BUSINESS: 20000,
+    ENTERPRISE: 75000,
+  };
+
   async function loadUsageData() {
     await Promise.all([
       loadStats(),
       loadTimeline(currentPeriod),
+      loadMonthlyUsage(),
     ]);
+  }
+
+  async function loadMonthlyUsage() {
+    const loadingEl = document.getElementById('monthly-usage-loading');
+    const infoEl = document.getElementById('monthly-usage-info');
+    const percentageEl = document.getElementById('monthly-usage-percentage');
+    const barEl = document.getElementById('monthly-usage-bar');
+    const usedEl = document.getElementById('monthly-usage-used');
+    const limitEl = document.getElementById('monthly-usage-limit');
+
+    try {
+      const response = await api.dashboard.getOverview();
+
+      loadingEl?.classList.add('hidden');
+      infoEl?.classList.remove('hidden');
+
+      if (response.success && response.data) {
+        const { usage, account } = response.data;
+        const limit = REQUESTS_BY_TIER[account.tier] || REQUESTS_BY_TIER.FREE;
+
+        // Combined usage (screenshots + PDFs = total requests)
+        const totalUsed = (usage.screenshots || 0) + (usage.pdfs || 0);
+        const percent = Math.round((totalUsed / limit) * 100);
+
+        if (usedEl) usedEl.textContent = totalUsed.toLocaleString();
+        if (limitEl) limitEl.textContent = limit.toLocaleString();
+        if (percentageEl) percentageEl.textContent = `${percent}%`;
+        if (barEl) barEl.style.width = `${Math.min(percent, 100)}%`;
+      }
+    } catch (error) {
+      console.error('Load monthly usage error:', error);
+      loadingEl?.classList.add('hidden');
+      infoEl?.classList.remove('hidden');
+    }
   }
 
   async function loadStats() {
@@ -351,15 +416,28 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 
     // Draw X-axis labels
     ctx.textAlign = 'center';
-    const step = Math.max(1, Math.floor(timelineData.length / 5));
+    // Calculate step based on chart width to prevent overlap (assuming ~60px per label)
+    const maxLabels = Math.max(2, Math.floor(chartWidth / 70));
+    const step = Math.max(1, Math.ceil(timelineData.length / maxLabels));
+
+    let lastLabelX = -Infinity;
+    const minLabelSpacing = 60; // Minimum pixels between label centers
+
     timelineData.forEach((item, index) => {
-      if (index % step === 0 || index === timelineData.length - 1) {
-        const x = padding + (index / (timelineData.length - 1 || 1)) * chartWidth;
+      const x = padding + (index / (timelineData.length - 1 || 1)) * chartWidth;
+
+      // Only draw label if it's at a step interval and far enough from the last label
+      const isStepInterval = index % step === 0;
+      const isLastPoint = index === timelineData.length - 1;
+      const hasEnoughSpace = x - lastLabelX >= minLabelSpacing;
+
+      if ((isStepInterval || isLastPoint) && hasEnoughSpace) {
         const date = new Date(item.date);
         const label = currentPeriod === 'day'
           ? date.toLocaleTimeString('en-US', { hour: 'numeric' })
           : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         ctx.fillText(label, x, height - 10);
+        lastLabelX = x;
       }
     });
   }

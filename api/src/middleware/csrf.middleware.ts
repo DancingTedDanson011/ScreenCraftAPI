@@ -68,7 +68,7 @@ export async function csrfMiddleware(
 
   // If no session cookie, no CSRF check needed
   // (Request will fail auth anyway)
-  if (!request.cookies['session']) {
+  if (!request.cookies['screencraft_session']) {
     return;
   }
 
@@ -113,8 +113,10 @@ function timingSafeEqual(a: string, b: string): boolean {
 /**
  * Set CSRF cookie on responses
  * Should be called after successful authentication
+ * @param reply - Fastify reply object
+ * @param domain - Optional cookie domain for cross-subdomain auth
  */
-export function setCsrfCookie(reply: FastifyReply): string {
+export function setCsrfCookie(reply: FastifyReply, domain?: string): string {
   const token = generateCsrfToken();
 
   reply.setCookie(CSRF_COOKIE_NAME, token, {
@@ -123,6 +125,7 @@ export function setCsrfCookie(reply: FastifyReply): string {
     sameSite: 'strict',
     path: '/',
     maxAge: 60 * 60 * 24, // 24 hours
+    domain, // For cross-subdomain auth
   });
 
   return token;

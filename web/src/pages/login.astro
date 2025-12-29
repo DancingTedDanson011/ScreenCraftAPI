@@ -15,7 +15,8 @@ function normalizeApiUrl(url: string): string {
 const error = Astro.url.searchParams.get('error');
 const mode = Astro.url.searchParams.get('mode') || 'login';
 const plan = Astro.url.searchParams.get('plan') || '';
-const API_URL = normalizeApiUrl(import.meta.env.PUBLIC_API_URL || 'http://localhost:3000');
+// Use empty string for same-origin (nginx proxy handles /api/ routing)
+const API_URL = normalizeApiUrl(import.meta.env.PUBLIC_API_URL || '');
 
 // Plan display names
 const planNames: Record<string, string> = {
@@ -180,7 +181,7 @@ const selectedPlanName = planNames[plan] || '';
                 <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
-                <span>100 free screenshots per month</span>
+                <span>250 free requests per month</span>
               </li>
               <li class="flex items-center gap-3 text-sm text-text-secondary">
                 <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -1,0 +1,17 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import MessagesTable from '../../components/admin/MessagesTable';
+---
+
+<AdminLayout title="Contact Messages" activeTab="messages">
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-[#F0F6FC]">Contact Messages</h1>
+        <p class="text-[#8B949E] mt-1">View and manage contact form submissions</p>
+      </div>
+    </div>
+
+    <MessagesTable client:load />
+  </div>
+</AdminLayout>

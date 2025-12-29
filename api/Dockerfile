@@ -24,7 +24,7 @@ RUN npx prisma generate
 # ============================================
 FROM node:20-alpine AS development
 
-# Install Playwright dependencies
+# Install Chromium and all dependencies
 RUN apk add --no-cache \
     chromium \
     nss \
@@ -32,26 +32,8 @@ RUN apk add --no-cache \
     harfbuzz \
     ca-certificates \
     ttf-freefont \
-    libstdc++ \
-    libgcc \
-    libx11 \
-    libxcomposite \
-    libxdamage \
-    libxext \
-    libxfixes \
-    libxrandr \
-    libgobject-2.0-0 \
-    libpango-1.0-0 \
-    libcairo-2 \
-    libasound2 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libcups2 \
-    libdbus-1-3 \
-    libdrm2 \
-    libxkbcommon \
-    libatspi2.0-0 \
-    libxshmfence1
+    openssl \
+    libc6-compat
 
 # Set Playwright to use system chromium
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
@@ -68,9 +50,6 @@ RUN npm ci && npm cache clean --force
 
 # Generate Prisma Client
 RUN npx prisma generate
-
-# Install Playwright browsers (uses system chromium)
-RUN npx playwright install --with-deps chromium || true
 
 # Copy source code
 COPY . .
@@ -117,7 +96,7 @@ RUN npm run build
 # ============================================
 FROM node:20-alpine AS production
 
-# Install Playwright dependencies and runtime requirements
+# Install Chromium and runtime requirements
 RUN apk add --no-cache \
     chromium \
     nss \
@@ -125,26 +104,6 @@ RUN apk add --no-cache \
     harfbuzz \
     ca-certificates \
     ttf-freefont \
-    libstdc++ \
-    libgcc \
-    libx11 \
-    libxcomposite \
-    libxdamage \
-    libxext \
-    libxfixes \
-    libxrandr \
-    libgobject-2.0-0 \
-    libpango-1.0-0 \
-    libcairo-2 \
-    libasound2 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libcups2 \
-    libdbus-1-3 \
-    libdrm2 \
-    libxkbcommon \
-    libatspi2.0-0 \
-    libxshmfence1 \
     dumb-init \
     curl
 
@@ -166,9 +125,6 @@ COPY --from=deps --chown=nodejs:nodejs /app/prisma ./prisma
 # Copy built application from builder stage
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
-
-# Install Playwright browsers (uses system chromium)
-RUN npx playwright install --with-deps chromium || true
 
 # Create uploads directory
 RUN mkdir -p /app/uploads && chown -R nodejs:nodejs /app/uploads

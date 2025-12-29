@@ -5,6 +5,36 @@ import Footer from '../components/Footer.astro';
 
 const releases = [
   {
+    version: '2.5.0',
+    date: '2025-12-28',
+    type: 'feature',
+    title: 'Auto Cookie Consent & API Key Fixes',
+    changes: [
+      { type: 'added', text: 'Automatic cookie consent banner acceptance (enabled by default)' },
+      { type: 'added', text: 'Support for OneTrust, CookieBot, Quantcast, Osano and common GDPR patterns' },
+      { type: 'added', text: 'Configurable cookieAcceptTimeout parameter (0-10000ms)' },
+      { type: 'added', text: 'Cookie consent toggle in demo widget' },
+      { type: 'fixed', text: 'API key creation and revocation now working correctly' },
+      { type: 'fixed', text: 'DELETE requests no longer require empty JSON body' },
+      { type: 'improved', text: 'Graceful fallback when no cookie banner is detected' },
+    ],
+  },
+  {
+    version: '2.4.0',
+    date: '2025-12-28',
+    type: 'feature',
+    title: 'Scroll Position & Enhanced Demo',
+    changes: [
+      { type: 'added', text: 'New scrollPosition parameter to capture screenshots at specific scroll levels' },
+      { type: 'added', text: 'Support for instant and smooth scroll behaviors' },
+      { type: 'added', text: 'PDF generation in the interactive demo widget' },
+      { type: 'added', text: 'Full page capture toggle in the demo' },
+      { type: 'added', text: 'Admin panel: Contact messages management' },
+      { type: 'improved', text: 'Enhanced demo with all API capabilities (scroll, delay, quality)' },
+      { type: 'improved', text: 'Updated documentation with scroll position examples' },
+    ],
+  },
+  {
     version: '2.3.0',
     date: '2025-12-27',
     type: 'feature',

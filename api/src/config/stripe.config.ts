@@ -19,20 +19,20 @@ export const STRIPE_CONFIG = {
     ENTERPRISE: process.env.STRIPE_PRICE_ENTERPRISE || 'price_enterprise_monthly',
   },
 
-  // Credit allocations per tier
-  credits: {
-    FREE: 100,
-    PRO: 1000,
-    BUSINESS: 5000,
-    ENTERPRISE: 25000,
+  // Monthly request limits per tier (1 request = 1 screenshot OR 1 PDF)
+  requests: {
+    FREE: 250,
+    PRO: 5000,
+    BUSINESS: 20000,
+    ENTERPRISE: 75000,
   },
 
   // Pricing amounts (for display purposes)
   amounts: {
     FREE: 0,
-    PRO: 2900, // $29.00 in cents
-    BUSINESS: 9900, // $99.00 in cents
-    ENTERPRISE: 49900, // $499.00 in cents
+    PRO: 1900, // $19.00 in cents
+    BUSINESS: 4900, // $49.00 in cents
+    ENTERPRISE: 9900, // $99.00 in cents
   },
 } as const;
 
@@ -58,7 +58,7 @@ export function getPriceIdForTier(tier: string): string | null {
   return priceId;
 }
 
-// Helper to get credits for tier
-export function getCreditsForTier(tier: string): number {
-  return STRIPE_CONFIG.credits[tier as keyof typeof STRIPE_CONFIG.credits] || 0;
+// Helper to get monthly request limit for tier
+export function getRequestsForTier(tier: string): number {
+  return STRIPE_CONFIG.requests[tier as keyof typeof STRIPE_CONFIG.requests] || 0;
 }

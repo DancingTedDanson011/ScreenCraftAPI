@@ -215,6 +215,40 @@ export class PaymentController {
   }
 
   /**
+   * Get payment history (invoices)
+   * GET /v1/payment/invoices
+   */
+  async getInvoices(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+    try {
+      const accountId = request.auth?.accountId;
+
+      if (!accountId) {
+        return reply.code(401).send({
+          success: false,
+          error: 'Authentication required',
+          code: 'AUTHENTICATION_REQUIRED',
+        });
+      }
+
+      // Get customer ID from account
+      const customerId = await stripeService.getOrCreateCustomer(accountId);
+      const invoices = await stripeService.getInvoices(customerId);
+
+      return reply.send({
+        success: true,
+        data: invoices,
+      });
+    } catch (error) {
+      logger.error({ error }, 'Failed to get invoices');
+
+      return reply.code(500).send({
+        success: false,
+        error: 'Failed to get payment history',
+      });
+    }
+  }
+
+  /**
    * Cancel subscription
    * POST /v1/payment/subscription/cancel
    */

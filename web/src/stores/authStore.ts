@@ -27,7 +27,8 @@ function normalizeApiUrl(url: string): string {
 }
 
 // API URL from environment
-const API_URL = normalizeApiUrl(import.meta.env.PUBLIC_API_URL || 'http://localhost:3000');
+// Use empty string for same-origin (nginx proxy handles /api/ routing)
+const API_URL = normalizeApiUrl(import.meta.env.PUBLIC_API_URL || '');
 
 // Atoms (reactive state)
 export const userAtom = atom<User | null>(null);

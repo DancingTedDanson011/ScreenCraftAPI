@@ -45,22 +45,22 @@ export const TIER_CONFIG: Record<Tier, TierLimits> = {
   FREE: {
     points: 100,
     duration: 3600,
-    credits: 1000,
+    credits: 250,
   },
   PRO: {
     points: 5000,
     duration: 3600,
-    credits: 50000,
+    credits: 5000,
   },
   BUSINESS: {
     points: 25000,
     duration: 3600,
-    credits: 250000,
+    credits: 20000,
   },
   ENTERPRISE: {
     points: 100000,
     duration: 3600,
-    credits: -1, // Unlimited
+    credits: 75000,
   },
 };
 

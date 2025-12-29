@@ -16,12 +16,14 @@ import { getQueueService } from '../services/queue/queue.service.js';
 import { JobPriority } from '../services/queue/queue.config.js';
 import { pdfRepository } from '../services/database/pdf.repository';
 import { StorageService } from '../services/storage/storage.service.js';
-import type { Pdf } from '@prisma/client';
+import { UsageService } from '../services/billing/usage.service.js';
+import { EventType, type Pdf } from '@prisma/client';
 
 // Get service instances
 const pdfService = getPdfService();
 const queueService = getQueueService();
 const storageService = new StorageService();
+const usageService = new UsageService();
 
 // Helper to convert Prisma model to API response
 function toPdfResponse(pdf: Pdf): PdfResponse {
@@ -187,6 +189,20 @@ export async function createPdf(
           result.pages
         );
 
+        // Track usage - deduct credits
+        const hasTemplate = !!(validatedData as any).templateId;
+        const creditCost = hasTemplate ? 3 : 2; // PDF_WITH_TEMPLATE: 3, PDF: 2
+        await usageService.recordUsage({
+          accountId,
+          eventType: hasTemplate ? EventType.PDF_WITH_TEMPLATE : EventType.PDF,
+          credits: creditCost,
+          metadata: {
+            pdfId: pdf.id,
+            type: validatedData.type,
+            pages: result.pages,
+          },
+        });
+
         const response: ApiResponse<PdfResponse> = {
           success: true,
           data: toPdfResponse(pdf),
@@ -333,7 +349,10 @@ export async function listPdfs(
   reply: FastifyReply
 ): Promise<void> {
   try {
-    const { page, limit, status, type, sortBy, sortOrder } = request.query;
+    const { page: pageParam, limit: limitParam, status, type, sortBy, sortOrder } = request.query;
+    // Coerce query params to numbers with defaults
+    const page = pageParam ? parseInt(String(pageParam), 10) : 1;
+    const limit = limitParam ? parseInt(String(limitParam), 10) : 20;
     const accountId = request.auth?.accountId;
 
     if (!accountId) {

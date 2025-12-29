@@ -86,8 +86,7 @@ export const BROWSER_LAUNCH_OPTIONS: LaunchOptions = {
     // Stability
     '--no-sandbox',                       // Required for Docker
     '--no-first-run',
-    '--no-zygote',
-    '--single-process',                   // More stable in containers
+    // Note: --no-zygote and --single-process removed - they cause crashes with sched_getscheduler syscall
 
     // Memory limits (per process)
     '--max-old-space-size=512',           // 512MB heap limit

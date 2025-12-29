@@ -153,6 +153,46 @@ import CodeBlock from '../../components/CodeBlock.astro';
     </table>
   </div>
 
+  <h3>Scroll Position</h3>
+  <p class="mb-4 text-text-secondary">
+    Capture screenshots at a specific scroll position. This is useful for capturing content below the fold
+    or specific sections of long pages.
+  </p>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Parameter</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Type</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Default</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">scrollPosition.y</td>
+          <td class="py-3 px-4 text-sm">number</td>
+          <td class="py-3 px-4 text-sm">0</td>
+          <td class="py-3 px-4">Vertical scroll position in pixels (0-50000)</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">scrollPosition.behavior</td>
+          <td class="py-3 px-4 text-sm">string</td>
+          <td class="py-3 px-4 text-sm">"instant"</td>
+          <td class="py-3 px-4">"instant" or "smooth" scroll animation</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bg-accent-warning/10 border border-accent-warning/20 rounded-lg p-4 mb-6">
+    <p class="text-accent-warning text-sm">
+      <strong>Note:</strong> <code>scrollPosition</code> cannot be used together with <code>fullPage: true</code>.
+      Use either full page capture or scroll position, not both.
+    </p>
+  </div>
+
   <h3>Element Selection</h3>
 
   <div class="overflow-x-auto not-prose mb-6">
@@ -225,6 +265,46 @@ import CodeBlock from '../../components/CodeBlock.astro';
     </table>
   </div>
 
+  <h3>Cookie Consent</h3>
+  <p class="mb-4 text-text-secondary">
+    Automatically accept cookie consent banners before capturing. This feature is enabled by default
+    and supports major consent management platforms like OneTrust, CookieBot, and common patterns.
+  </p>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Parameter</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Type</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Default</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">acceptCookies</td>
+          <td class="py-3 px-4 text-sm">boolean</td>
+          <td class="py-3 px-4 text-sm">true</td>
+          <td class="py-3 px-4">Automatically click cookie accept buttons</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-mono text-sm">cookieAcceptTimeout</td>
+          <td class="py-3 px-4 text-sm">number</td>
+          <td class="py-3 px-4 text-sm">2500</td>
+          <td class="py-3 px-4">Timeout in ms to wait for cookie banner (0-10000)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bg-accent-primary/10 border border-accent-primary/20 rounded-lg p-4 mb-6">
+    <p class="text-accent-primary text-sm">
+      <strong>Supported platforms:</strong> OneTrust, CookieBot, Quantcast, Osano, and common GDPR/cookie consent patterns.
+      The feature uses graceful degradation - if no banner is found, the screenshot proceeds normally.
+    </p>
+  </div>
+
   <h2>Examples</h2>
 
   <h3>Basic Screenshot</h3>
@@ -277,6 +357,65 @@ import CodeBlock from '../../components/CodeBlock.astro';
   "url": "https://example.com",
   "device": "iPhone 14 Pro",
   "fullPage": true
+}`}
+  />
+
+  <h3>Screenshot at Scroll Position</h3>
+
+  <CodeBlock
+    filename="Request"
+    lang="json"
+    code={`{
+  "url": "https://example.com/long-page",
+  "scrollPosition": {
+    "y": 1500,
+    "behavior": "instant"
+  },
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  }
+}`}
+  />
+
+  <h3>Scroll with Delay for Lazy Content</h3>
+
+  <CodeBlock
+    filename="Request"
+    lang="json"
+    code={`{
+  "url": "https://example.com/lazy-content",
+  "scrollPosition": {
+    "y": 2000,
+    "behavior": "smooth"
+  },
+  "waitOptions": {
+    "waitUntil": "networkidle0",
+    "delay": 2000
+  }
+}`}
+  />
+
+  <h3>Disable Cookie Auto-Accept</h3>
+
+  <CodeBlock
+    filename="Request"
+    lang="json"
+    code={`{
+  "url": "https://example.com",
+  "acceptCookies": false
+}`}
+  />
+
+  <h3>Cookie Accept with Extended Timeout</h3>
+
+  <CodeBlock
+    filename="Request"
+    lang="json"
+    code={`{
+  "url": "https://gdpr-heavy-site.eu",
+  "acceptCookies": true,
+  "cookieAcceptTimeout": 5000
 }`}
   />
 

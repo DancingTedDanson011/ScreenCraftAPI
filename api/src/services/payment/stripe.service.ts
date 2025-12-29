@@ -248,6 +248,44 @@ export class StripeService {
       throw new Error('Failed to cancel subscription');
     }
   }
+
+  /**
+   * Get invoices/payments for a customer
+   * @param customerId - Stripe customer ID
+   * @param limit - Number of invoices to retrieve
+   * @returns Array of invoice objects
+   */
+  async getInvoices(customerId: string, limit = 10): Promise<{
+    id: string;
+    amount: number;
+    currency: string;
+    status: string;
+    date: Date;
+    invoiceUrl: string | null;
+    invoicePdf: string | null;
+    description: string | null;
+  }[]> {
+    try {
+      const invoices = await stripe.invoices.list({
+        customer: customerId,
+        limit,
+      });
+
+      return invoices.data.map((invoice) => ({
+        id: invoice.id,
+        amount: invoice.amount_paid / 100, // Convert from cents
+        currency: invoice.currency.toUpperCase(),
+        status: invoice.status || 'unknown',
+        date: new Date(invoice.created * 1000),
+        invoiceUrl: invoice.hosted_invoice_url,
+        invoicePdf: invoice.invoice_pdf,
+        description: invoice.lines.data[0]?.description || null,
+      }));
+    } catch (error) {
+      logger.error({ error, customerId }, 'Failed to retrieve invoices');
+      throw new Error('Failed to retrieve invoices');
+    }
+  }
 }
 
 export const stripeService = new StripeService();

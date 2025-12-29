@@ -1,12 +1,9 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
-import { QuotaCard } from '../../components/dashboard/QuotaCard';
-import { StatsCard } from '../../components/dashboard/StatsCard';
-import { ActivityFeed } from '../../components/dashboard/ActivityFeed';
 ---
 
 <DashboardLayout title="Dashboard" activeTab="overview">
-  <!-- Loading State (shown while JS loads data) -->
+  <!-- Loading State -->
   <div id="loading-state" class="space-y-6">
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {[1, 2, 3, 4].map(() => (
@@ -19,25 +16,69 @@ import { ActivityFeed } from '../../components/dashboard/ActivityFeed';
     </div>
   </div>
 
-  <!-- Dashboard Content (populated by JS) -->
+  <!-- Dashboard Content -->
   <div id="dashboard-content" class="hidden space-y-6">
-    <!-- Quota Cards -->
+    <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div id="quota-card-container"></div>
-      <div id="screenshots-card-container"></div>
-      <div id="pdfs-card-container"></div>
-      <div id="credits-card-container"></div>
+      <div id="quota-card" class="bg-surface border border-border rounded-lg p-6">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-text-secondary text-sm">Requests Used</span>
+          <span id="quota-percentage" class="text-accent-primary text-sm font-medium">0%</span>
+        </div>
+        <div class="text-2xl font-bold text-text-primary mb-2">
+          <span id="quota-used">0</span> / <span id="quota-limit">100</span>
+        </div>
+        <div class="h-2 bg-surface-hover rounded-full overflow-hidden">
+          <div id="quota-bar" class="h-full bg-accent-primary rounded-full transition-all" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="bg-surface border border-border rounded-lg p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+          </div>
+          <span class="text-text-secondary text-sm">Screenshots</span>
+        </div>
+        <div id="screenshots-count" class="text-2xl font-bold text-text-primary">0</div>
+      </div>
+
+      <div class="bg-surface border border-border rounded-lg p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+          </div>
+          <span class="text-text-secondary text-sm">PDFs</span>
+        </div>
+        <div id="pdfs-count" class="text-2xl font-bold text-text-primary">0</div>
+      </div>
+
+      <div class="bg-surface border border-border rounded-lg p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+          </div>
+          <span class="text-text-secondary text-sm">Total Requests</span>
+        </div>
+        <div id="total-credits" class="text-2xl font-bold text-text-primary">0</div>
+      </div>
     </div>
 
     <!-- Quick Actions -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <a
-        href="/dashboard/api-keys?create=true"
-        class="bg-surface border border-border rounded-lg p-6 hover:border-accent-primary/50 transition-all group"
-      >
+      <a href="/dashboard/api-keys?create=true" class="bg-surface border border-border rounded-lg p-6 hover:border-accent-primary/50 transition-all group">
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 bg-accent-primary/20 rounded-lg flex items-center justify-center text-accent-primary group-hover:bg-accent-primary group-hover:text-white transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
             </svg>
           </div>
@@ -48,13 +89,10 @@ import { ActivityFeed } from '../../components/dashboard/ActivityFeed';
         </div>
       </a>
 
-      <a
-        href="/docs"
-        class="bg-surface border border-border rounded-lg p-6 hover:border-accent-secondary/50 transition-all group"
-      >
+      <a href="/docs" class="bg-surface border border-border rounded-lg p-6 hover:border-accent-secondary/50 transition-all group">
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 bg-accent-secondary/20 rounded-lg flex items-center justify-center text-accent-secondary group-hover:bg-accent-secondary group-hover:text-white transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
               <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -68,13 +106,10 @@ import { ActivityFeed } from '../../components/dashboard/ActivityFeed';
         </div>
       </a>
 
-      <a
-        href="/dashboard/usage"
-        class="bg-surface border border-border rounded-lg p-6 hover:border-purple-500/50 transition-all group"
-      >
+      <a href="/dashboard/usage" class="bg-surface border border-border rounded-lg p-6 hover:border-purple-500/50 transition-all group">
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="20" x2="18" y2="10"></line>
               <line x1="12" y1="20" x2="12" y2="4"></line>
               <line x1="6" y1="20" x2="6" y2="14"></line>
@@ -91,8 +126,20 @@ import { ActivityFeed } from '../../components/dashboard/ActivityFeed';
     <!-- Two Column Layout -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Recent Activity -->
-      <div id="activity-feed-container">
-        <ActivityFeed activities={[]} isLoading={true} client:load />
+      <div class="bg-surface border border-border rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-text-primary mb-4">Recent Activity</h3>
+        <div id="activity-loading" class="flex items-center justify-center py-8">
+          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-accent-primary"></div>
+        </div>
+        <div id="activity-empty" class="hidden text-center py-8">
+          <div class="text-text-muted mb-2">
+            <svg class="h-10 w-10 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p class="text-text-secondary">No recent activity</p>
+        </div>
+        <div id="activity-list" class="hidden space-y-3"></div>
       </div>
 
       <!-- Account Info -->
@@ -105,9 +152,7 @@ import { ActivityFeed } from '../../components/dashboard/ActivityFeed';
           </div>
           <div class="flex items-center justify-between py-3 border-b border-border">
             <span class="text-text-secondary">Plan</span>
-            <span id="account-tier" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent-primary/20 text-accent-primary">
-              -
-            </span>
+            <span id="account-tier" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent-primary/20 text-accent-primary">-</span>
           </div>
           <div class="flex items-center justify-between py-3 border-b border-border">
             <span class="text-text-secondary">Member Since</span>
@@ -118,12 +163,8 @@ import { ActivityFeed } from '../../components/dashboard/ActivityFeed';
             <span id="quota-reset" class="text-text-primary">-</span>
           </div>
         </div>
-
         <div class="mt-6 pt-4 border-t border-border">
-          <a
-            href="/dashboard/settings"
-            class="text-sm text-accent-primary hover:text-accent-primary/80 transition-colors"
-          >
+          <a href="/dashboard/settings" class="text-sm text-accent-primary hover:text-accent-primary/80 transition-colors">
             Manage account settings
           </a>
         </div>
@@ -135,7 +176,7 @@ import { ActivityFeed } from '../../components/dashboard/ActivityFeed';
   <div id="error-state" class="hidden">
     <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-6 text-center">
       <div class="text-red-400 mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg class="h-12 w-12 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="12" y1="8" x2="12" y2="12"></line>
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -143,10 +184,7 @@ import { ActivityFeed } from '../../components/dashboard/ActivityFeed';
       </div>
       <h3 class="text-lg font-medium text-text-primary mb-2">Failed to Load Dashboard</h3>
       <p id="error-message" class="text-text-secondary mb-4">An error occurred while loading your dashboard.</p>
-      <button
-        onclick="loadDashboard()"
-        class="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-lg font-medium transition-colors"
-      >
+      <button id="retry-btn" class="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-lg font-medium transition-colors">
         Try Again
       </button>
     </div>
@@ -161,7 +199,6 @@ import { ActivityFeed } from '../../components/dashboard/ActivityFeed';
     const dashboardContent = document.getElementById('dashboard-content');
     const errorState = document.getElementById('error-state');
 
-    // Show loading, hide others
     loadingState?.classList.remove('hidden');
     dashboardContent?.classList.add('hidden');
     errorState?.classList.add('hidden');
@@ -175,6 +212,26 @@ import { ActivityFeed } from '../../components/dashboard/ActivityFeed';
 
       const data = response.data;
 
+      // Update quota card
+      const quotaUsed = document.getElementById('quota-used');
+      const quotaLimit = document.getElementById('quota-limit');
+      const quotaPercentage = document.getElementById('quota-percentage');
+      const quotaBar = document.getElementById('quota-bar');
+
+      if (quotaUsed) quotaUsed.textContent = String(data.quota.used);
+      if (quotaLimit) quotaLimit.textContent = String(data.quota.limit);
+      if (quotaPercentage) quotaPercentage.textContent = `${data.quota.percentage}%`;
+      if (quotaBar) quotaBar.style.width = `${Math.min(data.quota.percentage, 100)}%`;
+
+      // Update stats
+      const screenshotsCount = document.getElementById('screenshots-count');
+      const pdfsCount = document.getElementById('pdfs-count');
+      const totalCredits = document.getElementById('total-credits');
+
+      if (screenshotsCount) screenshotsCount.textContent = String(data.usage.screenshots);
+      if (pdfsCount) pdfsCount.textContent = String(data.usage.pdfs);
+      if (totalCredits) totalCredits.textContent = String(data.usage.totalCredits);
+
       // Update account info
       const emailEl = document.getElementById('account-email');
       const tierEl = document.getElementById('account-tier');
@@ -185,38 +242,116 @@ import { ActivityFeed } from '../../components/dashboard/ActivityFeed';
       if (tierEl) tierEl.textContent = data.account.tier;
       if (createdEl) {
         createdEl.textContent = new Date(data.account.createdAt).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
+          year: 'numeric', month: 'long', day: 'numeric'
         });
       }
       if (resetEl) {
         resetEl.textContent = new Date(data.quota.resetDate).toLocaleDateString('en-US', {
-          month: 'long',
-          day: 'numeric',
+          month: 'long', day: 'numeric'
         });
       }
 
-      // Show dashboard content
+      // Update activity feed
+      renderActivityFeed(data.recentActivity || []);
+
+      // Show content
       loadingState?.classList.add('hidden');
       dashboardContent?.classList.remove('hidden');
 
     } catch (error) {
       console.error('Dashboard load error:', error);
-
       const errorMessage = document.getElementById('error-message');
       if (errorMessage) {
         errorMessage.textContent = error instanceof Error ? error.message : 'An error occurred';
       }
-
       loadingState?.classList.add('hidden');
       errorState?.classList.remove('hidden');
     }
   }
 
-  // Make function globally available for retry button
-  (window as any).loadDashboard = loadDashboard;
+  function renderActivityFeed(activities: any[]) {
+    const loadingEl = document.getElementById('activity-loading');
+    const emptyEl = document.getElementById('activity-empty');
+    const listEl = document.getElementById('activity-list');
 
-  // Load dashboard on page load
-  document.addEventListener('DOMContentLoaded', loadDashboard);
+    loadingEl?.classList.add('hidden');
+
+    if (!activities || activities.length === 0) {
+      emptyEl?.classList.remove('hidden');
+      listEl?.classList.add('hidden');
+      return;
+    }
+
+    emptyEl?.classList.add('hidden');
+    listEl?.classList.remove('hidden');
+
+    if (listEl) {
+      listEl.innerHTML = activities.slice(0, 5).map(activity => {
+        const iconColor = getActivityColor(activity.type);
+        const icon = getActivityIcon(activity.type);
+        const timeAgo = formatTimeAgo(activity.createdAt);
+
+        return `
+          <div class="flex items-start gap-3 p-3 rounded-lg hover:bg-surface-hover transition-colors">
+            <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${iconColor}">
+              ${icon}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-text-primary text-sm truncate">${activity.description}</p>
+              <p class="text-text-muted text-xs mt-1">${timeAgo}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  function getActivityColor(type: string): string {
+    switch (type) {
+      case 'screenshot': return 'bg-blue-500/20 text-blue-400';
+      case 'pdf': return 'bg-purple-500/20 text-purple-400';
+      case 'api_key_created': return 'bg-green-500/20 text-green-400';
+      case 'api_key_revoked': return 'bg-red-500/20 text-red-400';
+      default: return 'bg-gray-500/20 text-gray-400';
+    }
+  }
+
+  function getActivityIcon(type: string): string {
+    switch (type) {
+      case 'screenshot':
+        return '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>';
+      case 'pdf':
+        return '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
+      case 'api_key_created':
+        return '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
+      case 'api_key_revoked':
+        return '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+      default:
+        return '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>';
+    }
+  }
+
+  function formatTimeAgo(dateStr: string): string {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  // Setup
+  document.getElementById('retry-btn')?.addEventListener('click', loadDashboard);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadDashboard);
+  } else {
+    loadDashboard();
+  }
 </script>

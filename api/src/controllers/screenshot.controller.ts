@@ -21,12 +21,14 @@ import { StorageService } from '../services/storage/storage.service.js';
 import { getQueueService } from '../services/queue/queue.service.js';
 import { JobPriority } from '../services/queue/queue.config.js';
 import { screenshotRepository } from '../services/database/screenshot.repository';
-import type { Screenshot } from '@prisma/client';
+import { UsageService } from '../services/billing/usage.service.js';
+import { EventType, type Screenshot } from '@prisma/client';
 
 // Initialize services
 const screenshotService = getScreenshotService();
 const storageService = new StorageService();
 const queueService = getQueueService();
+const usageService = new UsageService();
 
 // Helper to convert Prisma model to API response
 function toScreenshotResponse(screenshot: Screenshot): ScreenshotResponse {
@@ -181,6 +183,19 @@ export async function createScreenshot(
           result.fileSize
         );
 
+        // Track usage - deduct credits
+        const creditCost = validatedData.fullPage ? 2 : 1; // SCREENSHOT_FULLPAGE: 2, SCREENSHOT: 1
+        await usageService.recordUsage({
+          accountId,
+          eventType: validatedData.fullPage ? EventType.SCREENSHOT_FULLPAGE : EventType.SCREENSHOT,
+          credits: creditCost,
+          metadata: {
+            screenshotId: screenshot.id,
+            url: validatedData.url,
+            format: validatedData.format,
+          },
+        });
+
         const response: ApiResponse<ScreenshotResponse> = {
           success: true,
           data: toScreenshotResponse(screenshot),
@@ -327,7 +342,10 @@ export async function listScreenshots(
   reply: FastifyReply
 ): Promise<void> {
   try {
-    const { page, limit, status, sortBy, sortOrder } = request.query;
+    const { page: pageParam, limit: limitParam, status, sortBy, sortOrder } = request.query;
+    // Coerce query params to numbers with defaults
+    const page = pageParam ? parseInt(String(pageParam), 10) : 1;
+    const limit = limitParam ? parseInt(String(limitParam), 10) : 20;
     const accountId = request.auth?.accountId;
 
     if (!accountId) {
