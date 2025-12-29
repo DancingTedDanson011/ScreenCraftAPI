@@ -58,7 +58,7 @@
     "playwright": "^1.49.1",
     "rate-limiter-flexible": "^9.0.1",
     "resend": "^6.6.0",
-    "stripe": "^17.5.0",
+    "stripe": "^20.1.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
