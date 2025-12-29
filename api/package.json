@@ -45,7 +45,7 @@
     "@fastify/swagger-ui": "^5.2.3",
     "@fastify/type-provider-typebox": "^6.1.0",
     "@fastify/websocket": "^11.0.1",
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^7.2.0",
     "bcryptjs": "^3.0.2",
     "bullmq": "^5.16.2",
     "dotenv": "^16.4.7",
