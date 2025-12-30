@@ -36,10 +36,16 @@ export const STRIPE_CONFIG = {
   },
 } as const;
 
-// Validate Stripe configuration
+// Check if Stripe is configured (returns boolean instead of throwing)
+export function isStripeConfigured(): boolean {
+  return !!STRIPE_CONFIG.secretKey;
+}
+
+// Validate Stripe configuration (logs warning instead of throwing)
 export function validateStripeConfig(): void {
   if (!STRIPE_CONFIG.secretKey) {
-    throw new Error('STRIPE_SECRET_KEY is not configured');
+    console.warn('STRIPE_SECRET_KEY is not configured - payment features will be disabled');
+    return;
   }
 
   if (!STRIPE_CONFIG.webhookSecret) {

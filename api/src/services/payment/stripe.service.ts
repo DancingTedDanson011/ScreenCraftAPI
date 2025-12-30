@@ -5,11 +5,21 @@ import { STRIPE_CONFIG, getPriceIdForTier } from '../../config/stripe.config.js'
 import { prisma } from '../../lib/prisma.js';
 import { logger } from '../../lib/logger.js';
 
-// Initialize Stripe client
-const stripe = new Stripe(STRIPE_CONFIG.secretKey, {
-  apiVersion: '2024-12-18.acacia',
-  typescript: true,
-});
+// Lazy-initialized Stripe client (only created when needed)
+let stripeClient: Stripe | null = null;
+
+function getStripeClient(): Stripe {
+  if (!stripeClient) {
+    if (!STRIPE_CONFIG.secretKey) {
+      throw new Error('STRIPE_SECRET_KEY is not configured. Payment features are disabled.');
+    }
+    stripeClient = new Stripe(STRIPE_CONFIG.secretKey, {
+      apiVersion: '2024-12-18.acacia',
+      typescript: true,
+    });
+  }
+  return stripeClient;
+}
 
 export class StripeService {
   /**
@@ -20,7 +30,7 @@ export class StripeService {
    */
   async createCustomer(email: string, accountId?: string): Promise<string> {
     try {
-      const customer = await stripe.customers.create({
+      const customer = await getStripeClient().customers.create({
         email,
         metadata: {
           accountId: accountId || '',
@@ -88,7 +98,7 @@ export class StripeService {
       }
 
       // Create checkout session
-      const session = await stripe.checkout.sessions.create({
+      const session = await getStripeClient().checkout.sessions.create({
         customer: customerId,
         mode: 'subscription',
         payment_method_types: ['card'],
@@ -137,7 +147,7 @@ export class StripeService {
    */
   async createPortalSession(customerId: string): Promise<{ url: string }> {
     try {
-      const session = await stripe.billingPortal.sessions.create({
+      const session = await getStripeClient().billingPortal.sessions.create({
         customer: customerId,
         return_url: STRIPE_CONFIG.successUrl,
       });
@@ -162,7 +172,7 @@ export class StripeService {
   async handleWebhook(payload: Buffer, signature: string): Promise<Stripe.Event> {
     try {
       // Verify webhook signature
-      const event = stripe.webhooks.constructEvent(
+      const event = getStripeClient().webhooks.constructEvent(
         payload,
         signature,
         STRIPE_CONFIG.webhookSecret
@@ -219,7 +229,7 @@ export class StripeService {
    */
   async getStripeSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
     try {
-      return await stripe.subscriptions.retrieve(subscriptionId);
+      return await getStripeClient().subscriptions.retrieve(subscriptionId);
     } catch (error) {
       logger.error({ error, subscriptionId }, 'Failed to retrieve subscription');
       throw new Error('Failed to retrieve subscription');
@@ -237,9 +247,9 @@ export class StripeService {
   ): Promise<Stripe.Subscription> {
     try {
       if (immediately) {
-        return await stripe.subscriptions.cancel(subscriptionId);
+        return await getStripeClient().subscriptions.cancel(subscriptionId);
       } else {
-        return await stripe.subscriptions.update(subscriptionId, {
+        return await getStripeClient().subscriptions.update(subscriptionId, {
           cancel_at_period_end: true,
         });
       }
@@ -266,7 +276,7 @@ export class StripeService {
     description: string | null;
   }[]> {
     try {
-      const invoices = await stripe.invoices.list({
+      const invoices = await getStripeClient().invoices.list({
         customer: customerId,
         limit,
       });
