@@ -143,6 +143,12 @@ services:
       - screencraft
     restart: unless-stopped
     command: npm run dev
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=PathPrefix(`/v1`) || PathPrefix(`/api`) || PathPrefix(`/auth`) || PathPrefix(`/admin-api`)"
+      - "traefik.http.routers.api.entrypoints=web"
+      - "traefik.http.routers.api.priority=10"
+      - "traefik.http.services.api.loadbalancer.server.port=3000"
 
   # BullMQ Worker
   worker:
@@ -196,7 +202,7 @@ services:
     container_name: screencraft-web
     environment:
       NODE_ENV: development
-      # Empty = same-origin, nginx handles /api/ routing
+      # Empty = same-origin, Traefik handles /api/ routing
       PUBLIC_API_URL: ""
     ports:
       - "4321:4321"
@@ -208,6 +214,12 @@ services:
       - screencraft
     restart: unless-stopped
     command: npm run dev -- --host 0.0.0.0
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.web.entrypoints=web"
+      - "traefik.http.routers.web.priority=1"
+      - "traefik.http.services.web.loadbalancer.server.port=4321"
 
   # C-06: Docker Socket Proxy for Traefik (security layer)
   docker-socket-proxy:
