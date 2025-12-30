@@ -256,7 +256,7 @@ services:
 
   # Traefik Reverse Proxy
   traefik:
-    image: traefik:v2.10
+    image: traefik:v3.2
     container_name: screencraft-traefik
     command:
       - "--api.dashboard=false"
