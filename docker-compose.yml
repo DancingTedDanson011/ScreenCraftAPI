@@ -254,33 +254,23 @@ services:
       - ALL
     read_only: true
 
-  # Traefik Reverse Proxy (Optional, for production-like routing)
+  # Traefik Reverse Proxy
   traefik:
     image: traefik:v2.10
     container_name: screencraft-traefik
     command:
-      # C-06/H-12: Disable insecure dashboard
       - "--api.dashboard=false"
       - "--api.insecure=false"
-      # C-06: Use socket proxy instead of direct socket access
-      - "--providers.docker.endpoint=tcp://docker-socket-proxy:2375"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
     ports:
       - "80:80"
-    depends_on:
-      - docker-socket-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - screencraft
     restart: unless-stopped
-    # C-08: Container security options
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    cap_add:
-      - NET_BIND_SERVICE
 
 networks:
   screencraft:
