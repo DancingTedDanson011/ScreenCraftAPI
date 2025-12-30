@@ -245,22 +245,18 @@ import Footer from '../components/Footer.astro';
             </div>
             <h2 class="text-xl font-semibold text-text-primary">Responsible Disclosure</h2>
           </div>
-          <p class="text-text-secondary mb-4">
+          <p class="text-text-secondary mb-6">
             We appreciate security researchers who help us keep ScreenCraft secure. If you discover a vulnerability, please report it responsibly.
           </p>
-          <div class="bg-background/50 rounded-lg p-4 mb-4">
-            <div class="flex items-center gap-2 mb-2">
-              <svg class="w-5 h-5 text-accent-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              <a href="mailto:security@screencraftapi.com" class="text-accent-primary hover:underline font-medium">
-                security@screencraftapi.com
-              </a>
-            </div>
-            <p class="text-text-muted text-sm">
-              We will acknowledge your report within 48 hours and work with you to understand and resolve the issue.
-            </p>
-          </div>
+          <a href="/contact" class="inline-flex items-center gap-2 px-6 py-3 bg-accent-primary text-white font-semibold rounded-lg hover:bg-accent-primary/90 transition-colors mb-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            Report a Vulnerability
+          </a>
+          <p class="text-text-muted text-sm mb-4">
+            We will acknowledge your report within 48 hours and work with you to understand and resolve the issue.
+          </p>
           <div class="flex flex-wrap gap-4 text-sm">
             <div class="flex items-center gap-2 text-text-secondary">
               <svg class="w-4 h-4 text-accent-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
