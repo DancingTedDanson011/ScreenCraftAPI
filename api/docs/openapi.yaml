@@ -4,6 +4,26 @@ info:
   description: |
     Professional Screenshot & PDF Generation API powered by Playwright.
 
+    ## Privacy & Data Handling
+
+    We take your privacy seriously. Here's what you need to know about data handling:
+
+    **What we DON'T store:**
+    - Authentication headers you provide (e.g., Authorization, custom auth headers)
+    - Cookies for authenticated screenshots
+    - Raw HTML content for PDF generation
+    - Any sensitive data from your captured pages
+
+    **Retention:**
+    - Screenshots/PDFs are automatically deleted based on your plan's retention period
+    - Use `noStore: true` for maximum privacy - the file is returned directly and never stored
+    - Check the `X-Retention-Until` response header to see when a resource will be deleted
+
+    **Best Practices:**
+    - Use `noStore: true` when capturing sensitive content
+    - Avoid passing credentials in URL query parameters
+    - Use cookies or headers for authentication instead
+
     ## Features
     - **High-Quality Screenshots**: Capture pixel-perfect screenshots of any webpage
     - **PDF Generation**: Convert URLs or HTML to professional PDFs
@@ -37,18 +57,14 @@ info:
   version: 1.0.0
   contact:
     name: API Support
-    email: support@screencraft.com
+    email: support@screencraftapi.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: https://api.screencraft.com
+  - url: https://www.screencraftapi.com/api/v1
     description: Production server
-  - url: https://staging-api.screencraft.com
-    description: Staging server
-  - url: http://localhost:3000
-    description: Local development server
 
 tags:
   - name: screenshots
@@ -169,9 +185,22 @@ paths:
                   url: https://gdpr-heavy-site.com
                   acceptCookies: true
                   cookieAcceptTimeout: 5000
+              privacyMode:
+                summary: Maximum privacy - no storage
+                value:
+                  url: https://example.com/sensitive-page
+                  noStore: true
+                  format: png
       responses:
         '201':
           description: Screenshot created successfully (synchronous)
+          headers:
+            X-Retention-Until:
+              description: ISO 8601 timestamp indicating when this resource will be automatically deleted. Not present if noStore was true.
+              schema:
+                type: string
+                format: date-time
+              example: '2025-12-27T12:00:00.000Z'
           content:
             application/json:
               schema:
@@ -264,6 +293,13 @@ paths:
       responses:
         '200':
           description: Screenshot file
+          headers:
+            X-Retention-Until:
+              description: ISO 8601 timestamp indicating when this resource will be automatically deleted
+              schema:
+                type: string
+                format: date-time
+              example: '2025-12-27T12:00:00.000Z'
           content:
             image/png:
               schema:
@@ -359,9 +395,23 @@ paths:
                   format: A4
                   async: true
                   webhookUrl: https://your-app.com/webhooks/pdf
+              privacyMode:
+                summary: Maximum privacy - no storage
+                value:
+                  type: url
+                  url: https://example.com/sensitive-document
+                  format: A4
+                  noStore: true
       responses:
         '201':
           description: PDF created successfully (synchronous)
+          headers:
+            X-Retention-Until:
+              description: ISO 8601 timestamp indicating when this resource will be automatically deleted. Not present if noStore was true.
+              schema:
+                type: string
+                format: date-time
+              example: '2025-12-27T12:00:00.000Z'
           content:
             application/json:
               schema:
@@ -460,6 +510,13 @@ paths:
       responses:
         '200':
           description: PDF file
+          headers:
+            X-Retention-Until:
+              description: ISO 8601 timestamp indicating when this resource will be automatically deleted
+              schema:
+                type: string
+                format: date-time
+              example: '2025-12-27T12:00:00.000Z'
           content:
             application/pdf:
               schema:
@@ -783,6 +840,10 @@ components:
           type: object
           additionalProperties: true
           description: Custom metadata to attach to the screenshot
+        noStore:
+          type: boolean
+          default: false
+          description: If true, the screenshot is returned directly and not stored. Maximum privacy mode - no record is kept.
 
     PdfMargin:
       type: object
@@ -897,6 +958,10 @@ components:
           type: object
           additionalProperties: true
           description: Custom metadata to attach to the PDF
+        noStore:
+          type: boolean
+          default: false
+          description: If true, the PDF is returned directly and not stored. Maximum privacy mode - no record is kept.
 
     PdfFromHtmlRequest:
       type: object
@@ -967,6 +1032,10 @@ components:
           type: object
           additionalProperties: true
           description: Custom metadata to attach to the PDF
+        noStore:
+          type: boolean
+          default: false
+          description: If true, the PDF is returned directly and not stored. Maximum privacy mode - no record is kept.
 
     ScreenshotData:
       type: object

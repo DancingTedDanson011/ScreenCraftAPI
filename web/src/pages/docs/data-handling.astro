@@ -1,0 +1,328 @@
+---
+import DocsLayout from '../../components/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+---
+
+<DocsLayout title="Data Handling" description="Learn how ScreenCraft handles your data, our privacy-first approach, and retention policies.">
+  <h1>Data Handling</h1>
+
+  <p class="lead text-lg text-text-secondary mb-8">
+    ScreenCraft is built with a privacy-first approach. We only store what's necessary to provide
+    reliable service and give you full control over your data.
+  </p>
+
+  <h2>Overview</h2>
+
+  <p>
+    When you use ScreenCraft to capture screenshots or generate PDFs, data flows through our systems
+    in a controlled manner. We've designed our infrastructure to minimize data retention while maintaining
+    the reliability and debugging capabilities you need.
+  </p>
+
+  <p>
+    Our core principles:
+  </p>
+
+  <ul>
+    <li><strong>Minimal data collection:</strong> We only store what's essential for service operation</li>
+    <li><strong>Configurable retention:</strong> You control how long your data is kept</li>
+    <li><strong>No-store option:</strong> For maximum privacy, bypass storage entirely</li>
+    <li><strong>Transparent practices:</strong> Full visibility into what we collect and why</li>
+  </ul>
+
+  <h2>Data We Store</h2>
+
+  <p>
+    Here's a complete breakdown of what data we store and for how long:
+  </p>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Data</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Stored</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Retention</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Purpose</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4">Target URL</td>
+          <td class="py-3 px-4"><span class="px-2 py-1 bg-accent-primary/20 text-accent-primary rounded text-sm">Yes</span></td>
+          <td class="py-3 px-4">7-90 days</td>
+          <td class="py-3 px-4">Debugging & usage tracking</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4">URL Domain</td>
+          <td class="py-3 px-4"><span class="px-2 py-1 bg-accent-primary/20 text-accent-primary rounded text-sm">Yes</span></td>
+          <td class="py-3 px-4">Indefinite</td>
+          <td class="py-3 px-4">Aggregated statistics</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4">Auth Headers</td>
+          <td class="py-3 px-4"><span class="px-2 py-1 bg-accent-error/20 text-accent-error rounded text-sm">NO</span></td>
+          <td class="py-3 px-4">-</td>
+          <td class="py-3 px-4">Never stored</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4">Cookies</td>
+          <td class="py-3 px-4"><span class="px-2 py-1 bg-accent-error/20 text-accent-error rounded text-sm">NO</span></td>
+          <td class="py-3 px-4">-</td>
+          <td class="py-3 px-4">Never stored</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4">HTML Content</td>
+          <td class="py-3 px-4"><span class="px-2 py-1 bg-accent-error/20 text-accent-error rounded text-sm">NO</span></td>
+          <td class="py-3 px-4">-</td>
+          <td class="py-3 px-4">Never stored</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4">Screenshot File</td>
+          <td class="py-3 px-4"><span class="px-2 py-1 bg-accent-primary/20 text-accent-primary rounded text-sm">Yes</span></td>
+          <td class="py-3 px-4">1h-30d</td>
+          <td class="py-3 px-4">Download availability</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4">PDF File</td>
+          <td class="py-3 px-4"><span class="px-2 py-1 bg-accent-primary/20 text-accent-primary rounded text-sm">Yes</span></td>
+          <td class="py-3 px-4">1h-30d</td>
+          <td class="py-3 px-4">Download availability</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>What We DON'T Store</h2>
+
+  <p>
+    We explicitly do not store sensitive data that could compromise your security or the security
+    of the pages you capture:
+  </p>
+
+  <div class="bg-accent-success/10 border border-accent-success/20 rounded-lg p-4 mb-6">
+    <ul class="text-text-secondary text-sm space-y-2 list-none pl-0 m-0">
+      <li class="flex items-start gap-2">
+        <svg class="w-5 h-5 text-accent-success flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span><strong>Authentication tokens</strong> passed in headers are never logged or stored</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <svg class="w-5 h-5 text-accent-success flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span><strong>Session cookies</strong> you provide for authenticated captures are discarded after use</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <svg class="w-5 h-5 text-accent-success flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span><strong>Raw HTML content</strong> from captured pages is not persisted after rendering</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <svg class="w-5 h-5 text-accent-success flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span><strong>Request credentials</strong> and sensitive query parameters are stripped from logs</span>
+      </li>
+    </ul>
+  </div>
+
+  <h2>Retention by Plan</h2>
+
+  <p>
+    Data retention periods vary based on your subscription plan. Higher tiers get extended retention
+    for files and metadata:
+  </p>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Plan</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">File Retention</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Metadata Retention</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-medium">FREE</td>
+          <td class="py-3 px-4">1 hour</td>
+          <td class="py-3 px-4">7 days</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-medium">PRO</td>
+          <td class="py-3 px-4">24 hours</td>
+          <td class="py-3 px-4">30 days</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-medium">BUSINESS</td>
+          <td class="py-3 px-4">7 days</td>
+          <td class="py-3 px-4">90 days</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-medium">ENTERPRISE</td>
+          <td class="py-3 px-4">30 days</td>
+          <td class="py-3 px-4">1 year</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bg-accent-primary/10 border border-accent-primary/20 rounded-lg p-4 mb-6">
+    <p class="text-accent-primary text-sm m-0">
+      <strong>Note:</strong> File retention refers to how long screenshots and PDFs remain downloadable.
+      Metadata includes request logs, target URLs, and usage data for your dashboard.
+    </p>
+  </div>
+
+  <h2>No-Store Mode</h2>
+
+  <p>
+    For maximum privacy, use the <code>noStore</code> option. When enabled, ScreenCraft returns the
+    screenshot or PDF directly in the response without persisting anything to storage.
+  </p>
+
+  <CodeBlock
+    filename="cURL"
+    lang="bash"
+    code={`curl -X POST https://api.screencraftapi.com/v1/screenshots \\
+  -H "Authorization: Bearer YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"url": "https://example.com", "noStore": true}'`}
+  />
+
+  <p>
+    With <code>noStore: true</code>:
+  </p>
+
+  <ul>
+    <li>The screenshot/PDF is returned directly as binary data</li>
+    <li>No file is saved to our CDN</li>
+    <li>No download URL is generated</li>
+    <li>Only basic request metadata is logged (for rate limiting)</li>
+    <li>Nothing is visible in your dashboard history</li>
+  </ul>
+
+  <div class="bg-accent-warning/10 border border-accent-warning/20 rounded-lg p-4 mb-6">
+    <p class="text-accent-warning text-sm m-0">
+      <strong>Important:</strong> With no-store mode, you must handle the binary response immediately.
+      There's no way to retrieve the file later since nothing is persisted.
+    </p>
+  </div>
+
+  <h2>Deleting Your Data</h2>
+
+  <p>
+    You have full control over your data and can delete it at any time.
+  </p>
+
+  <h3>Delete Individual Screenshots</h3>
+
+  <p>
+    Use the DELETE endpoint to remove a specific screenshot and its metadata:
+  </p>
+
+  <CodeBlock
+    filename="cURL"
+    lang="bash"
+    code={`curl -X DELETE https://api.screencraftapi.com/v1/screenshots/scr_abc123def456 \\
+  -H "Authorization: Bearer YOUR_KEY"`}
+  />
+
+  <CodeBlock
+    filename="Response"
+    lang="json"
+    code={`{
+  "success": true,
+  "message": "Screenshot deleted successfully"
+}`}
+  />
+
+  <h3>Account Deletion</h3>
+
+  <p>
+    When you delete your account, we permanently remove:
+  </p>
+
+  <ul>
+    <li>All stored screenshots and PDFs</li>
+    <li>All request history and metadata</li>
+    <li>API keys and authentication data</li>
+    <li>Billing information and invoices</li>
+    <li>Usage statistics and logs</li>
+  </ul>
+
+  <p>
+    To delete your account, go to <a href="/dashboard">Dashboard</a> &rarr; Settings &rarr; Delete Account.
+  </p>
+
+  <h3>Immediate Deletion Request</h3>
+
+  <p>
+    For urgent data deletion requests or GDPR/CCPA requests, contact us directly:
+  </p>
+
+  <ul>
+    <li>Email: <a href="mailto:privacy@screencraft.dev">privacy@screencraft.dev</a></li>
+    <li>Include your account email and the specific data you want deleted</li>
+    <li>We process requests within 48 hours</li>
+  </ul>
+
+  <h2>Security Measures</h2>
+
+  <p>
+    We take security seriously at every layer. Here's a summary of how we protect your data:
+  </p>
+
+  <div class="overflow-x-auto not-prose mb-6">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Layer</th>
+          <th class="text-left py-3 px-4 text-text-primary font-medium">Protection</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-medium">In Transit</td>
+          <td class="py-3 px-4">TLS 1.3 encryption for all API requests</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-medium">At Rest</td>
+          <td class="py-3 px-4">AES-256 encryption for stored files</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-medium">Access Control</td>
+          <td class="py-3 px-4">API keys with scoped permissions</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-medium">Infrastructure</td>
+          <td class="py-3 px-4">SOC 2 compliant cloud providers</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="py-3 px-4 font-medium">Monitoring</td>
+          <td class="py-3 px-4">Real-time threat detection and alerting</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    For complete details on our security practices, certifications, and compliance, see our
+    <a href="/security">Security page</a>.
+  </p>
+
+  <h2>Questions?</h2>
+
+  <p>
+    If you have questions about how we handle your data:
+  </p>
+
+  <ul>
+    <li>Email: <a href="mailto:privacy@screencraft.dev">privacy@screencraft.dev</a></li>
+    <li>Check our <a href="/privacy">Privacy Policy</a> for legal details</li>
+    <li>Review our <a href="/terms">Terms of Service</a></li>
+  </ul>
+</DocsLayout>

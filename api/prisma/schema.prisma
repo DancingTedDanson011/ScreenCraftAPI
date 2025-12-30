@@ -96,8 +96,8 @@ model Screenshot {
   viewport       Json? // { width, height, deviceScaleFactor, etc. }
   clip           Json? // { x, y, width, height }
   waitOptions    Json? // { waitUntil, timeout, delay, selector }
-  headers        Json?
-  cookies        Json?
+  // REMOVED: headers Json? - Privacy: Never store request headers (may contain auth tokens)
+  // REMOVED: cookies Json? - Privacy: Never store cookies (sensitive session data)
   userAgent      String?
   blockResources Json?
   omitBackground Boolean          @default(false)
@@ -111,8 +111,17 @@ model Screenshot {
   createdAt      DateTime         @default(now())
   completedAt    DateTime?
 
+  // Retention controls
+  expiresAt         DateTime? // When the file should be deleted from storage
+  metadataExpiresAt DateTime? // When this database record should be anonymized/deleted
+
+  // Privacy-safe analytics (no PII stored)
+  urlHash   String? // SHA256 hash of URL for deduplication analytics
+  urlDomain String? // Just the domain (e.g., "example.com") for usage stats
+
   @@index([accountId, createdAt])
   @@index([status, createdAt])
+  @@index([expiresAt])
   @@map("screenshots")
 }
 
@@ -124,7 +133,7 @@ model Pdf {
   status              PdfStatus @default(PENDING)
   type                PdfType
   url                 String? // For URL-based PDFs
-  html                String? // For HTML-based PDFs
+  // REMOVED: html String? - Privacy: HTML content passed through only, never stored (may contain sensitive data)
   format              PdfFormat @default(A4)
   landscape           Boolean   @default(false)
   printBackground     Boolean   @default(true)
@@ -138,8 +147,8 @@ model Pdf {
   height              String?
   scale               Float     @default(1.0)
   waitOptions         Json? // For URL-based: { waitUntil, timeout, delay }
-  headers             Json?
-  cookies             Json?
+  // REMOVED: headers Json? - Privacy: Never store request headers (may contain auth tokens)
+  // REMOVED: cookies Json? - Privacy: Never store cookies (sensitive session data)
   userAgent           String?
   fileSize            Int?
   pages               Int?
@@ -151,8 +160,17 @@ model Pdf {
   createdAt           DateTime  @default(now())
   completedAt         DateTime?
 
+  // Retention controls
+  expiresAt         DateTime? // When the file should be deleted from storage
+  metadataExpiresAt DateTime? // When this database record should be anonymized/deleted
+
+  // Privacy-safe analytics (no PII stored)
+  urlHash   String? // SHA256 hash of URL for deduplication analytics
+  urlDomain String? // Just the domain (e.g., "example.com") for usage stats
+
   @@index([accountId, createdAt])
   @@index([status, createdAt])
+  @@index([expiresAt])
   @@map("pdfs")
 }
 

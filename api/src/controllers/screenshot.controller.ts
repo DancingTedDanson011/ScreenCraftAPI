@@ -1,11 +1,7 @@
 import { FastifyReply } from 'fastify';
-import { randomUUID } from 'crypto';
 import {
   screenshotRequestSchema,
-  type ScreenshotRequest,
   type ScreenshotResponse,
-  type GetScreenshotParams,
-  type ListScreenshotsQuery,
 } from '../schemas/screenshot.schema';
 import {
   ErrorCode,
@@ -14,13 +10,17 @@ import {
   type ListScreenshotsRequest,
   type DownloadScreenshotRequest,
   type ApiResponse,
-  type HttpStatus,
 } from '../types/api.types';
-import { getScreenshotService, ScreenshotError } from '../services/screenshot/index.js';
+import { getScreenshotService } from '../services/screenshot/index.js';
 import { StorageService } from '../services/storage/storage.service.js';
 import { getQueueService } from '../services/queue/queue.service.js';
 import { JobPriority } from '../services/queue/queue.config.js';
-import { screenshotRepository } from '../services/database/screenshot.repository';
+import {
+  screenshotRepository,
+  hashUrl,
+  extractDomain,
+  calculateExpiresAt,
+} from '../services/database/screenshot.repository';
 import { UsageService } from '../services/billing/usage.service.js';
 import { EventType, type Screenshot } from '@prisma/client';
 
@@ -81,7 +81,28 @@ export async function createScreenshot(
     const isAsync = validatedData.async;
 
     if (isAsync) {
+      // PRIVACY: noStore is not compatible with async processing
+      // since async requires a database record for status tracking
+      if (validatedData.noStore) {
+        const response: ApiResponse = {
+          success: false,
+          error: {
+            code: ErrorCode.VALIDATION_ERROR,
+            message: 'noStore option cannot be used with async processing. Use synchronous mode (async: false) with noStore.',
+          },
+          meta: {
+            timestamp: new Date().toISOString(),
+            requestId: request.id,
+            version: 'v1',
+          },
+        };
+        reply.code(400).send(response);
+        return;
+      }
+
       // Create database record
+      // PRIVACY: headers and cookies are NOT stored in the database.
+      // They are passed to the queue job which uses them during capture only.
       const screenshot = await screenshotRepository.create({
         accountId,
         url: validatedData.url,
@@ -91,17 +112,22 @@ export async function createScreenshot(
         viewport: validatedData.viewport as any,
         clip: validatedData.clip as any,
         waitOptions: validatedData.waitOptions as any,
-        headers: validatedData.headers as any,
-        cookies: validatedData.cookies as any,
+        // PRIVACY: headers and cookies intentionally NOT passed to repository
         userAgent: validatedData.userAgent,
         blockResources: validatedData.blockResources as any,
         omitBackground: validatedData.omitBackground,
         encoding: validatedData.encoding,
         metadata: validatedData.metadata as any,
         webhookUrl: validatedData.webhookUrl,
+        // Privacy-safe analytics
+        urlHash: hashUrl(validatedData.url),
+        urlDomain: extractDomain(validatedData.url),
+        expiresAt: calculateExpiresAt(),
       });
 
       // Queue job for async processing via BullMQ
+      // Note: validatedData (including headers/cookies) is passed to the queue
+      // The worker will use these for capture but they are NOT persisted
       try {
         await queueService.addScreenshotJob(
           {
@@ -132,7 +158,68 @@ export async function createScreenshot(
 
       reply.code(202).send(response);
     } else {
+      // Check if noStore mode is requested
+      const noStore = validatedData.noStore;
+
+      if (noStore) {
+        // PRIVACY: noStore mode - capture and return directly without any persistence
+        // No database record, no storage upload - just capture and stream back
+        try {
+          // Validate request before processing
+          screenshotService.validateRequest(validatedData);
+
+          // Capture screenshot synchronously
+          // Note: headers and cookies from validatedData are used here for the capture
+          // but are never persisted anywhere
+          const result = await screenshotService.captureScreenshot(validatedData);
+
+          // Track usage - still need to deduct credits even for noStore
+          const creditCost = validatedData.fullPage ? 2 : 1;
+          await usageService.recordUsage({
+            accountId,
+            eventType: validatedData.fullPage ? EventType.SCREENSHOT_FULLPAGE : EventType.SCREENSHOT,
+            credits: creditCost,
+            metadata: {
+              // PRIVACY: Only store domain, not full URL, for noStore analytics
+              urlDomain: extractDomain(validatedData.url),
+              format: validatedData.format,
+              noStore: true,
+            },
+          });
+
+          // Return screenshot directly as binary response
+          const contentType = screenshotService.getContentType(result.format);
+          reply
+            .code(200)
+            .header('Content-Type', contentType)
+            .header('Content-Length', result.fileSize.toString())
+            .header('X-Screenshot-Width', result.width.toString())
+            .header('X-Screenshot-Height', result.height.toString())
+            .header('X-Screenshot-Format', result.format)
+            .header('Cache-Control', 'no-store, no-cache, must-revalidate')
+            .send(result.buffer);
+          return;
+        } catch (error) {
+          const response: ApiResponse = {
+            success: false,
+            error: {
+              code: ErrorCode.PROCESSING_FAILED,
+              message: error instanceof Error ? error.message : 'Failed to capture screenshot',
+            },
+            meta: {
+              timestamp: new Date().toISOString(),
+              requestId: request.id,
+              version: 'v1',
+            },
+          };
+          reply.code(500).send(response);
+          return;
+        }
+      }
+
+      // Standard synchronous mode with persistence
       // Create database record
+      // PRIVACY: headers and cookies are NOT stored in the database
       let screenshot = await screenshotRepository.create({
         accountId,
         url: validatedData.url,
@@ -142,14 +229,17 @@ export async function createScreenshot(
         viewport: validatedData.viewport as any,
         clip: validatedData.clip as any,
         waitOptions: validatedData.waitOptions as any,
-        headers: validatedData.headers as any,
-        cookies: validatedData.cookies as any,
+        // PRIVACY: headers and cookies intentionally NOT passed to repository
         userAgent: validatedData.userAgent,
         blockResources: validatedData.blockResources as any,
         omitBackground: validatedData.omitBackground,
         encoding: validatedData.encoding,
         metadata: validatedData.metadata as any,
         webhookUrl: validatedData.webhookUrl,
+        // Privacy-safe analytics
+        urlHash: hashUrl(validatedData.url),
+        urlDomain: extractDomain(validatedData.url),
+        expiresAt: calculateExpiresAt(),
       });
 
       try {
@@ -160,6 +250,7 @@ export async function createScreenshot(
         screenshotService.validateRequest(validatedData);
 
         // Capture screenshot synchronously
+        // Note: headers and cookies from validatedData are used for capture only
         const result = await screenshotService.captureScreenshot(validatedData);
 
         // Upload to storage
@@ -167,7 +258,8 @@ export async function createScreenshot(
         const contentType = screenshotService.getContentType(result.format);
         await storageService.upload(storageKey, result.buffer, contentType, {
           screenshotId: screenshot.id,
-          url: validatedData.url,
+          // PRIVACY: Only store domain in storage metadata, not full URL
+          urlDomain: extractDomain(validatedData.url),
           width: result.width.toString(),
           height: result.height.toString(),
         });
@@ -191,7 +283,8 @@ export async function createScreenshot(
           credits: creditCost,
           metadata: {
             screenshotId: screenshot.id,
-            url: validatedData.url,
+            // PRIVACY: Only store domain for analytics
+            urlDomain: extractDomain(validatedData.url),
             format: validatedData.format,
           },
         });

@@ -1,0 +1,316 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Security | ScreenCraft" description="Learn how ScreenCraft protects your data with enterprise-grade security measures.">
+  <Navbar />
+  <div class="min-h-screen bg-background flex flex-col">
+    <!-- Hero Section -->
+    <section class="py-16 md:py-24 border-b border-border">
+      <div class="max-w-4xl mx-auto px-4 text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent-primary/20 mb-6">
+          <svg class="w-8 h-8 text-accent-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <h1 class="text-3xl md:text-5xl font-bold text-text-primary mb-4">Security at ScreenCraft</h1>
+        <p class="text-xl text-text-secondary max-w-2xl mx-auto">
+          Your data protection is our priority. We implement enterprise-grade security measures to keep your data safe.
+        </p>
+      </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="flex-1 py-12">
+      <div class="max-w-4xl mx-auto px-4 space-y-8">
+
+        <!-- Infrastructure Security -->
+        <section class="bg-surface border border-border rounded-xl p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-accent-secondary/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-accent-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <h2 class="text-xl font-semibold text-text-primary">Infrastructure Security</h2>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div class="flex items-start gap-3 p-4 bg-background rounded-lg">
+              <div class="w-2 h-2 rounded-full bg-accent-primary mt-2 flex-shrink-0"></div>
+              <div>
+                <h3 class="font-medium text-text-primary">Hosted on Hetzner</h3>
+                <p class="text-text-secondary text-sm">Germany/EU-based data centers with strict privacy laws</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-4 bg-background rounded-lg">
+              <div class="w-2 h-2 rounded-full bg-accent-primary mt-2 flex-shrink-0"></div>
+              <div>
+                <h3 class="font-medium text-text-primary">Cloudflare CDN</h3>
+                <p class="text-text-secondary text-sm">Enterprise DDoS protection and global edge network</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-4 bg-background rounded-lg">
+              <div class="w-2 h-2 rounded-full bg-accent-primary mt-2 flex-shrink-0"></div>
+              <div>
+                <h3 class="font-medium text-text-primary">Docker Container Isolation</h3>
+                <p class="text-text-secondary text-sm">Each service runs in isolated containers</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-4 bg-background rounded-lg">
+              <div class="w-2 h-2 rounded-full bg-accent-primary mt-2 flex-shrink-0"></div>
+              <div>
+                <h3 class="font-medium text-text-primary">Regular Security Updates</h3>
+                <p class="text-text-secondary text-sm">Automated patching and dependency updates</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Data Protection -->
+        <section class="bg-surface border border-border rounded-xl p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-accent-primary/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-accent-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h2 class="text-xl font-semibold text-text-primary">Data Protection</h2>
+          </div>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3 p-3 bg-background rounded-lg">
+              <span class="text-accent-primary text-lg">&#10003;</span>
+              <span class="text-text-primary">Encryption at rest (AES-256)</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-background rounded-lg">
+              <span class="text-accent-primary text-lg">&#10003;</span>
+              <span class="text-text-primary">Encryption in transit (TLS 1.3)</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-background rounded-lg">
+              <span class="text-accent-primary text-lg">&#10003;</span>
+              <span class="text-text-primary">No plaintext credential storage</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-background rounded-lg">
+              <span class="text-accent-primary text-lg">&#10003;</span>
+              <span class="text-text-primary">Automatic data expiration</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-background rounded-lg">
+              <span class="text-accent-primary text-lg">&#10003;</span>
+              <span class="text-text-primary">GDPR compliant</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- What We Never Do -->
+        <section class="bg-surface border border-border rounded-xl p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-accent-error/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-accent-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+            </div>
+            <h2 class="text-xl font-semibold text-text-primary">What We Never Do</h2>
+          </div>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3 p-3 bg-background rounded-lg">
+              <span class="text-accent-error text-lg">&#10007;</span>
+              <span class="text-text-primary">Store your authentication headers</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-background rounded-lg">
+              <span class="text-accent-error text-lg">&#10007;</span>
+              <span class="text-text-primary">Store cookies or session data</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-background rounded-lg">
+              <span class="text-accent-error text-lg">&#10007;</span>
+              <span class="text-text-primary">Log request bodies</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-background rounded-lg">
+              <span class="text-accent-error text-lg">&#10007;</span>
+              <span class="text-text-primary">Share data with third parties</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-background rounded-lg">
+              <span class="text-accent-error text-lg">&#10007;</span>
+              <span class="text-text-primary">Train AI on your content</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Rendering Isolation -->
+        <section class="bg-surface border border-border rounded-xl p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-accent-warning/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-accent-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+              </svg>
+            </div>
+            <h2 class="text-xl font-semibold text-text-primary">Rendering Isolation</h2>
+          </div>
+          <div class="grid sm:grid-cols-3 gap-4">
+            <div class="p-4 bg-background rounded-lg text-center">
+              <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-accent-warning/20 flex items-center justify-center">
+                <svg class="w-6 h-6 text-accent-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              </div>
+              <h3 class="font-medium text-text-primary mb-1">Isolated Environment</h3>
+              <p class="text-text-secondary text-sm">Each screenshot runs in its own sandbox</p>
+            </div>
+            <div class="p-4 bg-background rounded-lg text-center">
+              <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-accent-warning/20 flex items-center justify-center">
+                <svg class="w-6 h-6 text-accent-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h3 class="font-medium text-text-primary mb-1">No Cross-Customer Access</h3>
+              <p class="text-text-secondary text-sm">Complete data separation between users</p>
+            </div>
+            <div class="p-4 bg-background rounded-lg text-center">
+              <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-accent-warning/20 flex items-center justify-center">
+                <svg class="w-6 h-6 text-accent-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 class="font-medium text-text-primary mb-1">Ephemeral Instances</h3>
+              <p class="text-text-secondary text-sm">Browser instances destroyed after each request</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- API Security -->
+        <section class="bg-surface border border-border rounded-xl p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-accent-secondary/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-accent-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+            </div>
+            <h2 class="text-xl font-semibold text-text-primary">API Security</h2>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div class="flex items-start gap-3 p-4 bg-background rounded-lg">
+              <div class="w-8 h-8 rounded bg-accent-secondary/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 text-accent-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-medium text-text-primary">API Key Authentication</h3>
+                <p class="text-text-secondary text-sm">Secure token-based access control with scoped permissions</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-4 bg-background rounded-lg">
+              <div class="w-8 h-8 rounded bg-accent-secondary/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 text-accent-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-medium text-text-primary">Rate Limiting</h3>
+                <p class="text-text-secondary text-sm">Protection against abuse and denial-of-service attacks</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-4 bg-background rounded-lg">
+              <div class="w-8 h-8 rounded bg-accent-secondary/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 text-accent-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-medium text-text-primary">Request Validation</h3>
+                <p class="text-text-secondary text-sm">Strict input validation and sanitization on all endpoints</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-4 bg-background rounded-lg">
+              <div class="w-8 h-8 rounded bg-accent-secondary/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 text-accent-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-medium text-text-primary">CORS Protection</h3>
+                <p class="text-text-secondary text-sm">Cross-origin request safeguards and domain whitelisting</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Responsible Disclosure -->
+        <section class="bg-gradient-to-r from-accent-primary/10 to-accent-secondary/10 border border-accent-primary/30 rounded-xl p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-accent-primary/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-accent-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h2 class="text-xl font-semibold text-text-primary">Responsible Disclosure</h2>
+          </div>
+          <p class="text-text-secondary mb-4">
+            We appreciate security researchers who help us keep ScreenCraft secure. If you discover a vulnerability, please report it responsibly.
+          </p>
+          <div class="bg-background/50 rounded-lg p-4 mb-4">
+            <div class="flex items-center gap-2 mb-2">
+              <svg class="w-5 h-5 text-accent-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <a href="mailto:security@screencraftapi.com" class="text-accent-primary hover:underline font-medium">
+                security@screencraftapi.com
+              </a>
+            </div>
+            <p class="text-text-muted text-sm">
+              We will acknowledge your report within 48 hours and work with you to understand and resolve the issue.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-4 text-sm">
+            <div class="flex items-center gap-2 text-text-secondary">
+              <svg class="w-4 h-4 text-accent-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Response within 48 hours</span>
+            </div>
+            <div class="flex items-center gap-2 text-text-secondary">
+              <svg class="w-4 h-4 text-accent-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Safe harbor for good-faith research</span>
+            </div>
+            <div class="flex items-center gap-2 text-text-secondary">
+              <svg class="w-4 h-4 text-accent-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Bug bounty program available</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Additional Info -->
+        <section class="bg-surface border border-border rounded-xl p-6">
+          <h2 class="text-xl font-semibold text-text-primary mb-4">Additional Resources</h2>
+          <div class="grid sm:grid-cols-3 gap-4">
+            <a href="/privacy" class="flex items-center gap-3 p-4 bg-background rounded-lg hover:bg-surface-hover transition group">
+              <svg class="w-5 h-5 text-text-muted group-hover:text-accent-primary transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span class="text-text-primary group-hover:text-accent-primary transition">Privacy Policy</span>
+            </a>
+            <a href="/terms" class="flex items-center gap-3 p-4 bg-background rounded-lg hover:bg-surface-hover transition group">
+              <svg class="w-5 h-5 text-text-muted group-hover:text-accent-primary transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span class="text-text-primary group-hover:text-accent-primary transition">Terms of Service</span>
+            </a>
+            <a href="/status" class="flex items-center gap-3 p-4 bg-background rounded-lg hover:bg-surface-hover transition group">
+              <svg class="w-5 h-5 text-text-muted group-hover:text-accent-primary transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span class="text-text-primary group-hover:text-accent-primary transition">System Status</span>
+            </a>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <Footer />
+  </div>
+</Layout>

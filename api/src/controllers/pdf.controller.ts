@@ -1,4 +1,5 @@
 import { FastifyReply } from 'fastify';
+import crypto from 'crypto';
 import {
   pdfRequestSchema,
   type PdfResponse,
@@ -18,6 +19,22 @@ import { pdfRepository } from '../services/database/pdf.repository';
 import { StorageService } from '../services/storage/storage.service.js';
 import { UsageService } from '../services/billing/usage.service.js';
 import { EventType, type Pdf } from '@prisma/client';
+
+// ============================================
+// PRIVACY HELPER FUNCTIONS
+// ============================================
+
+/**
+ * Extract just the domain from a URL for privacy-safe usage statistics
+ * This avoids storing full URLs which may contain sensitive query params
+ */
+function extractDomain(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return 'unknown';
+  }
+}
 
 // Get service instances
 const pdfService = getPdfService();
@@ -77,12 +94,35 @@ export async function createPdf(
     const isAsync = validatedData.async;
 
     if (isAsync) {
+      // PRIVACY: noStore is not compatible with async processing
+      // since async requires a database record for status tracking
+      if ((validatedData as any).noStore) {
+        const response: ApiResponse = {
+          success: false,
+          error: {
+            code: ErrorCode.VALIDATION_ERROR,
+            message: 'noStore option cannot be used with async processing. Use synchronous mode (async: false) with noStore.',
+          },
+          meta: {
+            timestamp: new Date().toISOString(),
+            requestId: request.id,
+            version: 'v1',
+          },
+        };
+        reply.code(400).send(response);
+        return;
+      }
+
       // Create database record
+      // PRIVACY: We intentionally do NOT pass headers, cookies, or html to the repository
+      // These sensitive fields are only used during PDF generation and immediately discarded
       const pdf = await pdfRepository.create({
         accountId,
         type: validatedData.type.toUpperCase() as 'URL' | 'HTML',
         url: validatedData.type === 'url' ? validatedData.url : undefined,
-        html: validatedData.type === 'html' ? validatedData.html : undefined,
+        // PRIVACY: html is NOT stored - passed through for generation only (may contain invoices, PII)
+        // PRIVACY: headers are NOT stored - may contain Authorization tokens
+        // PRIVACY: cookies are NOT stored - contain sensitive session data
         format: validatedData.format.toUpperCase() as any,
         landscape: validatedData.landscape,
         printBackground: validatedData.printBackground,
@@ -96,8 +136,6 @@ export async function createPdf(
         height: validatedData.height,
         scale: validatedData.scale,
         waitOptions: validatedData.type === 'url' ? (validatedData.waitOptions as any) : undefined,
-        headers: validatedData.type === 'url' ? (validatedData.headers as any) : undefined,
-        cookies: validatedData.type === 'url' ? (validatedData.cookies as any) : undefined,
         userAgent: validatedData.type === 'url' ? validatedData.userAgent : undefined,
         metadata: validatedData.metadata as any,
         webhookUrl: validatedData.webhookUrl,
@@ -136,12 +174,77 @@ export async function createPdf(
 
       reply.code(202).send(response);
     } else {
+      // Check if noStore mode is requested
+      const noStore = (validatedData as any).noStore;
+
+      if (noStore) {
+        // PRIVACY: noStore mode - generate and return directly without any persistence
+        // No database record, no storage upload - just generate and stream back
+        // This is especially important for HTML-to-PDF with sensitive content
+        try {
+          // Generate PDF synchronously
+          // Note: html, headers, cookies from validatedData are used here for generation
+          // but are never persisted anywhere
+          const result = await pdfService.generatePdf(validatedData);
+
+          // Track usage - still need to deduct credits even for noStore
+          const hasTemplate = !!(validatedData as any).templateId;
+          const creditCost = hasTemplate ? 3 : 2;
+          await usageService.recordUsage({
+            accountId,
+            eventType: hasTemplate ? EventType.PDF_WITH_TEMPLATE : EventType.PDF,
+            credits: creditCost,
+            metadata: {
+              // PRIVACY: Only store domain (for URL type), not full URL or HTML content
+              urlDomain: validatedData.type === 'url' && validatedData.url
+                ? extractDomain(validatedData.url)
+                : undefined,
+              type: validatedData.type,
+              pages: result.pages,
+              noStore: true,
+            },
+          });
+
+          // Return PDF directly as binary response
+          reply
+            .code(200)
+            .header('Content-Type', 'application/pdf')
+            .header('Content-Length', result.fileSize.toString())
+            .header('X-PDF-Pages', result.pages.toString())
+            .header('X-PDF-FileSize', result.fileSize.toString())
+            .header('Cache-Control', 'no-store, no-cache, must-revalidate')
+            .header('Content-Disposition', 'attachment; filename="document.pdf"')
+            .send(result.buffer);
+          return;
+        } catch (error) {
+          const response: ApiResponse = {
+            success: false,
+            error: {
+              code: ErrorCode.PROCESSING_FAILED,
+              message: error instanceof Error ? error.message : 'Failed to generate PDF',
+            },
+            meta: {
+              timestamp: new Date().toISOString(),
+              requestId: request.id,
+              version: 'v1',
+            },
+          };
+          reply.code(500).send(response);
+          return;
+        }
+      }
+
+      // Standard synchronous mode with persistence
       // Create database record
+      // PRIVACY: We intentionally do NOT pass headers, cookies, or html to the repository
+      // These sensitive fields are only used during PDF generation and immediately discarded
       let pdf = await pdfRepository.create({
         accountId,
         type: validatedData.type.toUpperCase() as 'URL' | 'HTML',
         url: validatedData.type === 'url' ? validatedData.url : undefined,
-        html: validatedData.type === 'html' ? validatedData.html : undefined,
+        // PRIVACY: html is NOT stored - passed through for generation only (may contain invoices, PII)
+        // PRIVACY: headers are NOT stored - may contain Authorization tokens
+        // PRIVACY: cookies are NOT stored - contain sensitive session data
         format: validatedData.format.toUpperCase() as any,
         landscape: validatedData.landscape,
         printBackground: validatedData.printBackground,
@@ -155,8 +258,6 @@ export async function createPdf(
         height: validatedData.height,
         scale: validatedData.scale,
         waitOptions: validatedData.type === 'url' ? (validatedData.waitOptions as any) : undefined,
-        headers: validatedData.type === 'url' ? (validatedData.headers as any) : undefined,
-        cookies: validatedData.type === 'url' ? (validatedData.cookies as any) : undefined,
         userAgent: validatedData.type === 'url' ? validatedData.userAgent : undefined,
         metadata: validatedData.metadata as any,
         webhookUrl: validatedData.webhookUrl,
@@ -167,6 +268,7 @@ export async function createPdf(
         pdf = await pdfRepository.markAsProcessing(pdf.id);
 
         // Generate PDF synchronously
+        // Note: html, headers, cookies from validatedData are used for generation only
         const result = await pdfService.generatePdf(validatedData);
 
         // Upload to storage

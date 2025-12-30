@@ -1,5 +1,51 @@
+import crypto from 'crypto';
 import { prisma } from '../../lib/db';
 import type { Screenshot, ScreenshotStatus, Prisma } from '@prisma/client';
+
+// ============================================
+// PRIVACY HELPER FUNCTIONS
+// ============================================
+
+/**
+ * Hash a URL for privacy-safe analytics and deduplication.
+ * We store the hash instead of the full URL to enable analytics
+ * without exposing potentially sensitive URL parameters.
+ */
+export function hashUrl(url: string): string {
+  return crypto.createHash('sha256').update(url).digest('hex');
+}
+
+/**
+ * Extract domain from URL for aggregated usage statistics.
+ * Only the hostname is stored, allowing usage analytics per domain
+ * without storing full URL paths or query parameters.
+ */
+export function extractDomain(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return 'unknown';
+  }
+}
+
+/**
+ * Default expiration time for screenshots in hours.
+ * Files older than this will be eligible for cleanup.
+ */
+const DEFAULT_EXPIRATION_HOURS = 24;
+
+/**
+ * Calculate expiration date based on default retention period.
+ */
+export function calculateExpiresAt(hoursFromNow: number = DEFAULT_EXPIRATION_HOURS): Date {
+  const expiresAt = new Date();
+  expiresAt.setHours(expiresAt.getHours() + hoursFromNow);
+  return expiresAt;
+}
+
+// ============================================
+// REPOSITORY INTERFACES
+// ============================================
 
 export interface CreateScreenshotData {
   accountId: string;
@@ -10,14 +56,19 @@ export interface CreateScreenshotData {
   viewport?: Prisma.InputJsonValue;
   clip?: Prisma.InputJsonValue;
   waitOptions?: Prisma.InputJsonValue;
-  headers?: Prisma.InputJsonValue;
-  cookies?: Prisma.InputJsonValue;
+  // PRIVACY: headers and cookies are intentionally NOT stored in the database.
+  // They are used only during the Playwright capture and then discarded.
+  // This prevents sensitive data (auth tokens, session cookies) from being persisted.
   userAgent?: string;
   blockResources?: Prisma.InputJsonValue;
   omitBackground?: boolean;
   encoding?: string;
   metadata?: Prisma.InputJsonValue;
   webhookUrl?: string;
+  // Privacy-safe analytics fields
+  urlHash?: string;
+  urlDomain?: string;
+  expiresAt?: Date;
 }
 
 export interface UpdateScreenshotStatusData {
@@ -40,6 +91,10 @@ export interface PaginationOptions {
 export class ScreenshotRepository {
   /**
    * Create a new screenshot job
+   *
+   * PRIVACY NOTE: This method intentionally does NOT accept or store
+   * headers or cookies. These sensitive values are used only during
+   * the Playwright capture process and are never persisted.
    */
   async create(data: CreateScreenshotData): Promise<Screenshot> {
     return prisma.screenshot.create({
@@ -52,8 +107,7 @@ export class ScreenshotRepository {
         viewport: data.viewport,
         clip: data.clip,
         waitOptions: data.waitOptions,
-        headers: data.headers,
-        cookies: data.cookies,
+        // PRIVACY: headers and cookies are NOT stored - see CreateScreenshotData interface
         userAgent: data.userAgent,
         blockResources: data.blockResources,
         omitBackground: data.omitBackground ?? false,
@@ -61,6 +115,10 @@ export class ScreenshotRepository {
         metadata: data.metadata,
         webhookUrl: data.webhookUrl,
         status: 'PENDING',
+        // Privacy-safe analytics fields
+        urlHash: data.urlHash ?? hashUrl(data.url),
+        urlDomain: data.urlDomain ?? extractDomain(data.url),
+        expiresAt: data.expiresAt ?? calculateExpiresAt(),
       },
     });
   }

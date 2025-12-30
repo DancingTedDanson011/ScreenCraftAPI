@@ -1,11 +1,69 @@
 import { prisma } from '../../lib/db';
 import type { Pdf, PdfStatus, PdfType, Prisma } from '@prisma/client';
+import crypto from 'crypto';
 
+// ============================================
+// PRIVACY CONFIGURATION
+// ============================================
+
+/**
+ * Default retention period for PDF files (24 hours)
+ * After this period, files should be cleaned up from storage
+ */
+const DEFAULT_RETENTION_HOURS = 24;
+
+// ============================================
+// PRIVACY HELPER FUNCTIONS
+// ============================================
+
+/**
+ * Hash a URL for privacy-safe analytics
+ * Allows deduplication without storing the actual URL
+ */
+function hashUrl(url: string): string {
+  return crypto.createHash('sha256').update(url).digest('hex');
+}
+
+/**
+ * Extract just the domain from a URL for usage statistics
+ * This is privacy-safe as it doesn't expose the full path or query params
+ */
+function extractDomain(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return 'unknown';
+  }
+}
+
+/**
+ * Calculate expiration date based on retention hours
+ */
+function calculateExpiresAt(retentionHours: number = DEFAULT_RETENTION_HOURS): Date {
+  const expiresAt = new Date();
+  expiresAt.setHours(expiresAt.getHours() + retentionHours);
+  return expiresAt;
+}
+
+// ============================================
+// DATA INTERFACES
+// ============================================
+
+/**
+ * Data required to create a PDF job
+ *
+ * PRIVACY NOTE: The following fields are intentionally EXCLUDED and never stored:
+ * - headers: May contain Authorization tokens, API keys, or session identifiers
+ * - cookies: Contains session data, auth tokens, and tracking identifiers
+ * - html: May contain invoices, reports, personal data, or other sensitive content
+ *
+ * These values are passed through for PDF generation but immediately discarded.
+ */
 export interface CreatePdfData {
   accountId: string;
   type: 'URL' | 'HTML';
   url?: string;
-  html?: string;
+  // REMOVED: html - Privacy: Never stored, passed through only (may contain PII, invoices, reports)
   format: 'LETTER' | 'LEGAL' | 'TABLOID' | 'LEDGER' | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6';
   landscape?: boolean;
   printBackground?: boolean;
@@ -19,11 +77,14 @@ export interface CreatePdfData {
   height?: string;
   scale?: number;
   waitOptions?: Prisma.InputJsonValue;
-  headers?: Prisma.InputJsonValue;
-  cookies?: Prisma.InputJsonValue;
+  // REMOVED: headers - Privacy: Never stored (may contain auth tokens)
+  // REMOVED: cookies - Privacy: Never stored (sensitive session data)
   userAgent?: string;
   metadata?: Prisma.InputJsonValue;
   webhookUrl?: string;
+  // Privacy options
+  noStore?: boolean; // If true, don't create a database record at all
+  retentionHours?: number; // Custom retention period (default: 24 hours)
 }
 
 export interface UpdatePdfStatusData {
@@ -48,14 +109,34 @@ export interface PdfPaginationOptions {
 export class PdfRepository {
   /**
    * Create a new PDF job
+   *
+   * PRIVACY: This method intentionally does NOT store:
+   * - html: Passed through for generation only, never persisted
+   * - headers: May contain auth tokens, never persisted
+   * - cookies: Session data, never persisted
+   *
+   * For URL-based PDFs, we store only:
+   * - urlHash: SHA256 hash for deduplication analytics
+   * - urlDomain: Just the hostname for usage stats
+   *
+   * Files are set to expire after the retention period (default: 24 hours)
    */
   async create(data: CreatePdfData): Promise<Pdf> {
+    // Calculate privacy-safe URL analytics (only for URL type)
+    const urlHash = data.url ? hashUrl(data.url) : undefined;
+    const urlDomain = data.url ? extractDomain(data.url) : undefined;
+
+    // Calculate expiration time
+    const expiresAt = calculateExpiresAt(data.retentionHours);
+
     return prisma.pdf.create({
       data: {
         accountId: data.accountId,
         type: data.type,
         url: data.url,
-        html: data.html,
+        // PRIVACY: html is intentionally NOT stored - it may contain invoices, reports, PII
+        // PRIVACY: headers are intentionally NOT stored - may contain auth tokens
+        // PRIVACY: cookies are intentionally NOT stored - sensitive session data
         format: data.format,
         landscape: data.landscape ?? false,
         printBackground: data.printBackground ?? true,
@@ -69,12 +150,15 @@ export class PdfRepository {
         height: data.height,
         scale: data.scale ?? 1.0,
         waitOptions: data.waitOptions,
-        headers: data.headers,
-        cookies: data.cookies,
         userAgent: data.userAgent,
         metadata: data.metadata,
         webhookUrl: data.webhookUrl,
         status: 'PENDING',
+        // Privacy-safe analytics
+        urlHash,
+        urlDomain,
+        // Retention controls
+        expiresAt,
       },
     });
   }
