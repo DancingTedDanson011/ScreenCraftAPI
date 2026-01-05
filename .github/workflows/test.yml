@@ -121,7 +121,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-report
           path: api/coverage/
@@ -203,7 +203,7 @@ jobs:
         run: cd api && npm run build
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: dist
           path: api/dist/
@@ -243,14 +243,14 @@ jobs:
           output: ./web-sbom.json
 
       - name: Upload API SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sbom-api
           path: ./api-sbom.json
           retention-days: 90
 
       - name: Upload Web SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sbom-web
           path: ./web-sbom.json
