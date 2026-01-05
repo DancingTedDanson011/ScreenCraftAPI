@@ -113,7 +113,7 @@ jobs:
           MINIO_SECRET_KEY: minioadmin
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: ./api/coverage/lcov.info
           flags: api
