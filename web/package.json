@@ -14,7 +14,7 @@
     "@nanostores/react": "^1.0.0",
     "astro": "^5.16.6",
     "nanostores": "^1.1.0",
-    "react": "^18.3.1",
+    "react": "^19.2.3",
     "react-dom": "^18.3.1",
     "tslib": "^2.8.1"
   },
